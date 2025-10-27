@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://rlxdv0y863e"]
+
+[ext_resource type="Script" uid="uid://bro2ety8phvoc" path="res://scenes/terrain_renderer/terrain_renderer.gd" id="1_g7g4h"]
+
+[sub_resource type="CompositorEffect" id="CompositorEffect_j8ivh"]
+resource_local_to_scene = false
+resource_name = ""
+enabled = true
+effect_callback_type = 4
+needs_motion_vectors = false
+needs_normal_roughness = false
+script = ExtResource("1_g7g4h")
+metadata/_custom_type_script = "uid://bro2ety8phvoc"
+
+[sub_resource type="Compositor" id="Compositor_a5oyu"]
+compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_j8ivh")])
+
+[node name="TestScene`" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+compositor = SubResource("Compositor_a5oyu")
