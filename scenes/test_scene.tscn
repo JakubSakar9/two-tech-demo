@@ -1,6 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://rlxdv0y863e"]
+[gd_scene load_steps=6 format=3 uid="uid://rlxdv0y863e"]
 
-[ext_resource type="Script" uid="uid://bro2ety8phvoc" path="res://scenes/terrain_renderer/terrain_renderer.gd" id="1_g7g4h"]
+[ext_resource type="Script" uid="uid://bro2ety8phvoc" path="res://scripts/terrain_renderer/terrain_renderer.gd" id="1_g7g4h"]
+[ext_resource type="Script" uid="uid://dovsku8cq4s1g" path="res://scripts/scene_manager.gd" id="1_nd71p"]
+[ext_resource type="PackedScene" uid="uid://db7lx53ycrjlr" path="res://assets/models/test_terrain.tscn" id="2_j8ivh"]
 
 [sub_resource type="CompositorEffect" id="CompositorEffect_j8ivh"]
 resource_local_to_scene = false
@@ -15,9 +17,11 @@ metadata/_custom_type_script = "uid://bro2ety8phvoc"
 [sub_resource type="Compositor" id="Compositor_a5oyu"]
 compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_j8ivh")])
 
-[node name="TestScene`" type="Node3D"]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="TestScene" type="Node3D"]
+script = ExtResource("1_nd71p")
 
 [node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.7434883, 0)
 compositor = SubResource("Compositor_a5oyu")
+
+[node name="TestTerrain" parent="." instance=ExtResource("2_j8ivh")]

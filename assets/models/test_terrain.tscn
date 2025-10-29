@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://db7lx53ycrjlr"]
+
+[ext_resource type="PackedScene" uid="uid://3andc8uh83cu" path="res://assets/models/test_terrain.fbx" id="1_1hoco"]
+
+[node name="TestTerrain" instance=ExtResource("1_1hoco")]
+
+[node name="TMesh" parent="." index="0" groups=["deformable"]]

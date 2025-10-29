@@ -15,6 +15,14 @@ run/main_scene="uid://rlxdv0y863e"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+TerrainGeometryProcessor="*res://scripts/autoload/deformable_geometry_processor.gd"
+
 [dotnet]
 
 project/assembly_name="two-tech-demo"
+
+[global_group]
+
+deformable=""
