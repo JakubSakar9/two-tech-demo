@@ -3,8 +3,6 @@ using Godot.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Xml;
 using GDArray = Godot.Collections.Array;
 
 struct SurfaceRenderBuffers
@@ -20,22 +18,26 @@ struct SurfaceRenderBuffers
 struct TransformUniformData
 {
     public Projection mMat;
-    public Projection pvMat;
+    public Projection vMat;
+    public Projection pMat;
 
     public TransformUniformData()
     {
-        pvMat = new();
         mMat = Projection.Identity;
+        vMat = Projection.Identity;
+        pMat = Projection.Identity;
     }
 }
 
 public partial class TerrainRendererBackend : GodotObject
 {
     const string VERT_SOURCE = "res://shaders/d_terrain.vert";
+    const string TESC_SOURCE = "res://shaders/d_terrain.tesc";
+    const string TESE_SOURCE = "res://shaders/d_terrain.tese";
     const string FRAG_SOURCE = "res://shaders/d_terrain.frag";
     
     const int MAT4_SIZE = 16 * sizeof(float);
-    const int TRANSFORM_UNIFORM_SIZE = 2 * MAT4_SIZE;
+    const int TRANSFORM_UNIFORM_SIZE = 3 * MAT4_SIZE;
 
     private RenderingDevice _rd = null;
     private Rid _pipeline;
@@ -49,6 +51,7 @@ public partial class TerrainRendererBackend : GodotObject
     private TransformUniformData _transformUniformData;
     private Rid _transformUniformBuffer;
     private long _vertexFormat;
+    private DisplacementData _displacementData;
 
     public void InitRendering(RenderSceneBuffersRD rsb, RenderSceneDataRD rsd)
     {
@@ -68,7 +71,7 @@ public partial class TerrainRendererBackend : GodotObject
         long fbFormat = _rd.FramebufferGetFormat(_screenBuffer);
 
         _pipeline = _rd.RenderPipelineCreate(_shader,
-            fbFormat, _vertexFormat, RenderingDevice.RenderPrimitive.Triangles,
+            fbFormat, _vertexFormat, RenderingDevice.RenderPrimitive.TesselationPatch,
             rasterizationState, multisampleState, depthStencilState, colorBlendState);
 
         _UpdateProjectionView(rsd);
@@ -76,6 +79,8 @@ public partial class TerrainRendererBackend : GodotObject
         _transformUniformBuffer = _rd.UniformBufferCreate(TRANSFORM_UNIFORM_SIZE, _GetTransformUniformBufferData());
 
         _clearColors = [new Color(0.2f, 0.2f, 0.2f, 1.0f)];
+
+        _displacementData = new DisplacementData();
     }
 
     public void CreateFramebuffers(RenderSceneBuffersRD renderSceneBuffers)
@@ -136,7 +141,6 @@ public partial class TerrainRendererBackend : GodotObject
 
     public void LoadBuffers()
     {
-        GD.Print("Loading buffers");
         DeformableGeometryProcessor.Instance.Synced = true;
         var meshes = DeformableGeometryProcessor.Instance.Meshes;
         _surfaceTransforms = DeformableGeometryProcessor.Instance.GlobalTransforms;
@@ -145,16 +149,21 @@ public partial class TerrainRendererBackend : GodotObject
         {
             _CreateVertexArray(meshes[i], ref _surfaces[i]);
             _CreateIndexArray(meshes[i], ref _surfaces[i]);
+            _SetupSurfaceTextures(meshes[i], i);
         }
     }
 
     private void _CompileShader()
     {
         FileAccess vertFile = FileAccess.Open(VERT_SOURCE, FileAccess.ModeFlags.Read);
+        FileAccess tescFile = FileAccess.Open(TESC_SOURCE, FileAccess.ModeFlags.Read);
+        FileAccess teseFile = FileAccess.Open(TESE_SOURCE, FileAccess.ModeFlags.Read);
         FileAccess fragFile = FileAccess.Open(FRAG_SOURCE, FileAccess.ModeFlags.Read);
         RDShaderSource source = new();
         source.Language = RenderingDevice.ShaderLanguage.Glsl;
         source.SourceVertex = vertFile.GetAsText();
+        source.SourceTesselationControl = tescFile.GetAsText();
+        source.SourceTesselationEvaluation = teseFile.GetAsText();
         source.SourceFragment = fragFile.GetAsText();
         RDShaderSpirV spirV = _rd.ShaderCompileSpirVFromSource(source);
         _shader = _rd.ShaderCreateFromSpirV(spirV);
@@ -181,7 +190,7 @@ public partial class TerrainRendererBackend : GodotObject
         uvAtr.Frequency = RenderingDevice.VertexFrequency.Vertex;
         uvAtr.Location = 2;
         uvAtr.Offset = 0;
-        uvAtr.Stride = 2 * sizeof(float);
+        uvAtr.Stride = 2 * sizeof(int);
 
         _vertexFormat = _rd.VertexFormatCreate([posAtr, normAtr, uvAtr]);
     }
@@ -231,8 +240,7 @@ public partial class TerrainRendererBackend : GodotObject
     {
         GDArray dataArrays = mesh.SurfaceGetArrays(0);
         int[] indices = (int[])dataArrays[(int)Mesh.ArrayType.Index];
-        uint numIndices = (uint)indices.Length;
-
+        uint numIndices = (uint) indices.Length;
         byte[] indicesBytes = new byte[numIndices * sizeof(int)];
         Buffer.BlockCopy(indices, 0, indicesBytes, 0, (int)numIndices * sizeof(int));
         buffers.IndexBuffer = _rd.IndexBufferCreate(numIndices, RenderingDevice.IndexBufferFormat.Uint32, indicesBytes);
@@ -263,6 +271,7 @@ public partial class TerrainRendererBackend : GodotObject
         state.LineWidth = 1.0f;
         state.FrontFace = RenderingDevice.PolygonFrontFace.Clockwise;
         state.DepthBiasEnabled = false;
+        state.PatchControlPoints = 3;
         return state;
     }
 
@@ -308,9 +317,8 @@ public partial class TerrainRendererBackend : GodotObject
 
     private void _UpdateProjectionView(RenderSceneDataRD rsd)
     {
-        Projection pMat = rsd.GetCamProjection();
-        Projection vMat = new Projection(rsd.GetCamTransform()).Inverse();
-        _transformUniformData.pvMat = pMat * vMat;
+        _transformUniformData.pMat = rsd.GetCamProjection();
+        _transformUniformData.vMat = new Projection(rsd.GetCamTransform()).Inverse();
     }
 
     private Rid _CreateUniformSet()
@@ -326,22 +334,19 @@ public partial class TerrainRendererBackend : GodotObject
         return _rd.UniformSetCreate([transformUniform], _shader, 0);
     }
 
+    private void _SetupSurfaceTextures(Mesh mesh, int surfaceIndex)
+    {
+        GDArray dataArrays = mesh.SurfaceGetArrays(0);
+        var vArray = (GDArray)dataArrays[(int)Mesh.ArrayType.Vertex];
+        int patchGridSize = (int) MathF.Ceiling(Mathf.Sqrt(vArray.Count)) - 1;
+        _displacementData.ComputeDisplacedPatches(patchGridSize);
+    }
+
     private unsafe byte[] _GetTransformUniformBufferData()
     {
         byte[] targetData = new byte[TRANSFORM_UNIFORM_SIZE];
         fixed (void* srcPtr = &_transformUniformData, dstPtr = &targetData[0])
             Buffer.MemoryCopy(srcPtr, dstPtr, TRANSFORM_UNIFORM_SIZE, TRANSFORM_UNIFORM_SIZE);
         return targetData;
-    }
-
-    private void _DisplayMeshInfo(ref readonly Mesh mesh)
-    {
-        GD.Print("----------");
-        GD.Print("Loaded mesh with name " + mesh.ResourceName);
-        GDArray arrays = mesh.SurfaceGetArrays(0);
-        GD.Print("Mesh contains " + ((GDArray)arrays[(int)Mesh.ArrayType.Vertex]).Count() + " vertices");
-        GD.Print("Mesh contains " + ((GDArray)arrays[(int)Mesh.ArrayType.TexUV]).Count() + " uv coordinates");
-        GD.Print("Mesh contains " + ((GDArray)arrays[(int)Mesh.ArrayType.Index]).Count() + " indices");
-        GD.Print("----------");
     }
 }
