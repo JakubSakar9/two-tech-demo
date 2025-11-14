@@ -16,6 +16,8 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
 } u_ubo;
 
+layout(binding = 2) uniform sampler2D u_displacement;
+
 void main()
 {
     float u = gl_TessCoord.x;
@@ -24,14 +26,6 @@ void main()
 
     // Position computation
     // TODO: Add displacement from a texture
-    float displacement = 0;
-    vec4 p0 = gl_in[0].gl_Position;
-    vec4 p1 = gl_in[1].gl_Position;
-    vec4 p2 = gl_in[2].gl_Position;
-    vec4 p = p0 * u + p1 * v + p2 * w;
-    p.y -= displacement;
-    frag_Position = p.xyz / p.w;
-    gl_Position = u_ubo.proj * u_ubo.view * p;
     
     // Normal computation
     vec3 n0 = tese_Normal[0];
@@ -44,5 +38,15 @@ void main()
     vec2 tc0 = tese_TexCoord[0];
     vec2 tc1 = tese_TexCoord[1];
     vec2 tc2 = tese_TexCoord[2];
-    frag_TexCoord = tc0 * u + tc1 * v + tc2 * w;
+    vec2 texCoord = tc0 * u + tc1 * v + tc2 * w;
+    frag_TexCoord = texCoord;
+    
+    vec4 displacement = texture(u_displacement, texCoord);
+    vec4 p0 = gl_in[0].gl_Position;
+    vec4 p1 = gl_in[1].gl_Position;
+    vec4 p2 = gl_in[2].gl_Position;
+    vec4 p = p0 * u + p1 * v + p2 * w;
+    p.y -= displacement.x;
+    frag_Position = p.xyz / p.w;
+    gl_Position = u_ubo.proj * u_ubo.view * p;
 }

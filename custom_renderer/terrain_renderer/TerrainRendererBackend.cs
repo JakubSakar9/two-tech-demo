@@ -51,7 +51,7 @@ public partial class TerrainRendererBackend : GodotObject
     private TransformUniformData _transformUniformData;
     private Rid _transformUniformBuffer;
     private long _vertexFormat;
-    private DisplacementData _displacementData;
+    private Array<DisplacementData> _displacements;
 
     public void InitRendering(RenderSceneBuffersRD rsb, RenderSceneDataRD rsd)
     {
@@ -80,7 +80,7 @@ public partial class TerrainRendererBackend : GodotObject
 
         _clearColors = [new Color(0.2f, 0.2f, 0.2f, 1.0f)];
 
-        _displacementData = new DisplacementData();
+        _displacements = new Array<DisplacementData>();
     }
 
     public void CreateFramebuffers(RenderSceneBuffersRD renderSceneBuffers)
@@ -98,14 +98,19 @@ public partial class TerrainRendererBackend : GodotObject
     public void Draw(RenderSceneDataRD rsd)
     {
         _UpdateProjectionView(rsd);
-        var uniformSet = _CreateUniformSet();
+        Array<Rid> uniformSets = [];
+        for (int i = 0; i < _surfaces.Length; i++)
+        {
+            uniformSets.Add(_CreateUniformSet(i));
+        }
 
         _rd.DrawCommandBeginLabel("Draw all deformable surfaces", Colors.White);
 
         var drawList = _rd.DrawListBegin(_screenBuffer, RenderingDevice.DrawFlags.ClearColor0, _clearColors);
-        _rd.DrawListBindUniformSet(drawList, uniformSet, 0);
-        foreach (var surface in _surfaces)
+        for (int i = 0; i < _surfaces.Length; i++)
         {
+            var surface = _surfaces[i];
+            _rd.DrawListBindUniformSet(drawList, uniformSets[i], 0);
             _rd.DrawListBindRenderPipeline(drawList, _pipeline);
             _rd.DrawListBindVertexArray(drawList, surface.VertexArray);
             _rd.DrawListBindIndexArray(drawList, surface.IndexArray);
@@ -115,7 +120,10 @@ public partial class TerrainRendererBackend : GodotObject
 
         _rd.DrawCommandEndLabel();
 
-        _rd.FreeRid(uniformSet);
+        for (int i = 0; i < _surfaces.Length; i++)
+        {
+            _rd.FreeRid(uniformSets[i]);
+        }
     }
 
     public void Cleanup()
@@ -147,9 +155,10 @@ public partial class TerrainRendererBackend : GodotObject
         _surfaces = new SurfaceRenderBuffers[meshes.Count()];
         for (int i = 0; i < meshes.Count(); i++)
         {
-            _CreateVertexArray(meshes[i], ref _surfaces[i]);
-            _CreateIndexArray(meshes[i], ref _surfaces[i]);
-            _SetupSurfaceTextures(meshes[i], i);
+            Mesh mesh = meshes[i];
+            _CreateVertexArray(in mesh, ref _surfaces[i]);
+            _CreateIndexArray(in mesh, ref _surfaces[i]);
+            _SetupDisplacementTextures(in mesh, i);
         }
     }
 
@@ -195,7 +204,7 @@ public partial class TerrainRendererBackend : GodotObject
         _vertexFormat = _rd.VertexFormatCreate([posAtr, normAtr, uvAtr]);
     }
 
-    private void _CreateVertexArray(Mesh mesh, ref SurfaceRenderBuffers buffers)
+    private void _CreateVertexArray(ref readonly Mesh mesh, ref SurfaceRenderBuffers buffers)
     {
         // NOTE: Only surface 0 is considered for now, all other surfaces are discarded.
         GDArray dataArrays = mesh.SurfaceGetArrays(0);
@@ -236,7 +245,7 @@ public partial class TerrainRendererBackend : GodotObject
             [buffers.VPositionBuffer, buffers.VNormalBuffer, buffers.VUvBuffer]);
     }
 
-    private void _CreateIndexArray(Mesh mesh, ref SurfaceRenderBuffers buffers)
+    private void _CreateIndexArray(ref readonly Mesh mesh, ref SurfaceRenderBuffers buffers)
     {
         GDArray dataArrays = mesh.SurfaceGetArrays(0);
         int[] indices = (int[])dataArrays[(int)Mesh.ArrayType.Index];
@@ -321,7 +330,7 @@ public partial class TerrainRendererBackend : GodotObject
         _transformUniformData.vMat = new Projection(rsd.GetCamTransform()).Inverse();
     }
 
-    private Rid _CreateUniformSet()
+    private Rid _CreateUniformSet(int i)
     {
         _transformUniformData.mMat = new Projection(_surfaceTransforms[0]);
         _rd.BufferUpdate(_transformUniformBuffer, 0, TRANSFORM_UNIFORM_SIZE, _GetTransformUniformBufferData());
@@ -331,15 +340,27 @@ public partial class TerrainRendererBackend : GodotObject
         transformUniform.Binding = 0;
         transformUniform.AddId(_transformUniformBuffer);
 
-        return _rd.UniformSetCreate([transformUniform], _shader, 0);
+        var displacedPatchesUniform = new RDUniform();
+        displacedPatchesUniform.UniformType = RenderingDevice.UniformType.Texture;
+        displacedPatchesUniform.Binding = 1;
+        displacedPatchesUniform.AddId(_displacements[i].TexDisplacedPatchesRes);
+
+        var displacementUniform = new RDUniform();
+        displacementUniform.UniformType = RenderingDevice.UniformType.Texture;
+        displacedPatchesUniform.Binding = 2;
+        displacedPatchesUniform.AddId(_displacements[i].TexDisplacementRes);
+
+        return _rd.UniformSetCreate([transformUniform, displacedPatchesUniform, displacementUniform], _shader, 0);
     }
 
-    private void _SetupSurfaceTextures(Mesh mesh, int surfaceIndex)
+    private void _SetupDisplacementTextures(ref readonly Mesh mesh, int surfaceIndex)
     {
+        _displacements.Add(new DisplacementData());
         GDArray dataArrays = mesh.SurfaceGetArrays(0);
         var vArray = (GDArray)dataArrays[(int)Mesh.ArrayType.Vertex];
         int patchGridSize = (int) MathF.Ceiling(Mathf.Sqrt(vArray.Count)) - 1;
-        _displacementData.ComputeDisplacedPatches(patchGridSize);
+        _displacements[surfaceIndex].ComputeDisplacedPatches(patchGridSize);
+        _displacements[surfaceIndex].CreateSamplers(ref _rd);
     }
 
     private unsafe byte[] _GetTransformUniformBufferData()
