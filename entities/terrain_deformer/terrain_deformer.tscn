@@ -1,10 +1,19 @@
-[gd_scene load_steps=3 format=3 uid="uid://cb3tbsjpikoo3"]
+[gd_scene load_steps=6 format=3 uid="uid://cb3tbsjpikoo3"]
 
 [ext_resource type="Script" uid="uid://tuap147a6h7f" path="res://entities/terrain_deformer/TerrainDeformer.cs" id="1_sw4i0"]
+[ext_resource type="Shader" uid="uid://c68cycatbmp1k" path="res://shaders/deformer_depth.gdshader" id="2_3q8wy"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_pxd6e"]
 radius = 0.4
 height = 0.8
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sw4i0"]
+render_priority = 0
+shader = ExtResource("2_3q8wy")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_sw4i0"]
+flip_faces = true
+size = Vector2(20, 20)
 
 [node name="TerrainDeformer" type="Node3D"]
 script = ExtResource("1_sw4i0")
@@ -13,7 +22,6 @@ script = ExtResource("1_sw4i0")
 unique_name_in_owner = true
 transparent_bg = true
 size = Vector2i(1024, 1024)
-render_target_clear_mode = 1
 
 [node name="DeformCamera" type="Camera3D" parent="SubViewport"]
 unique_name_in_owner = true
@@ -21,7 +29,12 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0
 projection = 1
 size = 20.0
 near = 0.5
+far = 50.5
 
-[node name="DeformerMesh" type="MeshInstance3D" parent="."]
+[node name="DeformerMesh" type="MeshInstance3D" parent="SubViewport"]
 unique_name_in_owner = true
 mesh = SubResource("SphereMesh_pxd6e")
+
+[node name="DepthFilterMesh" type="MeshInstance3D" parent="SubViewport"]
+material_override = SubResource("ShaderMaterial_sw4i0")
+mesh = SubResource("PlaneMesh_sw4i0")
