@@ -10,6 +10,8 @@ public partial class Player : CharacterBody3D
     [Export] public float StrafeSpeed = 5.0f;
 
     private Camera3D _mainCamera;
+    private Vector3 _gravityVelocity = Vector3.Zero;
+    private float _gravity;
 
     public override void _Ready()
     {
@@ -21,6 +23,7 @@ public partial class Player : CharacterBody3D
     {
         base._Input(@event);
         if (@event is InputEventMouseMotion motionEvent) _HandleMouseMotion(-motionEvent.ScreenRelative);
+        _gravity = (float) ProjectSettings.GetSetting("physics/3d/default_gravity");
     }
 
     public override void _PhysicsProcess(double delta)
@@ -37,8 +40,9 @@ public partial class Player : CharacterBody3D
         }
         else
         {
-            Velocity = Vector3.Zero;
+            Velocity = new Vector3(0, Velocity.Y, 0);
         }
+        Velocity += _Gravity(delta);
         MoveAndSlide();
     }
 
@@ -53,5 +57,14 @@ public partial class Player : CharacterBody3D
         _mainCamera.RotateX(scaledMotion.Y);
         float currentPitch = Mathf.Clamp(_mainCamera.Rotation.X, -MAX_PITCH, MAX_PITCH);
         _mainCamera.Rotation = new Vector3(currentPitch, 0.0f, 0.0f);
+    }
+
+    private Vector3 _Gravity(double delta)
+    {
+        if (IsOnFloor())
+        {
+            return Vector3.Zero;
+        }
+        return _gravityVelocity.MoveToward(new Vector3(0, Velocity.Y - _gravity, 0), _gravity * (float) delta);
     }
 }

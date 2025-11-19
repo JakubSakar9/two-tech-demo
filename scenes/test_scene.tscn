@@ -1,7 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://rlxdv0y863e"]
+[gd_scene load_steps=8 format=3 uid="uid://rlxdv0y863e"]
 
 [ext_resource type="PackedScene" uid="uid://cvqc2dc0uk3b0" path="res://assets/models/test_terrain.tscn" id="1_g7g4h"]
-[ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player.tscn" id="2_j8ivh"]
+[ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
+[ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain_deformer/terrain_deformer.tscn" id="3_7ddre"]
+[ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="4_qjeyg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
 sun_angle_max = 49.03
@@ -27,3 +29,11 @@ environment = SubResource("Environment_nd71p")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.0756845, 1.0111786, 4.366328)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("Player") instance=ExtResource("3_7ddre")]
+Player = NodePath("../Player")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="DebugTexture" parent="CanvasLayer" node_paths=PackedStringArray("Deformer") instance=ExtResource("4_qjeyg")]
+Deformer = NodePath("../../TerrainDeformer")
