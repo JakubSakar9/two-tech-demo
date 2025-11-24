@@ -1,9 +1,12 @@
-[gd_scene load_steps=8 format=3 uid="uid://rlxdv0y863e"]
+[gd_scene load_steps=11 format=3 uid="uid://rlxdv0y863e"]
 
-[ext_resource type="PackedScene" uid="uid://cvqc2dc0uk3b0" path="res://assets/models/test_terrain.tscn" id="1_g7g4h"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain_deformer/terrain_deformer.tscn" id="3_7ddre"]
+[ext_resource type="Material" uid="uid://d02kckxaqtnqc" path="res://assets/materials/snow_material.tres" id="3_wtsjf"]
+[ext_resource type="Image" uid="uid://bcxk1r5xudjcx" path="res://assets/textures/displ_base.png" id="4_3qnke"]
 [ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="4_qjeyg"]
+[ext_resource type="Texture2D" uid="uid://dxelt525i0feq" path="res://assets/textures/debug_output.png" id="6_3qnke"]
+[ext_resource type="PackedScene" uid="uid://c8b463t1xmvvi" path="res://assets/models/test_plane.tscn" id="6_wtsjf"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
 sun_angle_max = 49.03
@@ -23,17 +26,24 @@ ambient_light_color = Color(1, 1, 1, 1)
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_nd71p")
 
-[node name="TestTerrain" parent="." instance=ExtResource("1_g7g4h")]
-
 [node name="Player" parent="." instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.0756845, 1.0111786, 4.366328)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.0756845, 0.16754103, 4.366328)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 
-[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("Player") instance=ExtResource("3_7ddre")]
+[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("Player", "UnderlyingSurface") instance=ExtResource("3_7ddre")]
 Player = NodePath("../Player")
+UnderlyingSurface = NodePath("../TestPlane/MeshInstance3D")
+SnowMaterial = ExtResource("3_wtsjf")
+DefaultDisplacementMap = ExtResource("4_3qnke")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+visible = false
 
 [node name="DebugTexture" parent="CanvasLayer" node_paths=PackedStringArray("Deformer") instance=ExtResource("4_qjeyg")]
+texture = ExtResource("6_3qnke")
 Deformer = NodePath("../../TerrainDeformer")
+
+[node name="TestPlane" parent="." instance=ExtResource("6_wtsjf")]
+
+[editable path="TestPlane"]

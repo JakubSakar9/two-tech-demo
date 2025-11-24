@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://htt52qngwubo"
+path="res://.godot/imported/displacement_texture.glsl-cab398b6f4309334b7f0f1a06563ae70.res"
+
+[deps]
+
+source_file="res://shaders/displacement_texture.glsl"
+dest_files=["res://.godot/imported/displacement_texture.glsl-cab398b6f4309334b7f0f1a06563ae70.res"]
+
+[params]
+

@@ -8,9 +8,10 @@ void vertex() {
 
 void fragment() {
 	float depth = texture(depth_texture, SCREEN_UV).x;
-	float depthG = float(int(65535.0 * depth) % 256) / 255.0;
 	float depthR = float(int(255.0 * depth)) / 255.0;
-	ALBEDO.rgb = vec3(depthR, depthG, 1.0);
+	float depthG = float(int(65535.0 * (depth - depthR))) / 255.0;
+	float depthB = float(int(16777215.0 * (depth - depthG)) % 65536) / 255.0;
+	ALBEDO.rgb = vec3(depthR, depthG, depthB);
 }
 
 void light() {

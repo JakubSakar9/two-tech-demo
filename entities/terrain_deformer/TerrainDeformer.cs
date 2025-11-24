@@ -4,30 +4,68 @@ using System;
 public partial class TerrainDeformer : Node3D
 {
     const float DEFORMER_RADIUS = 0.4f;
+    const string DISPLACEMENT_TEXTURE_COMPUTE_PATH = "res://entities/terrain_deformer/displacement_texture_compute.gd";
 
     [Export] public Player Player;
+    [Export] public MeshInstance3D UnderlyingSurface;
+    [Export] public Material SnowMaterial;
+    [Export] public Image DefaultDisplacementMap;
+    [Export] public float patchSize = 20.0f;
+    [Export] public float snowHeight = 0.3f;
 
     private MeshInstance3D _deformerMesh;
+    private MeshInstance3D _snowSurface;
     private SubViewport _subViewport;
     private Camera3D _deformCamera;
+    private ImageTexture _combinedTexture;
+
+    private GodotObject _displacementTextureCompute;
 
     public override void _Ready()
     {
         base._Ready();
+        // Node init
         _deformerMesh = GetNode<MeshInstance3D>("%DeformerMesh");
         _subViewport = GetNode<SubViewport>("%SubViewport");
         _deformCamera = GetNode<Camera3D>("%DeformCamera");
-        _deformCamera.GlobalPosition = Vector3.Zero + _deformCamera.Near * Vector3.Down;
+
+        // Snow surface generation
+        _snowSurface = new MeshInstance3D();
+        var snowPlane = new PlaneMesh();
+        snowPlane.Size = 20.0f * Vector2.One;
+        snowPlane.SubdivideWidth = 64;
+        snowPlane.SubdivideDepth = 64;
+        snowPlane.Material = SnowMaterial;
+        _snowSurface.Mesh = snowPlane;
+        AddChild(_snowSurface);
+        _snowSurface.Position = Vector3.Up * snowHeight;
+
+        // Compute shader setup
+        Image inputImage = _subViewport.GetTexture().GetImage();
+        inputImage.Convert(Image.Format.Rgbaf);
+        _displacementTextureCompute = (GodotObject)GD.Load<GDScript>(DISPLACEMENT_TEXTURE_COMPUTE_PATH).New();
+        _displacementTextureCompute.Call("init", inputImage, DefaultDisplacementMap);
+        
+        _deformCamera.GlobalPosition = Vector3.Zero + 2.0f * _deformCamera.Near * Vector3.Down;
     }
 
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
-        _deformerMesh.GlobalPosition = Player.GlobalPosition + (DEFORMER_RADIUS) * Vector3.Up;
+        _deformerMesh.GlobalPosition = Player.GlobalPosition + DEFORMER_RADIUS * Vector3.Up;
     }
 
-    public ViewportTexture GetTexture()
+    public override void _Process(double delta)
     {
-        return _subViewport.GetTexture();
+        base._Process(delta);
+        Image inputImage = _subViewport.GetTexture().GetImage();
+        inputImage.Convert(Image.Format.Rgbaf);
+        Vector2I dims = _subViewport.Size / 16;
+        _combinedTexture = (ImageTexture)_displacementTextureCompute.Call("compute_texture", inputImage, dims);
+    }
+
+    public ImageTexture GetTexture()
+    {
+        return _combinedTexture;
     }
 }

@@ -24,3 +24,4 @@ shape = SubResource("CapsuleShape3D_u3f3p")
 [node name="MainCamera" type="Camera3D" parent="."]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -0.2290341)
+cull_mask = 1048573
