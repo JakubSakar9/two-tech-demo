@@ -1,3 +1,7 @@
-[gd_resource type="StandardMaterial3D" format=3 uid="uid://d02kckxaqtnqc"]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d02kckxaqtnqc"]
+
+[ext_resource type="Shader" uid="uid://bpr8tiyryxokm" path="res://shaders/snow_material.gdshader" id="1_548qu"]
 
 [resource]
+render_priority = 0
+shader = ExtResource("1_548qu")

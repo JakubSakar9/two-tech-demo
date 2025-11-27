@@ -1,17 +1,31 @@
 shader_type spatial;
+render_mode unshaded;
 
-uniform sampler2D depth_texture : hint_depth_texture;
+uniform sampler2D depth_texture : source_color, hint_depth_texture;
+uniform sampler2D last_texture : source_color, hint_default_black;
+
+uniform float feet_altitude = 0;
+uniform float snow_height = 1.0;
+uniform float patch_offset = 0.0f;
+uniform float patch_range = 100.0;
 
 void vertex() {
 	// Called for every vertex the material is visible on.
 }
 
 void fragment() {
-	float depth = texture(depth_texture, SCREEN_UV).x;
-	float depthR = float(int(255.0 * depth)) / 255.0;
-	float depthG = float(int(65535.0 * (depth - depthR))) / 255.0;
-	float depthB = float(int(16777215.0 * (depth - depthG)) % 65536) / 255.0;
-	ALBEDO.rgb = vec3(depthR, depthG, depthB);
+	float raw_depth = texture(depth_texture, SCREEN_UV).x;
+	float altitude = patch_offset + (1.0 - raw_depth) * patch_range;
+	float displacement = (snow_height + feet_altitude - altitude) / snow_height;
+	
+	vec3 last_rgb = texture(last_texture, SCREEN_UV).rgb;
+	float last_displacement = last_rgb.r;
+	if (last_displacement < displacement) {
+		ALBEDO = vec3(displacement, 0, 0);
+	}
+	else {
+		ALBEDO = last_rgb;
+	}
 }
 
 void light() {

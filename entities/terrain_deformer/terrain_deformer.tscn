@@ -21,6 +21,7 @@ script = ExtResource("1_sw4i0")
 [node name="SubViewport" type="SubViewport" parent="."]
 unique_name_in_owner = true
 transparent_bg = true
+canvas_cull_mask = 4294967294
 size = Vector2i(1024, 1024)
 render_target_update_mode = 4
 
@@ -31,14 +32,15 @@ cull_mask = 1048574
 projection = 1
 size = 20.0
 near = 0.5
-far = 1000.5
+far = 500.5
 
 [node name="DeformerMesh" type="MeshInstance3D" parent="SubViewport"]
 unique_name_in_owner = true
 layers = 2
 mesh = SubResource("SphereMesh_pxd6e")
 
-[node name="DepthFilterMesh" type="MeshInstance3D" parent="SubViewport"]
+[node name="DepthFilter" type="MeshInstance3D" parent="SubViewport"]
+unique_name_in_owner = true
 layers = 2
 material_override = SubResource("ShaderMaterial_sw4i0")
 mesh = SubResource("PlaneMesh_sw4i0")
