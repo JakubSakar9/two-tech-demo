@@ -9,5 +9,6 @@ public partial class DebugTexture : TextureRect
     {
         base._Draw();
         Texture = Deformer.GetTexture();
+        Scale = Vector2.One * 1024 / Texture.GetSize().X;
     }
 }

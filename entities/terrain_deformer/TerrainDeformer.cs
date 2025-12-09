@@ -6,7 +6,7 @@ public partial class TerrainDeformer : Node3D
     const float DEFORMER_RADIUS = 0.4f;
 
     [Export] public Player Player;
-    [Export] public MeshInstance3D UnderlyingSurface;
+    [Export] public TerrainGenerator Generator;
     [Export] public Material SnowMaterial;
     // [Export] public Image DefaultDisplacementMap;
     [Export] public float PatchSize = 20.0f;
@@ -35,8 +35,8 @@ public partial class TerrainDeformer : Node3D
         _snowSurface = new MeshInstance3D();
         var snowPlane = new PlaneMesh();
         snowPlane.Size = 20.0f * Vector2.One;
-        snowPlane.SubdivideWidth = 255;
-        snowPlane.SubdivideDepth = 255;
+        snowPlane.SubdivideWidth = 511;
+        snowPlane.SubdivideDepth = 511;
         snowPlane.Material = SnowMaterial;
         _snowSurface.Mesh = snowPlane;
         AddChild(_snowSurface);
@@ -54,7 +54,8 @@ public partial class TerrainDeformer : Node3D
         (_depthFilter.MaterialOverride as ShaderMaterial).SetShaderParameter("snow_height", SnowHeight);
         (_depthFilter.MaterialOverride as ShaderMaterial).SetShaderParameter("patch_offset", -_deformCamera.Near);
         (_depthFilter.MaterialOverride as ShaderMaterial).SetShaderParameter("patch_range", _deformCamera.Far - _deformCamera.Near);
-        (SnowMaterial as ShaderMaterial).SetShaderParameter("snow_height", SnowHeight);
+        
+        Generator.PatchChanged += _UpdatePatchParameters;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -74,5 +75,13 @@ public partial class TerrainDeformer : Node3D
     public ViewportTexture GetTexture()
     {
         return _subViewport.GetTexture();
+    }
+
+    private void _UpdatePatchParameters()
+    {
+        TerrainPatch curPatch = Generator.GetCurrentPatch();
+        (SnowMaterial as ShaderMaterial).SetShaderParameter("height_map", curPatch.HeightMap);
+        (SnowMaterial as ShaderMaterial).SetShaderParameter("snow_height", SnowHeight);
+        (SnowMaterial as ShaderMaterial).SetShaderParameter("patch_height", curPatch.PatchHeight);
     }
 }

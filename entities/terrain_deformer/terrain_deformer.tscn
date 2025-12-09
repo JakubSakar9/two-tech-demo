@@ -10,6 +10,10 @@ height = 0.8
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sw4i0"]
 render_priority = 0
 shader = ExtResource("2_3q8wy")
+shader_parameter/feet_altitude = 0.0
+shader_parameter/snow_height = 1.0
+shader_parameter/patch_offset = 0.0
+shader_parameter/patch_range = 100.0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_sw4i0"]
 flip_faces = true
@@ -21,8 +25,9 @@ script = ExtResource("1_sw4i0")
 [node name="SubViewport" type="SubViewport" parent="."]
 unique_name_in_owner = true
 transparent_bg = true
+scaling_3d_scale = 2.0
 canvas_cull_mask = 4294967294
-size = Vector2i(1024, 1024)
+size = Vector2i(2048, 2048)
 render_target_update_mode = 4
 
 [node name="DeformCamera" type="Camera3D" parent="SubViewport"]

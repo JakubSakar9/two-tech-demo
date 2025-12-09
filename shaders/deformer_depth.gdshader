@@ -21,10 +21,10 @@ void fragment() {
 	vec3 last_rgb = texture(last_texture, SCREEN_UV).rgb;
 	float last_displacement = last_rgb.r;
 	if (last_displacement < displacement) {
-		ALBEDO = vec3(displacement, 0, 0);
+		ALBEDO = vec3(displacement, dFdxCoarse(displacement), dFdyCoarse(displacement));
 	}
 	else {
-		ALBEDO = last_rgb;
+		ALBEDO = vec3(last_rgb.r, dFdxCoarse(last_rgb.x), dFdyCoarse(last_rgb.y));
 	}
 }
 

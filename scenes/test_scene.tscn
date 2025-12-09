@@ -1,14 +1,17 @@
-[gd_scene load_steps=9 format=3 uid="uid://rlxdv0y863e"]
+[gd_scene load_steps=12 format=3 uid="uid://rlxdv0y863e"]
 
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain_deformer/terrain_deformer.tscn" id="3_7ddre"]
 [ext_resource type="Material" uid="uid://d02kckxaqtnqc" path="res://assets/materials/snow_material.tres" id="3_wtsjf"]
 [ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="4_qjeyg"]
+[ext_resource type="PackedScene" uid="uid://bc2x3f1guodl7" path="res://entities/terrain_generator/terrain_generator.tscn" id="6_3qnke"]
 [ext_resource type="PackedScene" uid="uid://c8b463t1xmvvi" path="res://assets/models/test_plane.tscn" id="6_wtsjf"]
+[ext_resource type="Texture2D" uid="uid://dn4v7j1jgnbes" path="res://assets/textures/debugNoise.png" id="7_wtsjf"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
-sun_angle_max = 49.03
+sun_angle_max = 85.43
 sun_curve = 0.3105792
+energy_multiplier = 3.0
 
 [sub_resource type="Sky" id="Sky_j8ivh"]
 sky_material = SubResource("ProceduralSkyMaterial_g7g4h")
@@ -18,6 +21,10 @@ background_mode = 2
 sky = SubResource("Sky_j8ivh")
 ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
+reflected_light_source = 2
+ssao_enabled = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_qjeyg"]
 
 [node name="TestScene" type="Node3D"]
 
@@ -26,12 +33,13 @@ environment = SubResource("Environment_nd71p")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 
-[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("Player", "UnderlyingSurface") instance=ExtResource("3_7ddre")]
+[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("Player", "Generator") instance=ExtResource("3_7ddre")]
 Player = NodePath("../Player")
-UnderlyingSurface = NodePath("../TestPlane/MeshInstance3D")
+Generator = NodePath("../TerrainGenerator")
 SnowMaterial = ExtResource("3_wtsjf")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+visible = false
 
 [node name="DebugTexture" parent="CanvasLayer" node_paths=PackedStringArray("Deformer") instance=ExtResource("4_qjeyg")]
 Deformer = NodePath("../../TerrainDeformer")
@@ -39,6 +47,13 @@ Deformer = NodePath("../../TerrainDeformer")
 [node name="TestPlane" parent="." instance=ExtResource("6_wtsjf")]
 
 [node name="Player" parent="." instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.855804, 0, 7.429895)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.855804, 2.7994924, 7.429895)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4576449, 0.62018013, -5.8565736)
+mesh = SubResource("BoxMesh_qjeyg")
+
+[node name="TerrainGenerator" parent="." instance=ExtResource("6_3qnke")]
+HeightMap = ExtResource("7_wtsjf")
 
 [editable path="TestPlane"]
