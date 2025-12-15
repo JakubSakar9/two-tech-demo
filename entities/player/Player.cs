@@ -6,8 +6,8 @@ public partial class Player : CharacterBody3D
     const float MAX_PITCH = 2.0f * Mathf.Pi / 5.0f;
 
     [Export] public Vector2 MouseSensitivity = new Vector2(0.01f, 0.005f);
-    [Export] public float WalkSpeed = 10.0f;
-    [Export] public float StrafeSpeed = 5.0f;
+    [Export] public float WalkSpeed = 40.0f;
+    [Export] public float StrafeSpeed = 20.0f;
 
     private Camera3D _mainCamera;
     private Vector3 _gravityVelocity = Vector3.Zero;
