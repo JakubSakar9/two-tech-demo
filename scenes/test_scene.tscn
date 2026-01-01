@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://rlxdv0y863e"]
+[gd_scene load_steps=8 format=3 uid="uid://rlxdv0y863e"]
 
 [ext_resource type="PackedScene" uid="uid://beg2rrt3l6i6w" path="res://entities/terrain/terrain.tscn" id="1_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="3_nd71p"]
+[ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain_deformer/terrain_deformer.tscn" id="4_7ddre"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
 sun_angle_max = 85.43
@@ -31,8 +32,15 @@ environment = SubResource("Environment_nd71p")
 Player = NodePath("../Player")
 
 [node name="Player" parent="." instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.38547, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.117558, 0)
+WalkSpeed = 10.0
+StrafeSpeed = 5.0
 
-[node name="DebugTexture" parent="." node_paths=PackedStringArray("TerrainRef") instance=ExtResource("3_nd71p")]
+[node name="DebugTexture" parent="." node_paths=PackedStringArray("TerrainRef", "Deformer") instance=ExtResource("3_nd71p")]
 visible = false
+TerrainRef = NodePath("../Terrain")
+Deformer = NodePath("../TerrainDeformer")
+
+[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("PlayerRef", "TerrainRef") instance=ExtResource("4_7ddre")]
+PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")

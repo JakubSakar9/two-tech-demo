@@ -62,6 +62,7 @@ public partial class Terrain : StaticBody3D
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("max_height", MaxHeight);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("height_map", _heightMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _normalMaps[_noiseIndex]);
+        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("snow_height", 0.3);
     }
 
     public override void _Input(InputEvent @event)
@@ -84,9 +85,19 @@ public partial class Terrain : StaticBody3D
         _CheckChunkChange(in position2D);
     }
 
+    public void UpdateDisplacement(Texture2D displacement)
+    {
+        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("displacement_tex", displacement);
+    }
+
     public NoiseTexture2D GetNormalTexture()
     {
         return _normalMaps[_noiseIndex];
+    }
+
+    public NoiseTexture2D GetHeightMap()
+    {
+        return _heightMaps[_noiseIndex];
     }
 
     private void _CheckChunkChange(ref readonly Vector2 position2D)
