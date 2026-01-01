@@ -12,6 +12,6 @@ render_priority = 0
 shader = ExtResource("1_bu8bs")
 shader_parameter/albedo = Color(0.54509807, 1, 0.14509805, 1)
 shader_parameter/height_map = SubResource("NoiseTexture2D_bu8bs")
-shader_parameter/cell_coordinates = Vector2i(0, 0)
+shader_parameter/chunk_origin = Vector2(0, 0)
 shader_parameter/snow_height = 1.0
 shader_parameter/max_height = 32.0

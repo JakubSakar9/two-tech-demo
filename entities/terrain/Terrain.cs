@@ -84,6 +84,11 @@ public partial class Terrain : StaticBody3D
         _CheckChunkChange(in position2D);
     }
 
+    public NoiseTexture2D GetNormalTexture()
+    {
+        return _normalMaps[_noiseIndex];
+    }
+
     private void _CheckChunkChange(ref readonly Vector2 position2D)
     {
         Vector2 playerOffset = position2D - _chunkOrigin;
