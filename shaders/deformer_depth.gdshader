@@ -17,18 +17,23 @@ void vertex() {
 void fragment() {
 	float raw_depth = texture(depth_texture, SCREEN_UV).x;
 	float altitude = patch_offset + (1.0 - raw_depth) * patch_range;
-	float terrain_height = texture(height_map, SCREEN_UV / 6.0 + vec2(0.5 - 1.0/6.0)).r * max_terrain_height;
-	float displacement = (snow_height + terrain_height - altitude) / snow_height;
-	
+	vec2 terrain_uv = SCREEN_UV - vec2(0.5);
+	terrain_uv = vec2(terrain_uv.x, -terrain_uv.y);
+	terrain_uv = terrain_uv / 12.0 - vec2(0.5);
+	float terrain_height = texture(height_map, terrain_uv).r * max_terrain_height;
+	float displacement = (terrain_height - altitude) / snow_height;
+
 	//ALBEDO = vec3(terrain_height);
 	vec3 last_rgb = texture(last_texture, SCREEN_UV).rgb;
 	float last_displacement = last_rgb.r;
+	//ALBEDO = vec3(terrain_height / max_terrain_height, altitude / max_terrain_height, 0.0);
 	if (last_displacement < displacement) {
 		ALBEDO = vec3(displacement, dFdxCoarse(displacement), dFdyCoarse(displacement));
 	}
 	else {
 		ALBEDO = vec3(last_rgb.r, dFdxCoarse(last_rgb.x), dFdyCoarse(last_rgb.x));
 	}
+	//ALBEDO = vec3(altitude / 32.0);
 }
 
 void light() {

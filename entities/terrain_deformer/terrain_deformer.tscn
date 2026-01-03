@@ -28,7 +28,8 @@ script = ExtResource("1_sw4i0")
 [node name="SubViewport" type="SubViewport" parent="."]
 unique_name_in_owner = true
 transparent_bg = true
-scaling_3d_scale = 2.0
+scaling_3d_mode = 1
+fsr_sharpness = 2.0
 canvas_cull_mask = 4294967294
 size = Vector2i(2048, 2048)
 render_target_update_mode = 4

@@ -37,7 +37,6 @@ WalkSpeed = 10.0
 StrafeSpeed = 5.0
 
 [node name="DebugTexture" parent="." node_paths=PackedStringArray("TerrainRef", "Deformer") instance=ExtResource("3_nd71p")]
-visible = false
 TerrainRef = NodePath("../Terrain")
 Deformer = NodePath("../TerrainDeformer")
 
