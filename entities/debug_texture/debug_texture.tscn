@@ -2,5 +2,6 @@
 
 [ext_resource type="Script" uid="uid://g3tf0jtdoh6u" path="res://entities/debug_texture/DebugTexture.cs" id="1_o6lve"]
 
-[node name="DebugTexture" type="TextureRect"]
+[node name="DebugTexture" type="GridContainer"]
+columns = 3
 script = ExtResource("1_o6lve")

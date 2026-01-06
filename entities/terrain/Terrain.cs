@@ -85,7 +85,7 @@ public partial class Terrain : StaticBody3D
         _CheckChunkChange(in position2D);
     }
 
-    public void UpdateDisplacement(Texture2D displacement)
+    public void UpdateDisplacement(ref readonly Texture2D[] displacement)
     {
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("displacement_tex", displacement);
     }
