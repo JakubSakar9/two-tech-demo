@@ -1,19 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://cb3tbsjpikoo3"]
+[gd_scene load_steps=4 format=3 uid="uid://cb3tbsjpikoo3"]
 
 [ext_resource type="Script" uid="uid://tuap147a6h7f" path="res://entities/terrain_deformer/TerrainDeformer.cs" id="1_sw4i0"]
 [ext_resource type="Shader" uid="uid://c68cycatbmp1k" path="res://shaders/deformer_depth.gdshader" id="2_3q8wy"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_sw4i0"]
-render_priority = 0
-shader = ExtResource("2_3q8wy")
-shader_parameter/snow_height = 1.0
-shader_parameter/patch_offset = 0.0
-shader_parameter/patch_range = 100.0
-shader_parameter/max_terrain_height = 5.0
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_sw4i0"]
-flip_faces = true
-size = Vector2(20, 20)
 
 [sub_resource type="Curve3D" id="Curve3D_3q8wy"]
 _data = {
@@ -24,30 +12,9 @@ point_count = 4
 
 [node name="TerrainDeformer" type="Node3D"]
 script = ExtResource("1_sw4i0")
+DepthFilterShader = ExtResource("2_3q8wy")
 
-[node name="SubViewport" type="SubViewport" parent="."]
-unique_name_in_owner = true
-transparent_bg = true
-canvas_cull_mask = 4294967294
-size = Vector2i(2048, 2048)
-render_target_update_mode = 4
-
-[node name="DeformCamera" type="Camera3D" parent="SubViewport"]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
-cull_mask = 1048574
-projection = 1
-size = 20.0
-near = 0.5
-far = 500.5
-
-[node name="DepthFilter" type="MeshInstance3D" parent="SubViewport"]
-unique_name_in_owner = true
-layers = 2
-material_override = SubResource("ShaderMaterial_sw4i0")
-mesh = SubResource("PlaneMesh_sw4i0")
-
-[node name="DeformerMesh" type="CSGPolygon3D" parent="SubViewport"]
+[node name="DeformerMesh" type="CSGPolygon3D" parent="."]
 unique_name_in_owner = true
 layers = 2
 polygon = PackedVector2Array(-0.4, 0, -0.391, -0.083, -0.365, -0.163, -0.324, -0.235, -0.268, -0.297, -0.2, -0.346, -0.124, -0.38, -0.042, -0.398, 0.042, -0.398, 0.124, -0.38, 0.2, -0.346, 0.268, -0.297, 0.324, -0.235, 0.365, -0.163, 0.391, -0.083, 0.4, 0)
@@ -63,6 +30,6 @@ path_continuous_u = true
 path_u_distance = 1.0
 path_joined = false
 
-[node name="TrailPath" type="Path3D" parent="SubViewport"]
+[node name="TrailPath" type="Path3D" parent="."]
 unique_name_in_owner = true
 curve = SubResource("Curve3D_3q8wy")

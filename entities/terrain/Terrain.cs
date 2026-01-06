@@ -65,18 +65,6 @@ public partial class Terrain : StaticBody3D
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("snow_height", 0.3);
     }
 
-    public override void _Input(InputEvent @event)
-    {
-        base._Input(@event);
-        if (@event is InputEventKey keyEvent)
-        {
-            if (keyEvent.Keycode == Key.Q && keyEvent.IsPressed())
-            {
-                GetViewport().DebugDraw = Viewport.DebugDrawEnum.Wireframe;
-            }
-        }
-    }
-
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);

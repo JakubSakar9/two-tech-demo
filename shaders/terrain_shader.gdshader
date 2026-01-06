@@ -31,7 +31,7 @@ void vertex() {
 	ivec2 cell_coord = ivec2(disp_uv + 32768.0) - ivec2(32768);
 	disp_uv = disp_uv - vec2(cell_coord);
 	cell_coord = cell_coord + ivec2(300001);
-	int cell_idx = 3 * (cell_coord.y % 3) + cell_coord.x % 3;
+	int cell_idx = 3 * (cell_coord.y % 3) + cell_coord.x % 3;	
 
 	float height = texture(height_map, terrain_uv).r * max_height;
 	float snow_offset = (1.0 - texture(displacement_tex[cell_idx], disp_uv).r) * snow_height;

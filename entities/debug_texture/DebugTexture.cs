@@ -9,6 +9,18 @@ public partial class DebugTexture : GridContainer
     
     private TextureRect[] _texRects;
 
+    public override void _Input(InputEvent @event)
+    {
+        base._Input(@event);
+        if (@event is InputEventKey keyEvent)
+        {
+            if (keyEvent.Keycode == Key.Q && keyEvent.IsPressed())
+            {
+                Visible = !Visible;
+            }
+        }
+    }
+
     public override void _Ready()
     {
         base._Ready();
@@ -20,12 +32,12 @@ public partial class DebugTexture : GridContainer
             _texRects[i].CustomMinimumSize = new Vector2(CellTextureSize, CellTextureSize);
             AddChild(_texRects[i]);
         }
+        Deformer.CellChanged += QueueRedraw;
     }
 
     public override void _Draw()
     {
         base._Draw();
-        // Texture = TerrainRef.GetNormalTexture();
         for (int i = 0; i < 9; i++)
         {
             _texRects[i].Texture = Deformer.DisplacementMaps[i];
