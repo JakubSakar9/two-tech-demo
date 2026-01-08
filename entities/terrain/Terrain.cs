@@ -6,13 +6,15 @@ public partial class Terrain : StaticBody3D
 {
     const int NOISE_SWAP_COUNT = 4;
 
+    [Signal] public delegate void MapShiftedEventHandler();
+
     [Export] public Player Player;
     [Export] public int ChunkSizeUnits = 256;
     [Export] public int CollisionSizeUnits = 8;
     [Export] public float MaxHeight = 32.0f;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
 
-    private Vector2 _chunkOrigin = Vector2.Zero;
+    public Vector2 ChunkOrigin = Vector2.Zero;
 
     private MeshInstance3D _terrainMesh;
     private CollisionShape3D _terrainCollider;
@@ -90,33 +92,33 @@ public partial class Terrain : StaticBody3D
 
     private void _CheckChunkChange(ref readonly Vector2 position2D)
     {
-        Vector2 playerOffset = position2D - _chunkOrigin;
+        Vector2 playerOffset = position2D - ChunkOrigin;
         float thresholdDistance = ChunkSizeUnits * ChunkThresholdMultiplier / 2.0f;
         bool updateChunk = false;
         if (playerOffset.X < -thresholdDistance)
         {
-            _chunkOrigin.X -= ChunkSizeUnits;
+            ChunkOrigin.X -= ChunkSizeUnits;
             updateChunk = true;
         }
         if (playerOffset.X > thresholdDistance)
         {
-            _chunkOrigin.X += ChunkSizeUnits;
+            ChunkOrigin.X += ChunkSizeUnits;
             updateChunk = true;
         }
         if (playerOffset.Y < -thresholdDistance)
         {
-            _chunkOrigin.Y -= (float)ChunkSizeUnits;
+            ChunkOrigin.Y -= (float)ChunkSizeUnits;
             updateChunk = true;
         }
         if (playerOffset.Y > thresholdDistance)
         {
-            _chunkOrigin.Y += (float)ChunkSizeUnits;
+            ChunkOrigin.Y += (float)ChunkSizeUnits;
             updateChunk = true;
         }
 
         if (updateChunk)
         {
-            GD.Print("Moved chunk origin to " + _chunkOrigin);
+            GD.Print("Moved chunk origin to " + ChunkOrigin);
             CallDeferred(MethodName._UpdateHeightMap);
         }
         _UpdateCollisionHeightMap();
@@ -146,12 +148,12 @@ public partial class Terrain : StaticBody3D
     private async void _UpdateHeightMap()
     {
         _noiseIndex = (_noiseIndex + 1) % NOISE_SWAP_COUNT;
-        _noiseFunctions[_noiseIndex].Offset = new Vector3(_chunkOrigin.X - 1.5f * ChunkSizeUnits, _chunkOrigin.Y - 1.5f * ChunkSizeUnits, 0);
-        // _heightMaps[_noiseIndex].Noise = _noiseFunctions[_noiseIndex];
+        _noiseFunctions[_noiseIndex].Offset = new Vector3(ChunkOrigin.X - 1.5f * ChunkSizeUnits, ChunkOrigin.Y - 1.5f * ChunkSizeUnits, 0);
         var timer = GetTree().CreateTimer(1.0f);
         await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("height_map", _heightMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _normalMaps[_noiseIndex]);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("chunk_origin", _chunkOrigin);
+        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("chunk_origin", ChunkOrigin);
+        EmitSignal(SignalName.MapShifted);
     }
 }

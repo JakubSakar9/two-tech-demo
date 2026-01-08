@@ -35,9 +35,10 @@ public partial class TerrainDeformer : Node3D
     private Vector3 _lastPosition = Vector3.Zero;
     private Queue<Vector3> _recentPositions;
     private Vector2I _currentCell;
+    private Vector2I _lastChange = Vector2I.Zero;
     private Vector2 _currentCellCenter;
-    private int _currentCellIdx = 4;
     private Vector2 _terrainUVOffset = Vector2.Zero;
+    private int _currentCellIdx = 4;
 
     public override void _Ready()
     {
@@ -53,6 +54,9 @@ public partial class TerrainDeformer : Node3D
         _trailPath.Curve.ClearPoints();
 
         _recentPositions = new Queue<Vector3>();
+
+        TerrainRef.MapShifted += _UpdateTerrainUV;
+        _UpdateTerrainUV();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -72,21 +76,16 @@ public partial class TerrainDeformer : Node3D
         }
     }
 
-    public void UpdateTerrainUVOffset()
-    {
-        
-    }
-
     public override void _Process(double delta)
     {
         base._Process(delta);
         float xOffset = _currentCell.X / 12.0f;
         float yOffset = _currentCell.Y / 12.0f;
-        Vector2 tuv = _terrainUVOffset + new Vector2(xOffset, yOffset);
+        Vector2 tuv = new Vector2(xOffset, yOffset) - _terrainUVOffset;
 
         _depthMaterials[_currentCellIdx].SetShaderParameter("last_texture", DisplacementMaps[_currentCellIdx]);
         _depthMaterials[_currentCellIdx].SetShaderParameter("feet_altitude", PlayerRef.GlobalPosition.Y);
-        _depthMaterials[_currentCellIdx].SetShaderParameter("terrain_uv_offset", _terrainUVOffset + tuv);
+        _depthMaterials[_currentCellIdx].SetShaderParameter("terrain_uv_offset", tuv);
         TerrainRef.UpdateDisplacement(in DisplacementMaps);
         _CheckCellChange();
     }
@@ -173,7 +172,6 @@ public partial class TerrainDeformer : Node3D
             _depthMaterials[i].SetShaderParameter("snow_height", SnowHeight);
             _depthMaterials[i].SetShaderParameter("patch_offset", -DepthCameraNear);
             _depthMaterials[i].SetShaderParameter("patch_range", DepthCameraRange);
-            _depthMaterials[i].SetShaderParameter("height_map", TerrainRef.GetHeightMap());
             _depthMaterials[i].SetShaderParameter("max_terrain_height", TerrainRef.MaxHeight);
         }
     }
@@ -183,49 +181,86 @@ public partial class TerrainDeformer : Node3D
         float xDiff = PlayerRef.GlobalPosition.X - _currentCellCenter.X;
         float yDiff = PlayerRef.GlobalPosition.Z - _currentCellCenter.Y;
 
-        bool changed = false;
+        // bool changed = false;
+        Vector2I tempCell = _currentCell;
 
         if (xDiff > CELL_SIZE / 2)
         {
             _currentCellCenter.X += CELL_SIZE;
             _currentCell.X += 1;
-            changed = true;
         }
         else if (xDiff < -CELL_SIZE / 2)
         {
             _currentCellCenter.X -= CELL_SIZE;
             _currentCell.X -= 1;
-            changed = true;
         }
         if (yDiff > CELL_SIZE / 2)
         {
             _currentCellCenter.Y += CELL_SIZE;
             _currentCell.Y += 1;
-            changed = true;
         }
         else if (yDiff < -CELL_SIZE / 2)
         {
             _currentCellCenter.Y -= CELL_SIZE;
             _currentCell.Y -= 1;
-            changed = true;
         }
 
-        if (changed)
+        if (tempCell != _currentCell)
         {
-            _depthViewports[_currentCellIdx].RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled;
-            _UpdateCellIdx();
-            GD.Print("Changed to ", _currentCellCenter);
-            GD.Print("Idx: ", _currentCellIdx);
-            _depthViewports[_currentCellIdx].RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
-            // EmitSignal(SignalName.CellChanged);
+            _lastChange = _currentCell - tempCell;
+            _SwitchCell();
+        }
+    }
+
+    private void _SwitchCell()
+    {
+        _depthViewports[_currentCellIdx].RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled;
+        _UpdateCellIdx();
+        _depthViewports[_currentCellIdx].RenderTargetUpdateMode = SubViewport.UpdateMode.WhenVisible;
+
+        int row = CELL_COUNT_ROW - 1 - _currentCellIdx / CELL_COUNT_ROW;
+        int col = _currentCellIdx % CELL_COUNT_ROW;
+        
+        if (_lastChange.Y != 0)
+        {
+            GD.Print("Entered row ", row);
+            row = (CELL_COUNT_ROW + row + _lastChange.Y) % CELL_COUNT_ROW;
+            GD.Print("Shifting row ", row, " by ", 3 * _lastChange);
+            for (int i = CELL_COUNT_ROW * (CELL_COUNT_ROW - 1 - row); i < CELL_COUNT_ROW * (CELL_COUNT_ROW - row) - 1; i++)
+            {
+                Vector3 translation = CELL_COUNT_ROW * CELL_SIZE * new Vector3(0.0f, 0.0f, _lastChange.Y);
+                _depthCameras[i].GlobalTranslate(translation);
+                _depthFilters[i].GlobalTranslate(translation);
+            }
+        }
+
+        if (_lastChange.X != 0)
+        {
+            GD.Print("Entered col ", col);
+            col = (CELL_COUNT_ROW + col + _lastChange.X) % CELL_COUNT_ROW;
+            GD.Print("Shifting col ", col, " by ", 3 * _lastChange);
+            for (int i = col; i < CELL_COUNT; i += CELL_COUNT_ROW)
+            {
+                Vector3 translation = CELL_COUNT_ROW * CELL_SIZE * new Vector3(_lastChange.X, 0.0f, 0.0f);
+                _depthCameras[i].GlobalTranslate(translation);
+                _depthFilters[i].GlobalTranslate(translation);
+            }
         }
     }
 
     private void _UpdateCellIdx()
     {
-        // _currentCellIdx = 3 * ((_currentCell.Y + CELL_MOD_OFFSET) % CELL_COUNT_ROW) + (_currentCell.X + CELL_MOD_OFFSET) % CELL_COUNT_ROW;
         int x = (_currentCell.X + CELL_MOD_OFFSET) % CELL_COUNT_ROW;
         int y = CELL_COUNT_ROW - 1 - ((_currentCell.Y + CELL_MOD_OFFSET) % CELL_COUNT_ROW);
         _currentCellIdx = CELL_COUNT_ROW * y + x;
+    }
+
+    private void _UpdateTerrainUV()
+    {
+        for (int i = 0; i < CELL_COUNT; i++)
+        {
+            _depthMaterials[i].SetShaderParameter("height_map", TerrainRef.GetHeightMap());
+        }
+        _terrainUVOffset = TerrainRef.ChunkOrigin / (3.0f * TerrainRef.ChunkSizeUnits);
     }
 }
