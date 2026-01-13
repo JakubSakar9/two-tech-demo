@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
 public partial class Terrain : StaticBody3D
@@ -26,6 +27,8 @@ public partial class Terrain : StaticBody3D
 
     private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
+    private Image _debugFloats;
+    private ImageTexture _debugFloatsTex;
     
     private int _noiseIndex = 0;
 
@@ -65,6 +68,11 @@ public partial class Terrain : StaticBody3D
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("height_map", _heightMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _normalMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("snow_height", 0.3);
+
+        _GenDebugFloats();
+        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("tex_floats", _debugFloatsTex);
+
+        CallDeferred(MethodName._DebugRenderImages);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -155,5 +163,40 @@ public partial class Terrain : StaticBody3D
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _normalMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("chunk_origin", ChunkOrigin);
         EmitSignal(SignalName.MapShifted);
+    }
+
+    private void _GenDebugFloats()
+    {
+        const int FLOATS_SIZE = 64;
+        float[] floatData = new float[FLOATS_SIZE * FLOATS_SIZE];
+        for (int i = 0; i < FLOATS_SIZE; i++)
+        {
+           for (int j = 0; j < FLOATS_SIZE; j++)
+            {
+                float dist = 8.0f * (j - FLOATS_SIZE / 2) * (i - FLOATS_SIZE / 2) / (FLOATS_SIZE * FLOATS_SIZE);
+                floatData[i * FLOATS_SIZE + j] = 0.5f * (1.0f + Mathf.Sin(dist));
+            }
+        }
+
+        byte[] byteData = new byte[4 * FLOATS_SIZE * FLOATS_SIZE];
+        int pos = 0;
+        foreach (float val in floatData)
+        {
+            byte[] tmpData = BitConverter.GetBytes(val);
+            Array.Copy(tmpData, 0, byteData, pos, 4);
+            pos += 4;
+        }
+
+        _debugFloats = Image.CreateFromData(FLOATS_SIZE, FLOATS_SIZE, false, Image.Format.Rf, byteData);
+        _debugFloatsTex = new ImageTexture();
+        _debugFloatsTex.SetImage(_debugFloats);
+    }
+
+    private void _DebugRenderImages()
+    {
+        // Image im1 = _heightMaps[_noiseIndex].GetImage();
+        // Image im2 = _normalMaps[_noiseIndex].GetImage();
+        // im1.SaveJpg("res://rendered_height1.jpg");
+        // im2.SaveJpg("res://rendered_normal.jpg");
     }
 }

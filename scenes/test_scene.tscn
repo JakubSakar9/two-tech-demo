@@ -33,8 +33,11 @@ Player = NodePath("../Player")
 
 [node name="Player" parent="." instance=ExtResource("2_j8ivh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.117558, 0)
+WalkSpeed = 10.0
+StrafeSpeed = 5.0
 
 [node name="DebugTexture" parent="." node_paths=PackedStringArray("TerrainRef", "Deformer") instance=ExtResource("3_nd71p")]
+visible = false
 TerrainRef = NodePath("../Terrain")
 Deformer = NodePath("../TerrainDeformer")
 

@@ -8,7 +8,7 @@ const float DISP_CELL_SIZE = 64.0;
 uniform vec4 albedo;
 uniform sampler2D height_map: source_color, filter_linear_mipmap;
 uniform sampler2D normal_map: hint_normal, filter_linear_mipmap;
-//uniform sampler2D displacement_tex: hint_default_black, repeat_disable;
+uniform sampler2D tex_floats: source_color;
 uniform sampler2D displacement_tex[9]: repeat_disable;
 //uniform ivec2 cell_coordinates = ivec2(0, 0);
 uniform vec2 chunk_origin = vec2(0.0);
@@ -25,14 +25,15 @@ void vertex() {
 	vec2 unshifted_uv = vec2(transformedPosition.x, transformedPosition.z);
 	vec2 shifted_uv = unshifted_uv - chunk_origin;
 	terrain_uv = shifted_uv / HEIGHTMAP_RANGE - vec2(0.5);
-	
+
 	disp_uv = unshifted_uv / DISP_CELL_SIZE;
 	disp_uv = vec2(disp_uv.x, -disp_uv.y) + vec2(0.5);
 	ivec2 cell_coord = ivec2(disp_uv + 32768.0) - ivec2(32768);
 	disp_uv = disp_uv - vec2(cell_coord);
 	cell_coord = cell_coord + ivec2(300001);
-	int cell_idx = 3 * (cell_coord.y % 3) + cell_coord.x % 3;	
+	int cell_idx = 3 * (cell_coord.y % 3) + cell_coord.x % 3;
 
+	//float height = texture(tex_floats, 8.0 * terrain_uv).r * max_height;
 	float height = texture(height_map, terrain_uv).r * max_height;
 	float snow_offset = (1.0 - texture(displacement_tex[cell_idx], disp_uv).r) * snow_height;
 	VERTEX.y = height + snow_offset;
@@ -53,5 +54,6 @@ void fragment() {
 	//float displacement = texture(displacement_tex, disp_uv).r;
 
 	ALBEDO = vec3(2.0);
+	//ALBEDO = vec3(texture(tex_floats, 8.0 * terrain_uv).r);
 	//ALBEDO = vec3(disp_uv.x, disp_uv.y, 0.0);
 }

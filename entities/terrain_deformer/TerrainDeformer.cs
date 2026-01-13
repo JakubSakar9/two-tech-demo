@@ -9,6 +9,7 @@ public partial class TerrainDeformer : Node3D
     const int CELL_COUNT = 9;
     const int CELL_COUNT_ROW = 3;
     const int CELL_MOD_OFFSET = CELL_COUNT_ROW * 100000 + 1;
+    const int TRAIL_QUEUE_SIZE = 5; 
 
     [Signal] public delegate void CellChangedEventHandler();
 
@@ -57,6 +58,8 @@ public partial class TerrainDeformer : Node3D
 
         TerrainRef.MapShifted += _UpdateTerrainUV;
         _UpdateTerrainUV();
+
+        TreeExited += _DebugRenderDisplacement;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -67,7 +70,7 @@ public partial class TerrainDeformer : Node3D
         {
             _lastPosition = playerPos;
             _recentPositions.Enqueue(_lastPosition);
-            if (_recentPositions.Count > 5)
+            if (_recentPositions.Count > TRAIL_QUEUE_SIZE)
             {
                 _recentPositions.Dequeue();
                 _trailPath.Curve.RemovePoint(0);
@@ -250,8 +253,17 @@ public partial class TerrainDeformer : Node3D
 
     private void _UpdateCellIdx()
     {
-        int x = (_currentCell.X + CELL_MOD_OFFSET) % CELL_COUNT_ROW;
-        int y = CELL_COUNT_ROW - 1 - ((_currentCell.Y + CELL_MOD_OFFSET) % CELL_COUNT_ROW);
+        int x = (_currentCell.X + 1) % CELL_COUNT_ROW;
+        if (x < 0)
+        {
+            x += CELL_COUNT_ROW;
+        }
+        int y = (_currentCell.Y + CELL_MOD_OFFSET) % CELL_COUNT_ROW;
+        if (y < 0)
+        {
+            y += CELL_COUNT_ROW;
+        }
+        y = CELL_COUNT_ROW - 1 - y;
         _currentCellIdx = CELL_COUNT_ROW * y + x;
     }
 
@@ -262,5 +274,12 @@ public partial class TerrainDeformer : Node3D
             _depthMaterials[i].SetShaderParameter("height_map", TerrainRef.GetHeightMap());
         }
         _terrainUVOffset = TerrainRef.ChunkOrigin / (3.0f * TerrainRef.ChunkSizeUnits);
+    }
+
+    private void _DebugRenderDisplacement()
+    {
+        // var dispImage = DisplacementMaps[_currentCellIdx].GetImage();
+        // dispImage.Resize(1024, 1024);
+        // dispImage.SaveJpg("rendered_disp.jpg");
     }
 }
