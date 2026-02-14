@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bc2x3f1guodl7"]
-
-[ext_resource type="Script" uid="uid://b8nofk1mqg6mo" path="res://entities/terrain_generator/TerrainGenerator.cs" id="1_fqg20"]
-
-[node name="TerrainGenerator" type="Node3D"]
-script = ExtResource("1_fqg20")

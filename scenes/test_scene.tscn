@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://rlxdv0y863e"]
+[gd_scene format=3 uid="uid://rlxdv0y863e"]
 
 [ext_resource type="PackedScene" uid="uid://beg2rrt3l6i6w" path="res://entities/terrain/terrain.tscn" id="1_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
@@ -21,27 +21,27 @@ ambient_light_color = Color(1, 1, 1, 1)
 reflected_light_source = 2
 ssao_enabled = true
 
-[node name="TestScene" type="Node3D"]
+[node name="TestScene" type="Node3D" unique_id=509472552]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=263366814]
 environment = SubResource("Environment_nd71p")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=352656111]
 
-[node name="Terrain" parent="." node_paths=PackedStringArray("Player") instance=ExtResource("1_j8ivh")]
+[node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player") instance=ExtResource("1_j8ivh")]
 Player = NodePath("../Player")
 
-[node name="Player" parent="." instance=ExtResource("2_j8ivh")]
+[node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.117558, 0)
 WalkSpeed = 10.0
 StrafeSpeed = 5.0
 
-[node name="DebugTexture" parent="." node_paths=PackedStringArray("TerrainRef", "Deformer") instance=ExtResource("3_nd71p")]
+[node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("TerrainRef", "Deformer") instance=ExtResource("3_nd71p")]
 visible = false
 TerrainRef = NodePath("../Terrain")
 Deformer = NodePath("../TerrainDeformer")
 
-[node name="TerrainDeformer" parent="." node_paths=PackedStringArray("PlayerRef", "TerrainRef") instance=ExtResource("4_7ddre")]
+[node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("PlayerRef", "TerrainRef") instance=ExtResource("4_7ddre")]
 PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")
 Resolution = 4096

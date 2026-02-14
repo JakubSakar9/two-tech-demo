@@ -27,8 +27,8 @@ public partial class Terrain : StaticBody3D
 
     private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
-    private Image _debugFloats;
-    private ImageTexture _debugFloatsTex;
+    // private Image _debugFloats;
+    // private ImageTexture _debugFloatsTex;
     
     private int _noiseIndex = 0;
 
@@ -62,17 +62,15 @@ public partial class Terrain : StaticBody3D
         }
 
         _collisionNoiseFunction = new FastNoiseLite();
-        _UpdateCollisionHeightMap();
+        UpdateCollisionHeightMap();
 
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("max_height", MaxHeight);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("height_map", _heightMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _normalMaps[_noiseIndex]);
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("snow_height", 0.3);
 
-        _GenDebugFloats();
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("tex_floats", _debugFloatsTex);
-
-        CallDeferred(MethodName._DebugRenderImages);
+        // GenDebugFloats();
+        // (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("tex_floats", _debugFloatsTex);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -115,24 +113,24 @@ public partial class Terrain : StaticBody3D
         }
         if (playerOffset.Y < -thresholdDistance)
         {
-            ChunkOrigin.Y -= (float)ChunkSizeUnits;
+            ChunkOrigin.Y -= ChunkSizeUnits;
             updateChunk = true;
         }
         if (playerOffset.Y > thresholdDistance)
         {
-            ChunkOrigin.Y += (float)ChunkSizeUnits;
+            ChunkOrigin.Y += ChunkSizeUnits;
             updateChunk = true;
         }
 
         if (updateChunk)
         {
             GD.Print("Moved chunk origin to " + ChunkOrigin);
-            CallDeferred(MethodName._UpdateHeightMap);
+            CallDeferred(MethodName.UpdateHeightMap);
         }
-        _UpdateCollisionHeightMap();
+        UpdateCollisionHeightMap();
     }
 
-    private void _UpdateCollisionHeightMap()
+    private void UpdateCollisionHeightMap()
     {
         _collisionNoiseFunction.FractalLacunarity = 1.7f;
         _collisionNoiseFunction.Offset = new Vector3(Player.GlobalPosition.X - 0.5f, Player.GlobalPosition.Z - 0.5f, 0.0f);
@@ -153,7 +151,7 @@ public partial class Terrain : StaticBody3D
         _terrainCollider.GlobalPosition = new Vector3(Player.GlobalPosition.X, 0, Player.GlobalPosition.Z);
     }
 
-    private async void _UpdateHeightMap()
+    private async void UpdateHeightMap()
     {
         _noiseIndex = (_noiseIndex + 1) % NOISE_SWAP_COUNT;
         _noiseFunctions[_noiseIndex].Offset = new Vector3(ChunkOrigin.X - 1.5f * ChunkSizeUnits, ChunkOrigin.Y - 1.5f * ChunkSizeUnits, 0);
@@ -165,38 +163,30 @@ public partial class Terrain : StaticBody3D
         EmitSignal(SignalName.MapShifted);
     }
 
-    private void _GenDebugFloats()
-    {
-        const int FLOATS_SIZE = 64;
-        float[] floatData = new float[FLOATS_SIZE * FLOATS_SIZE];
-        for (int i = 0; i < FLOATS_SIZE; i++)
-        {
-           for (int j = 0; j < FLOATS_SIZE; j++)
-            {
-                float dist = 8.0f * (j - FLOATS_SIZE / 2) * (i - FLOATS_SIZE / 2) / (FLOATS_SIZE * FLOATS_SIZE);
-                floatData[i * FLOATS_SIZE + j] = 0.5f * (1.0f + Mathf.Sin(dist));
-            }
-        }
+    // private void GenDebugFloats()
+    // {
+    //     const int FLOATS_SIZE = 64;
+    //     float[] floatData = new float[FLOATS_SIZE * FLOATS_SIZE];
+    //     for (int i = 0; i < FLOATS_SIZE; i++)
+    //     {
+    //        for (int j = 0; j < FLOATS_SIZE; j++)
+    //         {
+    //             float dist = 8.0f * (j - FLOATS_SIZE / 2) * (i - FLOATS_SIZE / 2) / (FLOATS_SIZE * FLOATS_SIZE);
+    //             floatData[i * FLOATS_SIZE + j] = 0.5f * (1.0f + Mathf.Sin(dist));
+    //         }
+    //     }
 
-        byte[] byteData = new byte[4 * FLOATS_SIZE * FLOATS_SIZE];
-        int pos = 0;
-        foreach (float val in floatData)
-        {
-            byte[] tmpData = BitConverter.GetBytes(val);
-            Array.Copy(tmpData, 0, byteData, pos, 4);
-            pos += 4;
-        }
+    //     byte[] byteData = new byte[4 * FLOATS_SIZE * FLOATS_SIZE];
+    //     int pos = 0;
+    //     foreach (float val in floatData)
+    //     {
+    //         byte[] tmpData = BitConverter.GetBytes(val);
+    //         Array.Copy(tmpData, 0, byteData, pos, 4);
+    //         pos += 4;
+    //     }
 
-        _debugFloats = Image.CreateFromData(FLOATS_SIZE, FLOATS_SIZE, false, Image.Format.Rf, byteData);
-        _debugFloatsTex = new ImageTexture();
-        _debugFloatsTex.SetImage(_debugFloats);
-    }
-
-    private void _DebugRenderImages()
-    {
-        // Image im1 = _heightMaps[_noiseIndex].GetImage();
-        // Image im2 = _normalMaps[_noiseIndex].GetImage();
-        // im1.SaveJpg("res://rendered_height1.jpg");
-        // im2.SaveJpg("res://rendered_normal.jpg");
-    }
+    //     _debugFloats = Image.CreateFromData(FLOATS_SIZE, FLOATS_SIZE, false, Image.Format.Rf, byteData);
+    //     _debugFloatsTex = new ImageTexture();
+    //     _debugFloatsTex.SetImage(_debugFloats);
+    // }
 }

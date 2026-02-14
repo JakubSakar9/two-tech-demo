@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bgqfvyu3am6k5"]
-
-[ext_resource type="Script" uid="uid://dx1h2crgep2wt" path="res://entities/terrain_patch/TerrainPatch.cs" id="1_ovdqi"]
-
-[node name="TerrainPatch" type="StaticBody3D"]
-script = ExtResource("1_ovdqi")

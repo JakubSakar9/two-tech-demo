@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://5a8v1bmtx7n7"]
+
+[ext_resource type="Script" uid="uid://btke70vw33uc3" path="res://entities/texture_painter/TexturePainter.cs" id="1_36aq0"]
+
+[node name="TexturePainter" type="Node" unique_id=74182145]
+script = ExtResource("1_36aq0")
