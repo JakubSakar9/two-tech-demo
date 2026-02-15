@@ -3,23 +3,30 @@
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-layout(set = 0, binding = 0, r32f) restrict uniform image2D disp_tex;
+layout(set = 0, binding = 0, r32f) uniform image2D disp_tex;
+layout(set = 0, binding = 1) uniform sampler2D fp_tex;
 
 layout(push_constant, std430) uniform Params {
     uint tex_size;
+    float carve_depth;
     vec2 mouse_pos;
 } params;
 
+const float downscale_factor = 24.0;
 
 void main() {
     uint tex_width = params.tex_size;
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
-    ivec2 pixel = ivec2(px, py);
+    vec2 uv1 = vec2(float(px) / float(tex_width), float(py) / float(tex_width));
+    vec2 uv2 = downscale_factor * (uv1 - params.mouse_pos) + 0.5;
 
-    vec2 uv = vec2(px / float(tex_width), py / float(tex_width));
-    float dist = distance(uv, params.mouse_pos);
-    float intensity = (1.0 - clamp(20 * dist, 0.0, 1.0));
+    ivec2 pixel = ivec2(px, py);
+    vec4 in_color = imageLoad(disp_tex, pixel);
+
+    float intensity = texture(fp_tex, uv2).r * params.carve_depth;
+    intensity = max(intensity, in_color.r);
     vec4 out_color = vec4(intensity, 0.0, 0.0, 1.0);
+    // vec4 out_color = vec4(uv2.x, 0.0, 0.0, 1.0);
     imageStore(disp_tex, pixel, out_color);
 }

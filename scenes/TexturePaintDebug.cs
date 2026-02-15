@@ -13,6 +13,18 @@ public partial class TexturePaintDebug : Node2D
 		_textureRect.Texture = _texturePainter.DisplacementTexture;
 	}
 
+    public override void _Input(InputEvent @event)
+    {
+        base._Input(@event);
+		if (@event is InputEventMouseButton mouseEvent)
+		{
+			if (mouseEvent.ButtonIndex == MouseButton.Left)
+			{
+				_texturePainter.Params.CarveDepth = mouseEvent.Pressed ? 1.0f : 0.0f;
+			}
+		}
+    }
+
     public override void _Process(double delta)
     {
         base._Process(delta);

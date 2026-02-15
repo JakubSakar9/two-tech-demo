@@ -6,24 +6,27 @@ using System.Runtime.InteropServices;
 public struct TexturePainterParams
 {
 	public uint TextureSize;
-	private readonly uint _000;
+	public float CarveDepth;
 	public Vector2 MousePos;
 	// private readonly uint _001;
 }
 
 public partial class TexturePainter : Node
 {
-	[Export]
-	public uint TextureSize = 1024;
+	[Export] public uint TextureSize = 1024;
+	[Export] public Texture2D FootprintTexture;
 
 	const string SHADER_PATH = "res://shaders/disp_compute.glsl";
 
 	public Texture2Drd DisplacementTexture;
+	public TexturePainterParams Params;
 
     private RenderingDevice _device;
 	private Rid _shader;
 	private Rid _pipeline;
 	private Rid _computeTex;
+	private Rid _footprintTex;
+	private Rid _footprintSampler;
 	private Rid _uniformSet;
 
 	private Array<RDUniform> _uniforms;
@@ -32,13 +35,12 @@ public partial class TexturePainter : Node
 	private RDTextureView _view;
 
 	private float[] _imageData;
-	private TexturePainterParams _params;
-	
+
 	public override void _Ready()
 	{
         _device = RenderingServer.GetRenderingDevice();
 		_imageData = new float[TextureSize * TextureSize];
-        _params = new()
+        Params = new()
         {
             TextureSize = TextureSize
         };
@@ -48,22 +50,26 @@ public partial class TexturePainter : Node
 	
 	public override void _Process(double delta)
 	{
-		_params.MousePos = GetViewport().GetMousePosition() / TextureSize;
+		Params.MousePos = GetViewport().GetMousePosition() / TextureSize;
 		RenderingServer.CallOnRenderThread(Callable.From(DispatchCompute));
 	}
 
-
-    // public override void _PhysicsProcess(double delta)
-    // {
-    //     base._PhysicsProcess(delta);
-	// 	_params.MousePos = GetViewport().GetMousePosition() / TextureSize;
-	// 	RenderingServer.CallOnRenderThread(Callable.From(DispatchCompute));
-    // }
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+		_device.FreeRid(_shader);
+		_device.FreeRid(_pipeline);
+		_device.FreeRid(_computeTex);
+		_device.FreeRid(_footprintTex);
+		_device.FreeRid(_footprintSampler);
+		_device.FreeRid(_uniformSet);
+    }
 
 	private void InitCompute()
 	{
 		InitShader();
-		InitTexture();
+		InitTargetTexture();
+		InitFootprintTexture();
 		InitUniforms();
 		_pipeline = _device.ComputePipelineCreate(_shader);
 		DispatchCompute();
@@ -76,7 +82,7 @@ public partial class TexturePainter : Node
 		_shader = _device.ShaderCreateFromSpirV(shaderBytecode);
 	}
 
-	private void InitTexture()
+	private void InitTargetTexture()
 	{
         _format = new()
         {
@@ -98,6 +104,27 @@ public partial class TexturePainter : Node
 		DisplacementTexture.TextureRdRid = _computeTex;
 	}
 
+	private void InitFootprintTexture()
+	{
+		int fpSize = FootprintTexture.GetWidth();
+		var format = new RDTextureFormat
+		{
+			Width = (uint)fpSize,
+			Height = (uint)fpSize,
+			Format = RenderingDevice.DataFormat.R8Unorm,
+			UsageBits = RenderingDevice.TextureUsageBits.SamplingBit,
+			Mipmaps = 8
+		};
+		var view = new RDTextureView();
+		var footprintIm = FootprintTexture.GetImage();
+		_footprintTex = _device.TextureCreate(format, view, [footprintIm.GetData()]);
+
+		RDSamplerState samplerState = new();
+		samplerState.MinFilter = RenderingDevice.SamplerFilter.Linear;
+		samplerState.MagFilter = RenderingDevice.SamplerFilter.Linear;
+		_footprintSampler = _device.SamplerCreate(samplerState);
+	}
+
 	private void InitUniforms()
 	{
 		_uniforms = [];
@@ -109,6 +136,15 @@ public partial class TexturePainter : Node
 		};
 		computeTexUniform.AddId(_computeTex);
 		_uniforms.Add(computeTexUniform);
+
+		var footprintTexUniform = new RDUniform
+		{
+			UniformType = RenderingDevice.UniformType.SamplerWithTexture,
+			Binding = 1
+		};
+		footprintTexUniform.AddId(_footprintSampler);
+		footprintTexUniform.AddId(_footprintTex);
+		_uniforms.Add(footprintTexUniform);
 
 		_uniformSet = _device.UniformSetCreate(_uniforms, _shader, 0);
 	}
@@ -132,13 +168,13 @@ public partial class TexturePainter : Node
 
 	private byte[] ParamsToBytes()
 	{
-		int size = Marshal.SizeOf(_params);
+		int size = Marshal.SizeOf(Params);
 		byte[] output = new byte[size];
 		IntPtr ptr = IntPtr.Zero;
 		try
 		{
 			ptr = Marshal.AllocHGlobal(size);
-			Marshal.StructureToPtr(_params, ptr, true);
+			Marshal.StructureToPtr(Params, ptr, true);
 			Marshal.Copy(ptr, output, 0, size);
 		}
 		finally
