@@ -7,8 +7,8 @@ public struct TexturePainterParams
 {
 	public uint TextureSize;
 	public float CarveDepth;
-	public Vector2 MousePos;
-	// private readonly uint _001;
+	public Vector2 SpriteCenter;
+	public Vector4 RotationMat;
 }
 
 public partial class TexturePainter : Node
@@ -44,13 +44,22 @@ public partial class TexturePainter : Node
         {
             TextureSize = TextureSize
         };
+		GD.Randomize();
 
 		RenderingServer.CallOnRenderThread(Callable.From(InitCompute));
 	}
 	
 	public override void _Process(double delta)
 	{
-		Params.MousePos = GetViewport().GetMousePosition() / TextureSize;
+		Params.SpriteCenter = GetViewport().GetMousePosition() / TextureSize;
+		float angle = (float)GD.RandRange(0.0, 2.0 * Math.PI);
+		Params.RotationMat = new()
+		{
+			X =  Mathf.Cos(angle),
+			Y = -Mathf.Sin(angle),
+			Z =  Mathf.Sin(angle),
+			W =  Mathf.Cos(angle)
+		};
 		RenderingServer.CallOnRenderThread(Callable.From(DispatchCompute));
 	}
 

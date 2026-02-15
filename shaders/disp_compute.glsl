@@ -9,7 +9,8 @@ layout(set = 0, binding = 1) uniform sampler2D fp_tex;
 layout(push_constant, std430) uniform Params {
     uint tex_size;
     float carve_depth;
-    vec2 mouse_pos;
+    vec2 sprite_center;
+    mat2 rotation_mat;
 } params;
 
 const float downscale_factor = 24.0;
@@ -19,7 +20,7 @@ void main() {
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
     vec2 uv1 = vec2(float(px) / float(tex_width), float(py) / float(tex_width));
-    vec2 uv2 = downscale_factor * (uv1 - params.mouse_pos) + 0.5;
+    vec2 uv2 = params.rotation_mat * (downscale_factor * (uv1 - params.sprite_center)) + 0.5;
 
     ivec2 pixel = ivec2(px, py);
     vec4 in_color = imageLoad(disp_tex, pixel);
@@ -27,6 +28,5 @@ void main() {
     float intensity = texture(fp_tex, uv2).r * params.carve_depth;
     intensity = max(intensity, in_color.r);
     vec4 out_color = vec4(intensity, 0.0, 0.0, 1.0);
-    // vec4 out_color = vec4(uv2.x, 0.0, 0.0, 1.0);
     imageStore(disp_tex, pixel, out_color);
 }
