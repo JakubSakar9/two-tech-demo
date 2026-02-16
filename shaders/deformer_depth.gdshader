@@ -33,8 +33,8 @@ void fragment() {
 		ALBEDO = vec3(displacement, 0, 0);
 	}
 	else {
-		//ALBEDO = vec3(last_rgb.r, texture(height_map, terrain_uv).r, 0);
-		ALBEDO = vec3(last_rgb.r, 0, 0);
+		ALBEDO = vec3(last_rgb.r, texture(height_map, terrain_uv).r, 0);
+		//ALBEDO = vec3(last_rgb.r, 0, 0);
 	}
 	//ALBEDO = vec3(altitude / 32.0);
 }

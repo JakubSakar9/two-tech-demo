@@ -17,6 +17,7 @@ uniform float max_height = 5.0f;
 
 varying vec2 terrain_uv;
 varying vec2 disp_uv;
+varying vec3 debug_color;
 
 
 void vertex() {
@@ -38,14 +39,15 @@ void vertex() {
 	float snow_offset = (1.0 - texture(displacement_tex[cell_idx], disp_uv).r) * snow_height;
 	VERTEX.y = height + snow_offset;
 
-	vec2 eps = vec2(0.02, 0.0);
-	float disp_mx = texture(displacement_tex[cell_idx], disp_uv - eps * 0.01).r * snow_height;
-	float disp_px = texture(displacement_tex[cell_idx], disp_uv + eps * 0.01).r * snow_height;
-	float disp_mz = texture(displacement_tex[cell_idx], vec2(disp_uv.x - eps.y, disp_uv.x + eps.x) * 0.01).r * snow_height;
-	float disp_pz = texture(displacement_tex[cell_idx], vec2(disp_uv.x + eps.y, disp_uv.x - eps.x) * 0.01).r * snow_height;
-
-	vec3 normal = normalize(vec3(disp_px - disp_mx, 2.0 * eps.x * snow_height, disp_pz - disp_mz));
+	//vec2 eps = vec2(0.02, 0.0);
+	//float disp_mx = texture(displacement_tex[cell_idx], disp_uv - eps * 0.01).r * snow_height;
+	//float disp_px = texture(displacement_tex[cell_idx], disp_uv + eps * 0.01).r * snow_height;
+	//float disp_mz = texture(displacement_tex[cell_idx], vec2(disp_uv.x - eps.y, disp_uv.x + eps.x) * 0.01).r * snow_height;
+	//float disp_pz = texture(displacement_tex[cell_idx], vec2(disp_uv.x + eps.y, disp_uv.x - eps.x) * 0.01).r * snow_height;
+	//vec3 normal = normalize(vec3(disp_px - disp_mx, 2.0 * eps.x * snow_height, disp_pz - disp_mz));
+	vec3 normal = texture(height_map, terrain_uv).xyz / 2.0 + 0.5;
     NORMAL = normal;
+	debug_color = normal;
 }
 
 void fragment() {
@@ -53,7 +55,7 @@ void fragment() {
 	NORMAL_MAP = 2.0 * texture(normal_map, terrain_uv).xzy - vec3(1.0);
 	//float displacement = texture(displacement_tex, disp_uv).r;
 
-	ALBEDO = vec3(2.0);
+	ALBEDO = vec3(2.0 * debug_color);
 	//ALBEDO = vec3(texture(tex_floats, 8.0 * terrain_uv).r);
 	//ALBEDO = vec3(disp_uv.x, disp_uv.y, 0.0);
 }

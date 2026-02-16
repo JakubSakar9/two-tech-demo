@@ -22,13 +22,11 @@ public partial class Terrain : StaticBody3D
     private HeightMapShape3D _heightMapShape;
 
     private FastNoiseLite[] _noiseFunctions;
-    private NoiseTexture2D[] _heightMaps;
+    private ImageTexture[] _heightMaps;
     private NoiseTexture2D[] _normalMaps;
 
     private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
-    // private Image _debugFloats;
-    // private ImageTexture _debugFloatsTex;
     
     private int _noiseIndex = 0;
 
@@ -39,21 +37,27 @@ public partial class Terrain : StaticBody3D
         _terrainCollider = GetNode<CollisionShape3D>("%TerrainCollider");
         
         _noiseFunctions = new FastNoiseLite[NOISE_SWAP_COUNT];
-        _heightMaps = new NoiseTexture2D[NOISE_SWAP_COUNT];
+        _heightMaps = new ImageTexture[NOISE_SWAP_COUNT];
         _normalMaps = new NoiseTexture2D[NOISE_SWAP_COUNT];
         _heightMapShape = new HeightMapShape3D();
+
+        int heightmapSize = 3 * ChunkSizeUnits;
 
         for (int i = 0; i < NOISE_SWAP_COUNT; i++)
         {
             _noiseFunctions[i] = new FastNoiseLite();
-            _heightMaps[i] = new NoiseTexture2D();
+            _heightMaps[i] = new ImageTexture();
             _normalMaps[i] = new NoiseTexture2D();
 
             _noiseFunctions[i].FractalLacunarity = 1.7f;
             _noiseFunctions[i].Offset = new Vector3(-1.5f * ChunkSizeUnits, -1.5f * ChunkSizeUnits, 0.0f);
-            _heightMaps[i].Noise = _noiseFunctions[i];
-            _heightMaps[i].Width = 3 * ChunkSizeUnits;
-            _heightMaps[i].Height = 3 * ChunkSizeUnits;
+
+            byte[] imageData = new byte[heightmapSize * heightmapSize * sizeof(float)];
+            GenerateHeightMap(ref imageData, i);
+            var heightImage = Image.CreateFromData(3 * ChunkSizeUnits, 3 * ChunkSizeUnits, false, Image.Format.Rf, imageData);
+            heightImage.GenerateMipmaps();
+            GD.Print(heightImage.GetPixel(0, 0).R);
+            _heightMaps[i].SetImage(heightImage);
             
             _normalMaps[i].Noise = _noiseFunctions[i];
             _normalMaps[i].Width = 3 * ChunkSizeUnits;
@@ -91,7 +95,7 @@ public partial class Terrain : StaticBody3D
         return _normalMaps[_noiseIndex];
     }
 
-    public NoiseTexture2D GetHeightMap()
+    public ImageTexture GetHeightMap()
     {
         return _heightMaps[_noiseIndex];
     }
@@ -146,7 +150,7 @@ public partial class Terrain : StaticBody3D
             }
         }
         // NOTE: These numbers are arbitrarily set to make the collider work. It should be investigated why this is needed.
-        _heightMapShape.UpdateMapDataFromImage(_collisionImage, -6.7f, MaxHeight + 7f);
+        _heightMapShape.UpdateMapDataFromImage(_collisionImage, 0f, MaxHeight);
         _terrainCollider.Shape = _heightMapShape;
         _terrainCollider.GlobalPosition = new Vector3(Player.GlobalPosition.X, 0, Player.GlobalPosition.Z);
     }
@@ -163,30 +167,26 @@ public partial class Terrain : StaticBody3D
         EmitSignal(SignalName.MapShifted);
     }
 
-    // private void GenDebugFloats()
-    // {
-    //     const int FLOATS_SIZE = 64;
-    //     float[] floatData = new float[FLOATS_SIZE * FLOATS_SIZE];
-    //     for (int i = 0; i < FLOATS_SIZE; i++)
-    //     {
-    //        for (int j = 0; j < FLOATS_SIZE; j++)
-    //         {
-    //             float dist = 8.0f * (j - FLOATS_SIZE / 2) * (i - FLOATS_SIZE / 2) / (FLOATS_SIZE * FLOATS_SIZE);
-    //             floatData[i * FLOATS_SIZE + j] = 0.5f * (1.0f + Mathf.Sin(dist));
-    //         }
-    //     }
+    private unsafe void GenerateHeightMap(ref byte[] bytes, int noiseIndex = -1)
+    {
+        if (noiseIndex == -1)
+        {
+            noiseIndex = _noiseIndex;
+        }
 
-    //     byte[] byteData = new byte[4 * FLOATS_SIZE * FLOATS_SIZE];
-    //     int pos = 0;
-    //     foreach (float val in floatData)
-    //     {
-    //         byte[] tmpData = BitConverter.GetBytes(val);
-    //         Array.Copy(tmpData, 0, byteData, pos, 4);
-    //         pos += 4;
-    //     }
+        int heightmapSize = 3 * ChunkSizeUnits;
 
-    //     _debugFloats = Image.CreateFromData(FLOATS_SIZE, FLOATS_SIZE, false, Image.Format.Rf, byteData);
-    //     _debugFloatsTex = new ImageTexture();
-    //     _debugFloatsTex.SetImage(_debugFloats);
-    // }
+        fixed(byte* bytePointer = bytes)
+        {
+            float* floatPointer = (float*)bytePointer;
+            for (int i = 0; i < heightmapSize; i++)
+            {
+                for (int j = 0; j < heightmapSize; j++)
+                {
+                    float noiseValue = (_noiseFunctions[noiseIndex].GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    floatPointer[i * heightmapSize + j] = noiseValue;
+                }
+            }
+        }
+    }
 }

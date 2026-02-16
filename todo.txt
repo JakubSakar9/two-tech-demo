@@ -1,9 +1,7 @@
-- Write a compute shader that paints into texture
-- Make heightmap 32bit
 - Create raycast based footprints
 - Fix shading
-- Figure out a way to improve the resolution of footprints
-- Improve the resolution of footprints
+- Figure out a way to improve the terrain resolution near the footprints
+- Improve the terrain resolution near the footprints
 - Create skeleton-based character controller
 - Animate the skeleton for player movement
 - Use character feet to make footprints in the snow
