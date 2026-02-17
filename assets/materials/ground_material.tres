@@ -2,6 +2,13 @@
 
 [ext_resource type="Shader" uid="uid://tnrtre0lfm56" path="res://shaders/terrain_shader.gdshader" id="1_bu8bs"]
 
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_bu8bs"]
+noise_type = 5
+frequency = 0.4
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_jkxpb"]
+noise = SubResource("FastNoiseLite_bu8bs")
+
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_u83ap"]
 noise_type = 3
 
@@ -13,7 +20,7 @@ render_priority = 0
 shader = ExtResource("1_bu8bs")
 shader_parameter/albedo = Vector4(0, 1, 0, 0)
 shader_parameter/height_map = SubResource("NoiseTexture2D_bu8bs")
-shader_parameter/displacement_tex = null
+shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
 shader_parameter/chunk_origin = Vector2(0, 0)
 shader_parameter/snow_height = 1.0
 shader_parameter/max_height = 32.0

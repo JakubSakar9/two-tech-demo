@@ -1,7 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://cmd36yi002y6o"]
+[gd_scene format=3 uid="uid://cmd36yi002y6o"]
 
 [ext_resource type="Script" uid="uid://g3tf0jtdoh6u" path="res://entities/debug_texture/DebugTexture.cs" id="1_o6lve"]
 
-[node name="DebugTexture" type="GridContainer"]
-columns = 3
+[node name="DebugTexture" type="Control" unique_id=1874885877]
+layout_mode = 3
+anchors_preset = 0
 script = ExtResource("1_o6lve")
