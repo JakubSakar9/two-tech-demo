@@ -6,7 +6,6 @@ public struct HeightMap
     public FastNoiseLite noiseFn;
     public Image heightImage;
     public ImageTexture height;
-    public NoiseTexture2D normal;
     private int _size;
 
     public HeightMap(int size)
@@ -15,15 +14,9 @@ public struct HeightMap
         noiseFn = new();
         heightImage = new();
         height = new();
-        normal = new();
         _size = size;
 
         noiseFn.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
-
-        normal.Noise = noiseFn;
-        normal.Width = _size;
-        normal.Height = _size;
-        normal.AsNormalMap = true;
     }
 
     public unsafe void Generate()
@@ -59,6 +52,7 @@ public partial class Terrain : StaticBody3D
     [Signal] public delegate void MapShiftedEventHandler();
 
     [Export] public Player Player;
+    [Export] public TerrainDeformer Deformer;
     [Export] public int ChunkSizeUnits = 256;
     [Export] public int CollisionSizeUnits = 8;
     [Export] public float MaxHeight = 32.0f;
@@ -99,10 +93,11 @@ public partial class Terrain : StaticBody3D
         _collisionNoiseFunction = new FastNoiseLite();
         UpdateCollisionHeightMap();
 
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("max_height", MaxHeight);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("height_map", _heightMaps[_noiseIndex].height);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _heightMaps[_noiseIndex].normal);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("snow_height", 0.3);
+        CallDeferred(MethodName.AssignTexture);
+
+        SetShaderParam("max_height", MaxHeight);
+        SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
+        SetShaderParam("snow_height", 0.3f);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -132,17 +127,7 @@ public partial class Terrain : StaticBody3D
             pos2D.Y -= (4.0f / 3.0f);
         }
         _terrainMesh.GlobalPosition = new Vector3(pos2D.X, 0, pos2D.Y);
-        _CheckChunkChange(in pos2D);
-    }
-
-    public void UpdateDisplacement(ref readonly Texture2D[] displacement)
-    {
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("displacement_tex", displacement);
-    }
-
-    public NoiseTexture2D GetNormalTexture()
-    {
-        return _heightMaps[_noiseIndex].normal;
+        CheckChunkChange(in pos2D);
     }
 
     public ImageTexture GetHeightMap()
@@ -150,7 +135,7 @@ public partial class Terrain : StaticBody3D
         return _heightMaps[_noiseIndex].height;
     }
 
-    private void _CheckChunkChange(ref readonly Vector2 position2D)
+    private void CheckChunkChange(ref readonly Vector2 position2D)
     {
         Vector2 playerOffset = position2D - ChunkOrigin;
         float thresholdDistance = ChunkSizeUnits * ChunkThresholdMultiplier / 2.0f;
@@ -210,9 +195,20 @@ public partial class Terrain : StaticBody3D
         _heightMaps[_noiseIndex].MoveOrigin(ChunkOrigin);
         var timer = GetTree().CreateTimer(1.0f);
         await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("height_map", _heightMaps[_noiseIndex].height);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("normal_map", _heightMaps[_noiseIndex].normal);
-        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter("chunk_origin", ChunkOrigin);
+        SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
+        SetShaderParam("chunk_origin", ChunkOrigin);
         EmitSignal(SignalName.MapShifted);
+    }
+
+    private async void AssignTexture()
+    {
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        SetShaderParam("displacement_map_range", Deformer.DisplacementMapRange);
+        SetShaderParam("displacement_map", Deformer.GetDisplacement());
+    }
+
+    private void SetShaderParam(string property, Variant value)
+    {
+        (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter(property, value);
     }
 }

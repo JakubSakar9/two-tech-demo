@@ -9,6 +9,7 @@ script = ExtResource("1_sw4i0")
 
 [node name="TexturePainter" parent="." unique_id=74182145 instance=ExtResource("2_3q8wy")]
 unique_name_in_owner = true
+TextureSize = 2048
 FootprintTexture = ExtResource("3_hlft1")
 
 [node name="StepTimer" type="Timer" parent="." unique_id=433132126]

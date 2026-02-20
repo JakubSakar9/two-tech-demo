@@ -12,16 +12,15 @@ layout(push_constant, std430) uniform Params {
     float carve_depth;
     vec2 sprite_center;
     vec2 sprite_offset;
+    float downscale_factor;
 } params;
-
-const float downscale_factor = 64.0;
 
 void main() {
     uint tex_width = params.tex_size;
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
     vec2 uv1 = vec2(float(px) / float(tex_width), float(py) / float(tex_width));
-    vec2 uv2 = params.rotation_mat * (downscale_factor * (uv1 - params.sprite_center)) + 0.5 + params.sprite_offset;
+    vec2 uv2 = params.rotation_mat * (params.downscale_factor * (uv1 - params.sprite_center)) + 0.5 + params.sprite_offset;
 
     ivec2 pixel = ivec2(px, py);
     vec4 in_color = imageLoad(disp_tex, pixel);

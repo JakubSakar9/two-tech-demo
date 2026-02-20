@@ -6,7 +6,7 @@ public partial class TerrainDeformer : Node3D
 
     [Export] public Player Player;
     [Export] public float DisplacementMapRange = 64.0f;
-    [Export] public float StepInterval = 0.4f;
+    [Export] public float StepInterval = 0.35f;
 
     private Timer _stepTimer;
     private TexturePainter _painter;
@@ -17,6 +17,7 @@ public partial class TerrainDeformer : Node3D
         InitNodes();
 
         _stepTimer.WaitTime = StepInterval;
+        _painter.Params.DownscaleFactor = 0.8f * DisplacementMapRange;
     }
 
     public override void _PhysicsProcess(double delta)

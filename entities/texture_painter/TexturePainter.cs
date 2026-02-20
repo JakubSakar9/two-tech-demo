@@ -10,7 +10,8 @@ public struct TexturePainterParams
 	public float CarveDepth;
 	public Vector2 SpriteCenter;
 	public Vector2 SpriteOffet;
-	private Vector2 _padding;
+	public float DownscaleFactor;
+	private float _padding;
 }
 
 public partial class TexturePainter : Node
