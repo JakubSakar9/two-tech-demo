@@ -1,5 +1,7 @@
 - Simplified footprint spawning
-- Figure out a way to improve the terrain resolution near the footprints
+- Raycast based carving
+- Use displacement map in terrain shader
+- Figure out how to put together existing Godot pipeline and a custom pipeline for the terrain
 - Improve the terrain resolution near the footprints
 - Create skeleton-based character controller
 - Animate the skeleton for player movement
