@@ -15,3 +15,8 @@ FootprintTexture = ExtResource("3_yxryd")
 unique_name_in_owner = true
 offset_right = 40.0
 offset_bottom = 40.0
+
+[node name="StepTimer" type="Timer" parent="." unique_id=781681598]
+unique_name_in_owner = true
+one_shot = true
+autostart = true

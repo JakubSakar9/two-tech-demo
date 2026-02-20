@@ -5,10 +5,13 @@ using System.Runtime.InteropServices;
 
 public struct TexturePainterParams
 {
+	public Vector4 RotationMat;
 	public uint TextureSize;
 	public float CarveDepth;
-	public Vector2 SpriteCenter;
-	public Vector4 RotationMat;
+	public Vector2 SpriteOffset;
+	public Vector2 TextureOffset;
+	public bool FlipSprite;
+	private uint _000;
 }
 
 public partial class TexturePainter : Node
@@ -42,24 +45,19 @@ public partial class TexturePainter : Node
 		_imageData = new float[TextureSize * TextureSize];
         Params = new()
         {
-            TextureSize = TextureSize
+            TextureSize = TextureSize,
+			SpriteOffset = new Vector2(0.505f, 0.5f),
+			FlipSprite = false
         };
 		GD.Randomize();
+
+		SetAngle(0.0f);
 
 		RenderingServer.CallOnRenderThread(Callable.From(InitCompute));
 	}
 	
 	public override void _Process(double delta)
 	{
-		Params.SpriteCenter = GetViewport().GetMousePosition() / TextureSize;
-		float angle = (float)GD.RandRange(0.0, 2.0 * Math.PI);
-		Params.RotationMat = new()
-		{
-			X =  Mathf.Cos(angle),
-			Y = -Mathf.Sin(angle),
-			Z =  Mathf.Sin(angle),
-			W =  Mathf.Cos(angle)
-		};
 		RenderingServer.CallOnRenderThread(Callable.From(DispatchCompute));
 	}
 
@@ -73,6 +71,17 @@ public partial class TexturePainter : Node
 		_device.FreeRid(_footprintSampler);
 		_device.FreeRid(_uniformSet);
     }
+
+	public void SetAngle(float angleRadians)
+	{
+		Params.RotationMat = new()
+		{
+			X =  Mathf.Cos(angleRadians),
+			Y = -Mathf.Sin(angleRadians),
+			Z =  Mathf.Sin(angleRadians),
+			W =  Mathf.Cos(angleRadians)
+		};
+	}
 
 	private void InitCompute()
 	{
@@ -128,10 +137,12 @@ public partial class TexturePainter : Node
 		var footprintIm = FootprintTexture.GetImage();
 		_footprintTex = _device.TextureCreate(format, view, [footprintIm.GetData()]);
 
-		RDSamplerState samplerState = new();
-		samplerState.MinFilter = RenderingDevice.SamplerFilter.Linear;
-		samplerState.MagFilter = RenderingDevice.SamplerFilter.Linear;
-		_footprintSampler = _device.SamplerCreate(samplerState);
+        RDSamplerState samplerState = new()
+        {
+            MinFilter = RenderingDevice.SamplerFilter.Linear,
+            MagFilter = RenderingDevice.SamplerFilter.Linear
+        };
+        _footprintSampler = _device.SamplerCreate(samplerState);
 	}
 
 	private void InitUniforms()
@@ -173,6 +184,8 @@ public partial class TexturePainter : Node
 
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 		_device.ComputeListEnd();
+
+		Params.CarveDepth = 0.0f;
 	}
 
 	private byte[] ParamsToBytes()

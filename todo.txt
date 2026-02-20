@@ -1,4 +1,4 @@
-- Create raycast based footprints
+- Simplified footprint spawning
 - Figure out a way to improve the terrain resolution near the footprints
 - Improve the terrain resolution near the footprints
 - Create skeleton-based character controller
@@ -12,4 +12,5 @@
 - [Varying Snow Height]
 - [Visual Improvements]
 - [Vegetation/obstacles]
+- [Test with users]
 - [UI/Gamey stuff]

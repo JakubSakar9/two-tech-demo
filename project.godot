@@ -17,6 +17,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="two-tech-demo"
 run/main_scene="uid://rlxdv0y863e"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+run/max_fps=60
 config/icon="res://icon.svg"
 
 [debug]
