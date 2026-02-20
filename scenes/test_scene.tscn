@@ -37,7 +37,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.117558, 0)
 WalkSpeed = 10.0
 StrafeSpeed = 5.0
 
-[node name="DebugTexture" parent="." unique_id=2046541328 instance=ExtResource("3_nd71p")]
+[node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
 visible = false
+Deformer = NodePath("../TerrainDeformer")
 
-[node name="TerrainDeformer" parent="." unique_id=253020266 instance=ExtResource("4_7ddre")]
+[node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
+Player = NodePath("../Player")
+DisplacementMapRange = 256.0

@@ -6,3 +6,9 @@
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_o6lve")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1775913982]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0

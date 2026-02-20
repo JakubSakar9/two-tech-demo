@@ -8,10 +8,9 @@ public struct TexturePainterParams
 	public Vector4 RotationMat;
 	public uint TextureSize;
 	public float CarveDepth;
-	public Vector2 SpriteOffset;
-	public Vector2 TextureOffset;
-	public bool FlipSprite;
-	private uint _000;
+	public Vector2 SpriteCenter;
+	public Vector2 SpriteOffet;
+	private Vector2 _padding;
 }
 
 public partial class TexturePainter : Node
@@ -38,6 +37,7 @@ public partial class TexturePainter : Node
 	private RDTextureView _view;
 
 	private float[] _imageData;
+	private int _yFlip = 1;
 
 	public override void _Ready()
 	{
@@ -46,8 +46,8 @@ public partial class TexturePainter : Node
         Params = new()
         {
             TextureSize = TextureSize,
-			SpriteOffset = new Vector2(0.505f, 0.5f),
-			FlipSprite = false
+			SpriteCenter = new Vector2(0.5f, 0.5f),
+			SpriteOffet = new Vector2(-0.2f, 0.0f)
         };
 		GD.Randomize();
 
@@ -76,11 +76,16 @@ public partial class TexturePainter : Node
 	{
 		Params.RotationMat = new()
 		{
-			X =  Mathf.Cos(angleRadians),
+			X =  Mathf.Cos(angleRadians) * _yFlip,
 			Y = -Mathf.Sin(angleRadians),
-			Z =  Mathf.Sin(angleRadians),
+			Z =  Mathf.Sin(angleRadians) * _yFlip,
 			W =  Mathf.Cos(angleRadians)
 		};
+	}
+
+	public void FlipSprite()
+	{
+		_yFlip *= -1;
 	}
 
 	private void InitCompute()
