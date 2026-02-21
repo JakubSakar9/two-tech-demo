@@ -18,7 +18,7 @@ func _notification(what: int) -> void:
 			
 
 func _render_callback(callback_type: int, render_data: RenderData) -> void:
-	if callback_type == EFFECT_CALLBACK_TYPE_POST_TRANSPARENT:
+	if callback_type == EFFECT_CALLBACK_TYPE_PRE_OPAQUE:
 		var rsb: RenderSceneBuffersRD = render_data.get_render_scene_buffers()
 		var rsd: RenderSceneDataRD = render_data.get_render_scene_data()
 		if rsb:

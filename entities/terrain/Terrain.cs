@@ -107,25 +107,25 @@ public partial class Terrain : StaticBody3D
         Vector2 playerPos2D = new(Player.GlobalPosition.X, Player.GlobalPosition.Z);
         Vector2 pos2D = new(_terrainMesh.GlobalPosition.X, _terrainMesh.GlobalPosition.Z);
         Vector2 positionDelta = playerPos2D - pos2D;
-        while (positionDelta.X > 4.0f / 3.0f)
+        while (positionDelta.X > 1f)
         {
-            positionDelta.X -= 4.0f / 3.0f;
-            pos2D.X += 4.0f / 3.0f;
+            positionDelta.X -= 1f;
+            pos2D.X += 1f;
         }
-        while (positionDelta.X < -4.0f / 3.0f)
+        while (positionDelta.X < -1f)
         {
-            positionDelta.X += 4.0f / 3.0f;
-            pos2D.X -= 4.0f / 3.0f;
+            positionDelta.X += 1f;
+            pos2D.X -= 1f;
         }
-        while (positionDelta.Y > 4.0f / 3.0f)
+        while (positionDelta.Y > 1f)
         {
-            positionDelta.Y -= 4.0f / 3.0f;
-            pos2D.Y += 4.0f / 3.0f;
+            positionDelta.Y -= 1f;
+            pos2D.Y += 1f;
         }
-        while (positionDelta.Y < -4.0f / 3.0f)
+        while (positionDelta.Y < -1f)
         {
-            positionDelta.Y += 4.0f / 3.0f;
-            pos2D.Y -= 4.0f / 3.0f;
+            positionDelta.Y += 1f;
+            pos2D.Y -= 1f;
         }
         _terrainMesh.GlobalPosition = new Vector3(pos2D.X, 0, pos2D.Y);
         CheckChunkChange(in pos2D);

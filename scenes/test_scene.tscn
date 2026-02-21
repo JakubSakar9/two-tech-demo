@@ -26,8 +26,8 @@ ssil_intensity = 4.0
 [sub_resource type="CompositorEffect" id="CompositorEffect_qjeyg"]
 resource_local_to_scene = false
 resource_name = ""
-enabled = true
-effect_callback_type = 3
+enabled = false
+effect_callback_type = 0
 access_resolved_color = false
 access_resolved_depth = false
 needs_motion_vectors = false
