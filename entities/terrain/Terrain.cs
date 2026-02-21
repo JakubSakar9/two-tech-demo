@@ -75,6 +75,7 @@ public partial class Terrain : StaticBody3D
     public override void _Ready()
     {
         base._Ready();
+
         _terrainMesh = GetNode<MeshInstance3D>("%TerrainMesh");
         _terrainCollider = GetNode<CollisionShape3D>("%TerrainCollider");
         
@@ -103,28 +104,28 @@ public partial class Terrain : StaticBody3D
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
-        Vector2 playerPos2D = new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z);
-        Vector2 pos2D = new Vector2(_terrainMesh.GlobalPosition.X, _terrainMesh.GlobalPosition.Z);
+        Vector2 playerPos2D = new(Player.GlobalPosition.X, Player.GlobalPosition.Z);
+        Vector2 pos2D = new(_terrainMesh.GlobalPosition.X, _terrainMesh.GlobalPosition.Z);
         Vector2 positionDelta = playerPos2D - pos2D;
         while (positionDelta.X > 4.0f / 3.0f)
         {
-            positionDelta.X -= (4.0f / 3.0f);
-            pos2D.X += (4.0f / 3.0f);
+            positionDelta.X -= 4.0f / 3.0f;
+            pos2D.X += 4.0f / 3.0f;
         }
         while (positionDelta.X < -4.0f / 3.0f)
         {
-            positionDelta.X += (4.0f / 3.0f);
-            pos2D.X -= (4.0f / 3.0f);
+            positionDelta.X += 4.0f / 3.0f;
+            pos2D.X -= 4.0f / 3.0f;
         }
         while (positionDelta.Y > 4.0f / 3.0f)
         {
-            positionDelta.Y -= (4.0f / 3.0f);
-            pos2D.Y += (4.0f / 3.0f);
+            positionDelta.Y -= 4.0f / 3.0f;
+            pos2D.Y += 4.0f / 3.0f;
         }
         while (positionDelta.Y < -4.0f / 3.0f)
         {
-            positionDelta.Y += (4.0f / 3.0f);
-            pos2D.Y -= (4.0f / 3.0f);
+            positionDelta.Y += 4.0f / 3.0f;
+            pos2D.Y -= 4.0f / 3.0f;
         }
         _terrainMesh.GlobalPosition = new Vector3(pos2D.X, 0, pos2D.Y);
         CheckChunkChange(in pos2D);

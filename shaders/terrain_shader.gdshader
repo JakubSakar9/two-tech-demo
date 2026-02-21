@@ -1,5 +1,6 @@
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
+//render_mode unshaded;
 
 const float HEIGHTMAP_RANGE = 768.0;
 
@@ -7,7 +8,7 @@ const float HEIGHTMAP_RANGE = 768.0;
 uniform vec4 albedo;
 uniform sampler2D height_map: source_color, filter_linear_mipmap;
 uniform sampler2D glitter_map: source_color, filter_nearest;
-uniform sampler2D displacement_map: source_color, filter_linear_mipmap_anisotropic;
+uniform sampler2D displacement_map: source_color, filter_linear_mipmap;
 uniform vec2 chunk_origin = vec2(0.0);
 uniform float snow_height = 1.0f;
 uniform float max_height = 5.0f;
@@ -40,10 +41,10 @@ void vertex() {
 	vec3 normal_height = -normalize(cross(height_px - height_mx, height_py - height_my));
 	
 	float eps_d = 0.0005;
-	vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, texture(displacement_map, disp_uv + vec2(eps_h, 0)).r * (1.0 - snow_height), VERTEX.y);
-	vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, texture(displacement_map, disp_uv - vec2(eps_h, 0)).r * (1.0 - snow_height), VERTEX.y);
-	vec3 disp_py = vec3(VERTEX.x, texture(displacement_map, disp_uv + vec2(0, eps_h)).r * (1.0 - snow_height), VERTEX.y + eps_h * displacement_map_range);
-	vec3 disp_my = vec3(VERTEX.x, texture(displacement_map, disp_uv - vec2(0, eps_h)).r * (1.0 - snow_height), VERTEX.y - eps_h * displacement_map_range);
+	vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_map, disp_uv + vec2(eps_h, 0)).r, VERTEX.y);
+	vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_map, disp_uv - vec2(eps_h, 0)).r, VERTEX.y);
+	vec3 disp_py = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_map, disp_uv + vec2(0, eps_h)).r, VERTEX.y + eps_h * displacement_map_range);
+	vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_map, disp_uv - vec2(0, eps_h)).r, VERTEX.y - eps_h * displacement_map_range);
 	vec3 normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
 	
 	disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
@@ -58,8 +59,8 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = vec3(0.8 * debug_color);
-	EMISSION = vec3(0.1, 0.1, 0.1);
+	ALBEDO = 0.8 * debug_color;
+	//EMISSION = vec3(0.1, 0.1, 0.1);
 }
 
 void light() {
@@ -71,5 +72,5 @@ void light() {
 	vec3 H = normalize(LIGHT + VIEW);
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
 	SPECULAR_LIGHT = vec3(rim_specular * disp_flatness);
-	DIFFUSE_LIGHT = 0.5 * ALBEDO * dot(LIGHT, NORMAL) * displacement;
+	DIFFUSE_LIGHT = 0.5 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * displacement;
 }
