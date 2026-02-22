@@ -17,7 +17,7 @@ public partial class TerrainDeformer : Node3D
         InitNodes();
 
         _stepTimer.WaitTime = StepInterval;
-        _painter.Params.DownscaleFactor = 0.8f * DisplacementMapRange;
+        _painter.Params.DownscaleFactor = 1.2f * DisplacementMapRange;
     }
 
     public override void _PhysicsProcess(double delta)

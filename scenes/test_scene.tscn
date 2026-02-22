@@ -20,6 +20,7 @@ sky = SubResource("Sky_j8ivh")
 ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
 reflected_light_source = 2
+ssao_enabled = true
 ssil_radius = 10.0
 ssil_intensity = 4.0
 
@@ -62,6 +63,6 @@ Deformer = NodePath("../TerrainDeformer")
 
 [node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
 Player = NodePath("../Player")
-DisplacementMapRange = 128.0
+StepInterval = 0.28
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1319070328]

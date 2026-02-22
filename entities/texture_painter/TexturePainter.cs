@@ -146,7 +146,9 @@ public partial class TexturePainter : Node
         RDSamplerState samplerState = new()
         {
             MinFilter = RenderingDevice.SamplerFilter.Linear,
-            MagFilter = RenderingDevice.SamplerFilter.Linear
+            MagFilter = RenderingDevice.SamplerFilter.Linear,
+			RepeatU = RenderingDevice.SamplerRepeatMode.ClampToBorder,
+			RepeatV = RenderingDevice.SamplerRepeatMode.ClampToBorder,
         };
         _footprintSampler = _device.SamplerCreate(samplerState);
 	}

@@ -99,6 +99,8 @@ public partial class Terrain : StaticBody3D
         SetShaderParam("max_height", MaxHeight);
         SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
         SetShaderParam("snow_height", 0.3f);
+
+        // GetViewport().DebugDraw = Viewport.DebugDrawEnum.Wireframe;
     }
 
     public override void _PhysicsProcess(double delta)
