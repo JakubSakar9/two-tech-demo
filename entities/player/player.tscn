@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://d10bpbm16fk1e"]
+[gd_scene format=3 uid="uid://d10bpbm16fk1e"]
 
 [ext_resource type="Script" uid="uid://c7xb0jrjk7xof" path="res://entities/player/Player.cs" id="1_merdl"]
+[ext_resource type="PackedScene" uid="uid://b6at368peknpr" path="res://assets/models/player/player.glb" id="2_abrql"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_u3f3p"]
 radius = 0.4
@@ -10,18 +11,75 @@ height = 1.8
 radius = 0.4
 height = 1.8
 
-[node name="Player" type="CharacterBody3D"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_abrql"]
+animation = &"idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_sglur"]
+animation = &"walk"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_bls4j"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_abrql")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_sglur")
+blend_point_1/pos = 1.0
+min_space = 0.0
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_fkugw"]
+graph_offset = Vector2(-741, 1)
+nodes/BlendSpace1D/node = SubResource("AnimationNodeBlendSpace1D_bls4j")
+nodes/BlendSpace1D/position = Vector2(-140, 120)
+node_connections = [&"output", 0, &"BlendSpace1D"]
+
+[node name="Player" type="CharacterBody3D" unique_id=1431341784]
 script = ExtResource("1_merdl")
 
-[node name="PlayerMesh" type="MeshInstance3D" parent="."]
+[node name="PlayerMesh" type="MeshInstance3D" parent="." unique_id=1648516227]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+visible = false
 mesh = SubResource("CapsuleMesh_u3f3p")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=393030964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_u3f3p")
 
-[node name="MainCamera" type="Camera3D" parent="."]
+[node name="MainCamera" type="Camera3D" parent="." unique_id=880945308]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -0.2290341)
 cull_mask = 1048573
+
+[node name="PlayerSkin" parent="." unique_id=160291661 instance=ExtResource("2_abrql")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
+
+[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 1245262695) index="0" unique_id=839782709]
+bones/0/position = Vector3(-2.8951658e-10, 0.84652746, 0.017193029)
+bones/0/rotation = Quaternion(-0.03667094, 1.1912911e-07, -4.371518e-09, 0.9993274)
+bones/2/rotation = Quaternion(-0.014857686, -0.11694958, 0.98340756, -0.13788329)
+bones/3/rotation = Quaternion(0.120499216, 0.0051755216, -0.09108298, 0.9885126)
+bones/4/rotation = Quaternion(-0.14360522, -0.039846804, 0.9878388, -0.044320017)
+bones/4/scale = Vector3(0.9999639, 1, 0.99999154)
+bones/5/rotation = Quaternion(-0.0902722, 0.003224405, -0.05348484, 0.9944747)
+bones/6/rotation = Quaternion(0.58440745, 0.03316285, 0.26120013, 0.7675564)
+bones/6/scale = Vector3(0.9999807, 1.0000161, 0.9999879)
+bones/7/rotation = Quaternion(0.008223953, -0.1009019, 0.98140424, 0.16308567)
+bones/8/rotation = Quaternion(0.12049925, -0.005175505, 0.091082975, 0.9885126)
+bones/9/rotation = Quaternion(0.14563592, -0.039851356, 0.98755455, 0.04402427)
+bones/9/scale = Vector3(0.9999629, 1.0000001, 0.9999911)
+bones/10/rotation = Quaternion(-0.09027148, -0.0032243787, 0.05348441, 0.99447477)
+bones/11/rotation = Quaternion(0.5839159, -0.031446338, -0.26224583, 0.7676461)
+bones/11/scale = Vector3(0.9999801, 1.0000168, 0.9999877)
+bones/12/position = Vector3(0.051505342, 0.51271045, 0.22282161)
+bones/12/rotation = Quaternion(-0.04340317, 0.7057735, 0.7057735, -0.04340317)
+bones/13/position = Vector3(0.16216579, 0.09388828, -0.095402345)
+bones/13/rotation = Quaternion(-0.009165643, 0.7070474, -0.7070474, 0.009165643)
+bones/14/position = Vector3(-0.050271958, 0.51271045, 0.22282161)
+bones/15/position = Vector3(-0.16216579, 0.09388828, -0.095402345)
+bones/15/rotation = Quaternion(0.009165643, 0.7070474, -0.7070474, -0.009165643)
+
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1883167356]
+unique_name_in_owner = true
+root_node = NodePath("%AnimationTree/../PlayerSkin")
+tree_root = SubResource("AnimationNodeBlendTree_fkugw")
+anim_player = NodePath("../PlayerSkin/AnimationPlayer")
+parameters/BlendSpace1D/blend_position = 0.0
+
+[editable path="PlayerSkin"]

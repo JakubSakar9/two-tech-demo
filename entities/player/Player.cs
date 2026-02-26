@@ -7,8 +7,10 @@ public partial class Player : CharacterBody3D
 
     [Export] public Vector2 MouseSensitivity = new(0.01f, 0.005f);
     [Export] public float WalkSpeed = 40.0f;
-    [Export] public float StrafeSpeed = 20.0f;
+    [Export] public float WalkAcceleration = 35.0f;
+    [Export] public float WalkDecceleration = 50.0f;
 
+    private AnimationTree _animationTree;
     private Camera3D _mainCamera;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
@@ -16,6 +18,7 @@ public partial class Player : CharacterBody3D
     public override void _Ready()
     {
         base._Ready();
+        _animationTree = GetNode<AnimationTree>("%AnimationTree");
         _mainCamera = GetNode<Camera3D>("%MainCamera");
     }
 
@@ -32,18 +35,35 @@ public partial class Player : CharacterBody3D
         
         // Handle horizontal movement
         Vector2 movementInput = new(Input.GetAxis("move_left", "move_right"), Input.GetAxis("move_forward", "move_back"));
-        Vector2 horizontalVelocity = new(movementInput.X * StrafeSpeed, movementInput.Y * WalkSpeed);
-        horizontalVelocity = horizontalVelocity.Rotated(-Rotation.Y);
+        Vector2 horizontalVelocity = new Vector2();
         if (movementInput != Vector2.Zero)
         {
+            horizontalVelocity = new Vector2(Velocity.X, Velocity.Z) + WalkAcceleration * movementInput.Rotated(-Rotation.Y).Normalized() * (float)delta;
+            if (horizontalVelocity.Length() > WalkSpeed)
+            {
+                horizontalVelocity = horizontalVelocity.Normalized() * WalkSpeed;
+            }
             Velocity = new Vector3(horizontalVelocity.X, Velocity.Y, horizontalVelocity.Y);
         }
         else
         {
-            Velocity = new Vector3(0, Velocity.Y, 0);
+            horizontalVelocity = new Vector2(Velocity.X, Velocity.Z);
+            float horizontalDeltaLen = WalkDecceleration * (float)delta;
+            if (horizontalDeltaLen > horizontalVelocity.Length())
+            {
+                horizontalVelocity = Vector2.Zero;
+            }
+            else
+            {
+                horizontalVelocity -= horizontalVelocity.Normalized() * horizontalDeltaLen;
+            }
+            Velocity = new Vector3(horizontalVelocity.X, Velocity.Y, horizontalVelocity.Y);
         }
         Velocity += Gravity(delta);
         MoveAndSlide();
+
+        float motionParameter = horizontalVelocity.Length() / WalkSpeed;
+        _animationTree.Set("parameters/BlendSpace1D/blend_position", motionParameter);
     }
 
     private void HandleMouseMotion(Vector2 delta)

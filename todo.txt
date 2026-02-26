@@ -1,18 +1,21 @@
-- Simplified footprint spawning
-- Raycast based carving
-- Use displacement map in terrain shader
-- Figure out how to put together existing Godot pipeline and a custom pipeline for the terrain
-- Improve the terrain resolution near the footprints
-- Create skeleton-based character controller
-- Animate the skeleton for player movement
 - Use character feet to make footprints in the snow
-- Find a way to make the footprints smoother
-- [Infinite footprints]
-- [Wind]
-- [Snow Particles]
-- [Audio]
-- [Varying Snow Height]
+- Use 49 or 81 (make it a setting) textures which capture the nearest chunks
+- When encoutering a past chunk reconstruct footprints using a compute shader
+- At a certain radious fade the footprints out to avoid sharp footprints popping
+- Write a compute shader that precomputes a wind vector field over the map (in sets of nine chunks, use asynchronous computation during runtime)
+- Create a snow particle system that follows the player
+- Affect the velocity of the particles using the wind vector field
+- Footprints Audio
+- Wind spatial audio based on the current wind velocity
+- Precompute a snow height texture based on the heightmap and wind vector field
+- Use the snow height texture in the terrain shader and use a ground texture for places with no snow
+- Decrease footprint depth when changing a chunk if it is snowing
+- Optimize footprints render distance by only using textures for the chunks where footprints are rendered
+- Limit a number of chunks with footprints and discard the latest ones
+- Update the discard policy to not discard textures which are nearby
 - [Visual Improvements]
-- [Vegetation/obstacles]
 - [Test with users]
+- [Experiment with hardware tesselation to improve performance]
+- [Vegetation/obstacles]
 - [UI/Gamey stuff]
+- [Add procedural animation]

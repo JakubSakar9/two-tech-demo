@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://rlxdv0y863e"]
 
 [ext_resource type="PackedScene" uid="uid://beg2rrt3l6i6w" path="res://entities/terrain/terrain.tscn" id="1_j8ivh"]
-[ext_resource type="Script" uid="uid://dgemqt1ldd365" path="res://entities/terrain_renderer/terrain_renderer.gd" id="1_qjeyg"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="3_nd71p"]
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain_deformer/terrain_deformer.tscn" id="4_7ddre"]
@@ -24,26 +23,10 @@ ssao_enabled = true
 ssil_radius = 10.0
 ssil_intensity = 4.0
 
-[sub_resource type="CompositorEffect" id="CompositorEffect_qjeyg"]
-resource_local_to_scene = false
-resource_name = ""
-enabled = false
-effect_callback_type = 0
-access_resolved_color = false
-access_resolved_depth = false
-needs_motion_vectors = false
-needs_normal_roughness = false
-script = ExtResource("1_qjeyg")
-metadata/_custom_type_script = "uid://dgemqt1ldd365"
-
-[sub_resource type="Compositor" id="Compositor_wtsjf"]
-compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_qjeyg")])
-
 [node name="TestScene" type="Node3D" unique_id=509472552]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=263366814]
 environment = SubResource("Environment_nd71p")
-compositor = SubResource("Compositor_wtsjf")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=352656111]
 
@@ -64,5 +47,3 @@ Deformer = NodePath("../TerrainDeformer")
 [node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
 Player = NodePath("../Player")
 StepInterval = 0.28
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1319070328]
