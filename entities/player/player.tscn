@@ -25,13 +25,14 @@ blend_point_1/pos = 1.0
 min_space = 0.0
 
 [sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_fkugw"]
-graph_offset = Vector2(-741, 1)
+graph_offset = Vector2(-466, -67)
 nodes/BlendSpace1D/node = SubResource("AnimationNodeBlendSpace1D_bls4j")
 nodes/BlendSpace1D/position = Vector2(-140, 120)
 node_connections = [&"output", 0, &"BlendSpace1D"]
 
 [node name="Player" type="CharacterBody3D" unique_id=1431341784]
 script = ExtResource("1_merdl")
+WalkSpeed = 10.0
 
 [node name="PlayerMesh" type="MeshInstance3D" parent="." unique_id=1648516227]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -50,22 +51,22 @@ cull_mask = 1048573
 [node name="PlayerSkin" parent="." unique_id=160291661 instance=ExtResource("2_abrql")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
-[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 1245262695) index="0" unique_id=839782709]
-bones/0/position = Vector3(-2.8951658e-10, 0.84652746, 0.017193029)
+[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 1170584340) index="0" unique_id=1907178092]
+bones/0/position = Vector3(-8.712027e-11, 0.8442784, 0.01719303)
 bones/0/rotation = Quaternion(-0.03667094, 1.1912911e-07, -4.371518e-09, 0.9993274)
-bones/2/rotation = Quaternion(-0.014857686, -0.11694958, 0.98340756, -0.13788329)
+bones/2/rotation = Quaternion(-0.014120355, -0.11690004, 0.9818509, -0.14867386)
 bones/3/rotation = Quaternion(0.120499216, 0.0051755216, -0.09108298, 0.9885126)
-bones/4/rotation = Quaternion(-0.14360522, -0.039846804, 0.9878388, -0.044320017)
+bones/4/rotation = Quaternion(-0.1442743, -0.027959151, 0.9879122, -0.049323462)
 bones/4/scale = Vector3(0.9999639, 1, 0.99999154)
-bones/5/rotation = Quaternion(-0.0902722, 0.003224405, -0.05348484, 0.9944747)
-bones/6/rotation = Quaternion(0.58440745, 0.03316285, 0.26120013, 0.7675564)
+bones/5/rotation = Quaternion(-0.11122026, 0.0032151043, -0.06589614, 0.9916035)
+bones/6/rotation = Quaternion(0.59189945, 0.03403667, 0.2659338, 0.7601157)
 bones/6/scale = Vector3(0.9999807, 1.0000161, 0.9999879)
-bones/7/rotation = Quaternion(0.008223953, -0.1009019, 0.98140424, 0.16308567)
+bones/7/rotation = Quaternion(0.007860072, -0.10100132, 0.98050493, 0.16836624)
 bones/8/rotation = Quaternion(0.12049925, -0.005175505, 0.091082975, 0.9885126)
-bones/9/rotation = Quaternion(0.14563592, -0.039851356, 0.98755455, 0.04402427)
+bones/9/rotation = Quaternion(0.14630264, -0.02795359, 0.98763, 0.049002588)
 bones/9/scale = Vector3(0.9999629, 1.0000001, 0.9999911)
-bones/10/rotation = Quaternion(-0.09027148, -0.0032243787, 0.05348441, 0.99447477)
-bones/11/rotation = Quaternion(0.5839159, -0.031446338, -0.26224583, 0.7676461)
+bones/10/rotation = Quaternion(-0.11121972, -0.0032150894, 0.065895796, 0.9916036)
+bones/11/rotation = Quaternion(0.5914561, -0.032310303, -0.2669915, 0.76016533)
 bones/11/scale = Vector3(0.9999801, 1.0000168, 0.9999877)
 bones/12/position = Vector3(0.051505342, 0.51271045, 0.22282161)
 bones/12/rotation = Quaternion(-0.04340317, 0.7057735, 0.7057735, -0.04340317)
@@ -75,11 +76,31 @@ bones/14/position = Vector3(-0.050271958, 0.51271045, 0.22282161)
 bones/15/position = Vector3(-0.16216579, 0.09388828, -0.095402345)
 bones/15/rotation = Quaternion(0.009165643, 0.7070474, -0.7070474, -0.009165643)
 
+[node name="LeftFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="1" unique_id=307436259]
+unique_name_in_owner = true
+transform = Transform3D(-0.87675375, 0.10651761, -0.46888727, -0.47323066, -0.36394858, 0.80223024, -0.085185215, 0.9253148, 0.36951104, 0.16216755, 0.09391025, -0.09540223)
+bone_name = "foot.l"
+bone_idx = 6
+
+[node name="RightFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="2" unique_id=1956819650]
+unique_name_in_owner = true
+transform = Transform3D(-0.8767525, -0.10651755, 0.4688869, 0.47323027, -0.36394873, 0.8022302, 0.085184634, 0.9253151, 0.36951083, -0.16216755, 0.09391037, -0.09540225)
+bone_name = "foot.r"
+bone_idx = 11
+
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=1883167356]
 unique_name_in_owner = true
 root_node = NodePath("%AnimationTree/../PlayerSkin")
 tree_root = SubResource("AnimationNodeBlendTree_fkugw")
 anim_player = NodePath("../PlayerSkin/AnimationPlayer")
 parameters/BlendSpace1D/blend_position = 0.0
+
+[node name="LeftFootRaycast" type="RayCast3D" parent="." unique_id=369813681]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.17417836, 0.21988471, 0)
+
+[node name="RightFootRaycast" type="RayCast3D" parent="." unique_id=1879169123]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17417836, 0.21988471, 0)
 
 [editable path="PlayerSkin"]

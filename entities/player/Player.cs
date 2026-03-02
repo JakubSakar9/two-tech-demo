@@ -10,16 +10,27 @@ public partial class Player : CharacterBody3D
     [Export] public float WalkAcceleration = 35.0f;
     [Export] public float WalkDecceleration = 50.0f;
 
+    public float LeftFootHitDistance = 0.0f;
+    public float RightFootHitDistance = 0.0f;
+    public Vector2 LeftFootPosition = Vector2.Zero;
+    public Vector2 RightFootPosition = Vector2.Zero;
+
     private AnimationTree _animationTree;
     private Camera3D _mainCamera;
+    private BoneAttachment3D _leftFootAttachment;
+    private BoneAttachment3D _rightFootAttachment;
+    private RayCast3D _leftFootRaycast;
+    private RayCast3D _rightFootRaycast;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
+    private float _initialAttachmentHeight = 0.0f;
 
     public override void _Ready()
     {
         base._Ready();
-        _animationTree = GetNode<AnimationTree>("%AnimationTree");
-        _mainCamera = GetNode<Camera3D>("%MainCamera");
+        NodeInit();
+
+        _initialAttachmentHeight = _leftFootAttachment.Position.Y;
     }
 
     public override void _Input(InputEvent @event)
@@ -35,7 +46,7 @@ public partial class Player : CharacterBody3D
         
         // Handle horizontal movement
         Vector2 movementInput = new(Input.GetAxis("move_left", "move_right"), Input.GetAxis("move_forward", "move_back"));
-        Vector2 horizontalVelocity = new Vector2();
+        Vector2 horizontalVelocity;
         if (movementInput != Vector2.Zero)
         {
             horizontalVelocity = new Vector2(Velocity.X, Velocity.Z) + WalkAcceleration * movementInput.Rotated(-Rotation.Y).Normalized() * (float)delta;
@@ -64,6 +75,44 @@ public partial class Player : CharacterBody3D
 
         float motionParameter = horizontalVelocity.Length() / WalkSpeed;
         _animationTree.Set("parameters/BlendSpace1D/blend_position", motionParameter);
+
+        _leftFootRaycast.GlobalPosition = _leftFootAttachment.GlobalPosition;
+        _rightFootRaycast.GlobalPosition = _rightFootAttachment.GlobalPosition;
+        _leftFootRaycast.ForceRaycastUpdate();
+        _rightFootRaycast.ForceRaycastUpdate();
+        
+        if (_leftFootRaycast.IsColliding())
+        {
+            LeftFootHitDistance = _leftFootRaycast.GetCollisionPoint().DistanceTo(_leftFootRaycast.GlobalPosition) - _initialAttachmentHeight;
+        }
+        else
+        {
+            LeftFootHitDistance = 1.0f;
+        }
+
+        if (_rightFootRaycast.IsColliding())
+        {
+            RightFootHitDistance = _rightFootRaycast.GetCollisionPoint().DistanceTo(_rightFootRaycast.GlobalPosition) - _initialAttachmentHeight;
+        }
+        else
+        {
+            RightFootHitDistance = 1.0f;
+        }
+
+        var leftPos3D = _leftFootAttachment.GlobalPosition;
+        var rightPos3D = _rightFootAttachment.GlobalPosition;
+        LeftFootPosition = new Vector2(leftPos3D.X, leftPos3D.Z);
+        RightFootPosition = new Vector2(rightPos3D.X, rightPos3D.Z);
+    }
+
+    private void NodeInit()
+    { 
+        _animationTree = GetNode<AnimationTree>("%AnimationTree");
+        _mainCamera = GetNode<Camera3D>("%MainCamera");
+        _leftFootAttachment = GetNode<BoneAttachment3D>("%LeftFootAttachment");
+        _rightFootAttachment = GetNode<BoneAttachment3D>("%RightFootAttachment");
+        _leftFootRaycast = GetNode<RayCast3D>("%LeftFootRaycast");
+        _rightFootRaycast = GetNode<RayCast3D>("%RightFootRaycast");
     }
 
     private void HandleMouseMotion(Vector2 delta)

@@ -34,11 +34,13 @@ environment = SubResource("Environment_nd71p")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5091324, -1.5258789e-05, 0.5162506)
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
+MaxHeight = 48.0
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.117558, 0)
-WalkSpeed = 5.0
-StrafeSpeed = 3.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.427174, 0)
+WalkSpeed = 1.3
+WalkAcceleration = 15.0
+WalkDecceleration = 20.0
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
 visible = false
@@ -46,4 +48,4 @@ Deformer = NodePath("../TerrainDeformer")
 
 [node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
 Player = NodePath("../Player")
-StepInterval = 0.28
+SnowHeight = 0.15

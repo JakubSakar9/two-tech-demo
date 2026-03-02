@@ -9,7 +9,7 @@ public struct TexturePainterParams
 	public uint TextureSize;
 	public float CarveDepth;
 	public Vector2 SpriteCenter;
-	public Vector2 SpriteOffet;
+	public Vector2 SpriteOffset;
 	public float DownscaleFactor;
 	private float _padding;
 }
@@ -48,7 +48,7 @@ public partial class TexturePainter : Node
         {
             TextureSize = TextureSize,
 			SpriteCenter = new Vector2(0.5f, 0.5f),
-			SpriteOffet = new Vector2(-0.2f, 0.0f)
+			SpriteOffset = new Vector2(-0.0f, 0.0f)
         };
 		GD.Randomize();
 
