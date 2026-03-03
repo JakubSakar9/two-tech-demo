@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 public struct TexturePainterParams
 {
 	public Vector4 RotationMat;
-	public uint TextureSize;
-	public float CarveDepth;
-	public Vector2 SpriteCenter;
-	public Vector2 SpriteOffset;
+    public Vector2 CenterLeft;
+    public Vector2 CenterRight;
+    public float DepthLeft;
+    public float DepthRight;
+    public uint TextureSize;
 	public float DownscaleFactor;
-	private float _padding;
 }
 
 public partial class TexturePainter : Node
@@ -47,10 +47,11 @@ public partial class TexturePainter : Node
         Params = new()
         {
             TextureSize = TextureSize,
-			SpriteCenter = new Vector2(0.5f, 0.5f),
-			SpriteOffset = new Vector2(-0.0f, 0.0f)
+            CenterLeft = new Vector2(0.5f, 0.5f),
+            CenterRight = new Vector2(0.5f, 0.5f),
+            DepthLeft = 0.0f,
+			DepthRight = 0.0f
         };
-		GD.Randomize();
 
 		SetAngle(0.0f);
 
@@ -192,8 +193,6 @@ public partial class TexturePainter : Node
 
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 		_device.ComputeListEnd();
-
-		Params.CarveDepth = 0.0f;
 	}
 
 	private byte[] ParamsToBytes()

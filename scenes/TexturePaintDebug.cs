@@ -26,12 +26,11 @@ public partial class TexturePaintDebug : Node2D
     {
         base._Process(delta);
 		_deformationCenter += Vector2.Up * 20.0f * (float)delta;
-		_texturePainter.Params.SpriteCenter = new Vector2(0.5f, 0.5f) + _deformationCenter / _texturePainter.Params.TextureSize;
+		_texturePainter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + _deformationCenter / _texturePainter.Params.TextureSize;
 		if (_stepTimer.IsStopped())
 		{
 			_stepTimer.Start();
-			_texturePainter.Params.CarveDepth = 1.0f;
-			_texturePainter.FlipSprite();
+			_texturePainter.Params.DepthLeft = 1.0f;
 		}
     }
 }
