@@ -13,6 +13,8 @@ uniform vec2 chunk_origin = vec2(0.0);
 uniform float snow_height = 1.0f;
 uniform float max_height = 5.0f;
 uniform float displacement_map_range = 64.0;
+uniform float near_fadeout_distance = 128.0;
+uniform float far_fadeout_distance = 192.0;
 
 varying vec2 terrain_uv;
 varying vec2 disp_uv;
@@ -99,16 +101,20 @@ void fragment() {
 	
 	 float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
 	
-	 if (dot_diff > 0.1) {
-	 	NORMAL = normal_disp;
-	 }
-	 else if (dot_diff < -0.1) {
-	 	NORMAL = normal_height;
-	 }
-	 else {
-	 	float t = (dot_diff + 0.1) / 0.2;
-	 	NORMAL = mix(normal_height, normal_disp, t);
-	 }
+	if (dot_diff > 0.1) {
+		NORMAL = normal_disp;
+	}
+	else if (dot_diff < -0.1) {
+		NORMAL = normal_height;
+	}
+	else {
+		float t = (dot_diff + 0.1) / 0.2;
+		NORMAL = mix(normal_height, normal_disp, t);
+	}
+	
+	float v_distance = length(VERTEX);
+	float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
+	NORMAL = mix(NORMAL, normal_height, fade_t);
 	//NORMAL = normal_height;
 	
 	NORMAL = (VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
