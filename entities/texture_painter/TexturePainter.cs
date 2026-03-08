@@ -16,7 +16,7 @@ public struct TexturePainterParams
 
 public partial class TexturePainter : Node
 {
-	[Export] public uint TextureSize = 1024;
+	[Export] public int TextureSize = 1024;
 	[Export] public Texture2D FootprintTexture;
 
 	const string SHADER_PATH = "res://shaders/disp_compute.glsl";
@@ -46,7 +46,7 @@ public partial class TexturePainter : Node
 		_imageData = new float[TextureSize * TextureSize];
         Params = new()
         {
-            TextureSize = TextureSize,
+            TextureSize = (uint)TextureSize,
             CenterLeft = new Vector2(0.5f, 0.5f),
             CenterRight = new Vector2(0.5f, 0.5f),
             DepthLeft = 0.0f,
@@ -111,8 +111,8 @@ public partial class TexturePainter : Node
 	{
         _format = new()
         {
-            Width = TextureSize,
-            Height = TextureSize,
+            Width = (uint)TextureSize,
+            Height = (uint)TextureSize,
             Format = RenderingDevice.DataFormat.R32Sfloat,
             UsageBits = RenderingDevice.TextureUsageBits.CanUpdateBit
                 | RenderingDevice.TextureUsageBits.StorageBit
@@ -180,8 +180,8 @@ public partial class TexturePainter : Node
 
 	private void DispatchCompute()
 	{
-		uint xGroups = TextureSize / 16;
-		uint yGroups = TextureSize / 16;
+		uint xGroups = (uint)(TextureSize / 16);
+		uint yGroups = (uint)(TextureSize / 16);
 		uint zGroups = 1;
 
 		var computeList = _device.ComputeListBegin();

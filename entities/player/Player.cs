@@ -19,8 +19,7 @@ public partial class Player : CharacterBody3D
     private Camera3D _mainCamera;
     private BoneAttachment3D _leftFootAttachment;
     private BoneAttachment3D _rightFootAttachment;
-    private RayCast3D _leftFootRaycast;
-    private RayCast3D _rightFootRaycast;
+    private RayCast3D _heightRaycast;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
     private float _initialAttachmentHeight = 0.0f;
@@ -76,26 +75,16 @@ public partial class Player : CharacterBody3D
         float motionParameter = horizontalVelocity.Length() / WalkSpeed;
         _animationTree.Set("parameters/BlendSpace1D/blend_position", motionParameter);
 
-        _leftFootRaycast.GlobalPosition = _leftFootAttachment.GlobalPosition;
-        _rightFootRaycast.GlobalPosition = _rightFootAttachment.GlobalPosition;
-        _leftFootRaycast.ForceRaycastUpdate();
-        _rightFootRaycast.ForceRaycastUpdate();
-        
-        if (_leftFootRaycast.IsColliding())
+        _heightRaycast.ForceRaycastUpdate();
+        if (_heightRaycast.IsColliding())
         {
-            LeftFootHitDistance = _leftFootRaycast.GetCollisionPoint().DistanceTo(_leftFootRaycast.GlobalPosition) - _initialAttachmentHeight;
+            float hitDistance = _heightRaycast.GetCollisionPoint().DistanceTo(_heightRaycast.GlobalPosition) - _heightRaycast.Position.Y;
+            LeftFootHitDistance = hitDistance + _leftFootAttachment.Position.Y - _initialAttachmentHeight;
+            RightFootHitDistance = hitDistance + _rightFootAttachment.Position.Y - _initialAttachmentHeight;
         }
         else
         {
             LeftFootHitDistance = 1.0f;
-        }
-
-        if (_rightFootRaycast.IsColliding())
-        {
-            RightFootHitDistance = _rightFootRaycast.GetCollisionPoint().DistanceTo(_rightFootRaycast.GlobalPosition) - _initialAttachmentHeight;
-        }
-        else
-        {
             RightFootHitDistance = 1.0f;
         }
 
@@ -111,8 +100,7 @@ public partial class Player : CharacterBody3D
         _mainCamera = GetNode<Camera3D>("%MainCamera");
         _leftFootAttachment = GetNode<BoneAttachment3D>("%LeftFootAttachment");
         _rightFootAttachment = GetNode<BoneAttachment3D>("%RightFootAttachment");
-        _leftFootRaycast = GetNode<RayCast3D>("%LeftFootRaycast");
-        _rightFootRaycast = GetNode<RayCast3D>("%RightFootRaycast");
+        _heightRaycast = GetNode<RayCast3D>("%HeightRaycast");
     }
 
     private void HandleMouseMotion(Vector2 delta)
