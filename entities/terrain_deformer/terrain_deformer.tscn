@@ -12,3 +12,7 @@ SnowHeight = 0.05
 unique_name_in_owner = true
 TextureSize = 2048
 FootprintTexture = ExtResource("3_hlft1")
+
+[node name="FootprintPainter" type="FootprintPainter" parent="." unique_id=2022267761]
+texture_size = 2048
+footprint_texture = null

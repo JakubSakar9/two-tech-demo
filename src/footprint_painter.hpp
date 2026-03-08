@@ -30,6 +30,7 @@ class FootprintPainter: public Node
         float depth_left;
         float depth_right;
         int32_t texture_size;
+        float downscale_factor;
     };
 
     public:
@@ -38,14 +39,14 @@ class FootprintPainter: public Node
 
     private:
         // Exported
-        Ref<Texture2D> footprint_tex;
-        int32_t texture_size;
+        Ref<Texture2D> footprint_texture;
+        int32_t texture_size = 256; 
         TPParams params;
         RenderingDevice *device;
         RID shader;
         RID pipeline;
-        RID compute_tex;
-        RID footprint_tex_rid;
+        RID compute_texture;
+        RID footprint_texture_rid;
         RID footprint_sampler;
         RID uniform_set;
         TypedArray<Ref<RDUniform>> uniforms;
@@ -71,11 +72,20 @@ class FootprintPainter: public Node
         void init_uniforms();
         void dispatch_compute();
 
+        void set_texture_size(const int32_t p_size);
+        void set_footprint_texture(const Ref<Texture2D>& p_texture);
+        int32_t get_texture_size();
+        Ref<Texture2D> get_footprint_texture();
+
+        inline void free_if_valid(const RID& p_rid, const char* debug_msg)
+        {
+            WARN_PRINT(debug_msg);
+            if (p_rid.is_valid()) device->free_rid(p_rid);
+        }
+
     public:
         FootprintPainter();
         ~FootprintPainter();
-
-
 };
 
 } // namespace godot
