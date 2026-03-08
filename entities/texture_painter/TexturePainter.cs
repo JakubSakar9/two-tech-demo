@@ -97,7 +97,7 @@ public partial class TexturePainter : Node
 		InitFootprintTexture();
 		InitUniforms();
 		_pipeline = _device.ComputePipelineCreate(_shader);
-		DispatchCompute();
+		// DispatchCompute();
 	}
 
 	private void InitShader()

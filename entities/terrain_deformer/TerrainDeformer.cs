@@ -15,7 +15,7 @@ public partial class TerrainDeformer : Node3D
         base._Ready();
         InitNodes();
 
-        _painter.Params.DownscaleFactor = 1.2f * DisplacementMapRange;
+        _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
     }
 
     public override void _PhysicsProcess(double delta)

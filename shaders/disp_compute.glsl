@@ -12,7 +12,7 @@ layout(push_constant, std430) uniform Params {
     vec2 center_right;
     float depth_left;
     float depth_right;
-    uint tex_size;
+    int tex_size;
     float downscale_factor;
 } params;
 
