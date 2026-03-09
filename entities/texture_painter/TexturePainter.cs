@@ -1,6 +1,8 @@
 using Godot;
 using Godot.Collections;
 using System;
+using System.Collections.Generic;
+using System.Net.Security;
 using System.Runtime.InteropServices;
 
 public struct TexturePainterParams
@@ -16,88 +18,82 @@ public struct TexturePainterParams
 
 public partial class TexturePainter : Node
 {
-	[Export] public int TextureSize = 1024;
-	[Export] public Texture2D FootprintTexture;
+    [Export] public Texture2D FootprintTexture;
+    [Export] public uint TextureSize = 1024;
+	[Export] public ChunkPool Pool;
 
-	const string SHADER_PATH = "res://shaders/disp_compute.glsl";
+    const string SHADER_PATH = "res://shaders/disp_compute.glsl";
 
-	public Texture2Drd DisplacementTexture;
-	public TexturePainterParams Params;
+    // public Texture2Drd DisplacementTexture;
+    public TexturePainterParams Params;
 
     private RenderingDevice _device;
-	private Rid _shader;
-	private Rid _pipeline;
-	private Rid _computeTex;
-	private Rid _footprintTex;
-	private Rid _footprintSampler;
-	private Rid _uniformSet;
+    private Rid _shader;
+    private Rid _pipeline;
+    private Rid _computeTex;
+    private Rid _footprintTex;
+    private Rid _footprintSampler;
+    private Rid _uniformSet;
 
-	private Array<RDUniform> _uniforms;
+    private Array<RDUniform> _uniforms;
+    private RDTextureFormat _format;
+    private RDTextureView _view;
 
-	private RDTextureFormat _format;
-	private RDTextureView _view;
 
-	private float[] _imageData;
-	private int _yFlip = 1;
-
-	public override void _Ready()
-	{
+    public override void _Ready()
+    {
         _device = RenderingServer.GetRenderingDevice();
-		_imageData = new float[TextureSize * TextureSize];
         Params = new()
         {
-            TextureSize = (uint)TextureSize,
+            TextureSize = TextureSize,
             CenterLeft = new Vector2(0.5f, 0.5f),
             CenterRight = new Vector2(0.5f, 0.5f),
             DepthLeft = 0.0f,
-			DepthRight = 0.0f
+            DepthRight = 0.0f
         };
 
-		SetAngle(0.0f);
+        SetAngle(0.0f);
 
-		RenderingServer.CallOnRenderThread(Callable.From(InitCompute));
-	}
-	
-	public override void _Process(double delta)
-	{
-		RenderingServer.CallOnRenderThread(Callable.From(DispatchCompute));
-	}
+        RenderingServer.CallOnRenderThread(Callable.From(InitCompute));
+    }
+
+    public override void _Process(double delta)
+    {
+        RenderingServer.CallOnRenderThread(Callable.From(DrawTextures));
+    }
 
     public override void _ExitTree()
     {
         base._ExitTree();
-		_device.FreeRid(_shader);
-		_device.FreeRid(_pipeline);
-		_device.FreeRid(_computeTex);
-		_device.FreeRid(_footprintTex);
-		_device.FreeRid(_footprintSampler);
-		_device.FreeRid(_uniformSet);
+        _device.FreeRid(_shader);
+        _device.FreeRid(_pipeline);
+        _device.FreeRid(_computeTex);
+        _device.FreeRid(_footprintTex);
+        _device.FreeRid(_footprintSampler);
+        _device.FreeRid(_uniformSet);
     }
 
-	public void SetAngle(float angleRadians)
-	{
-		Params.RotationMat = new()
-		{
-			X =  Mathf.Cos(angleRadians) * _yFlip,
-			Y = -Mathf.Sin(angleRadians),
-			Z =  Mathf.Sin(angleRadians) * _yFlip,
-			W =  Mathf.Cos(angleRadians)
-		};
-	}
+    public void SetAngle(float angleRadians)
+    {
+        Params.RotationMat = new()
+        {
+            X = Mathf.Cos(angleRadians),
+            Y = -Mathf.Sin(angleRadians),
+            Z = Mathf.Sin(angleRadians),
+            W = Mathf.Cos(angleRadians)
+        };
+    }
 
-	public void FlipSprite()
-	{
-		_yFlip *= -1;
-	}
+    public void InitPool(uint chunkRange)
+    {
+        Pool.Initialize(chunkRange, TextureSize, in _device);
+    }
 
-	private void InitCompute()
+    private void InitCompute()
 	{
 		InitShader();
-		InitTargetTexture();
 		InitFootprintTexture();
-		InitUniforms();
 		_pipeline = _device.ComputePipelineCreate(_shader);
-		// DispatchCompute();
 	}
 
 	private void InitShader()
@@ -105,28 +101,6 @@ public partial class TexturePainter : Node
 		var shaderFile = GD.Load<RDShaderFile>(SHADER_PATH);
 		var shaderBytecode = shaderFile.GetSpirV();
 		_shader = _device.ShaderCreateFromSpirV(shaderBytecode);
-	}
-
-	private void InitTargetTexture()
-	{
-        _format = new()
-        {
-            Width = (uint)TextureSize,
-            Height = (uint)TextureSize,
-            Format = RenderingDevice.DataFormat.R32Sfloat,
-            UsageBits = RenderingDevice.TextureUsageBits.CanUpdateBit
-                | RenderingDevice.TextureUsageBits.StorageBit
-				| RenderingDevice.TextureUsageBits.CpuReadBit
-                | RenderingDevice.TextureUsageBits.CanCopyFromBit
-                | RenderingDevice.TextureUsageBits.SamplingBit
-        };
-
-		_view = new();
-		DisplacementTexture = new();
-
-		var computeIm = Image.CreateEmpty((int)TextureSize, (int)TextureSize, false, Image.Format.Rf);
-		_computeTex = _device.TextureCreate(_format, _view, [computeIm.GetData()]);
-		DisplacementTexture.TextureRdRid = _computeTex;
 	}
 
 	private void InitFootprintTexture()
@@ -154,34 +128,38 @@ public partial class TexturePainter : Node
         _footprintSampler = _device.SamplerCreate(samplerState);
 	}
 
-	private void InitUniforms()
-	{
-		_uniforms = [];
-
-		var computeTexUniform = new RDUniform
-		{
-			UniformType = RenderingDevice.UniformType.Image,
-			Binding = 0
-		};
-		computeTexUniform.AddId(_computeTex);
-		_uniforms.Add(computeTexUniform);
-
+    private void DrawTextures()
+    {
 		var footprintTexUniform = new RDUniform
 		{
 			UniformType = RenderingDevice.UniformType.SamplerWithTexture,
 			Binding = 1
 		};
-		footprintTexUniform.AddId(_footprintSampler);
-		footprintTexUniform.AddId(_footprintTex);
-		_uniforms.Add(footprintTexUniform);
 
-		_uniformSet = _device.UniformSetCreate(_uniforms, _shader, 0);
-	}
+        List<DTChunk> chunks = Pool.GetTargetChunks();
+        foreach (var chunk in chunks)
+        {
+            _uniforms = [];
 
-	private void DispatchCompute()
+			var computeTexUniform = new RDUniform
+			{
+				UniformType = RenderingDevice.UniformType.Image,
+				Binding = 0
+			};
+			computeTexUniform.AddId(chunk.TexRid);
+			
+			_uniforms.Add(computeTexUniform);
+            _uniforms.Add(footprintTexUniform);
+            DispatchCompute();
+
+            _device.FreeRid(_uniformSet);
+        }
+    }
+
+    private void DispatchCompute()
 	{
-		uint xGroups = (uint)(TextureSize / 16);
-		uint yGroups = (uint)(TextureSize / 16);
+		uint xGroups = TextureSize / 16;
+		uint yGroups = TextureSize / 16;
 		uint zGroups = 1;
 
 		var computeList = _device.ComputeListBegin();

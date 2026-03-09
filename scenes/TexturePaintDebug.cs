@@ -13,8 +13,8 @@ public partial class TexturePaintDebug : Node2D
 		_texturePainter = GetNode<TexturePainter>("%TexturePainter");
 		_textureRect = GetNode<TextureRect>("%TextureRect");
 		_stepTimer = GetNode<Timer>("%StepTimer");
-		_textureRect.Texture = _texturePainter.DisplacementTexture;
-		_stepTimer.WaitTime = 0.5f;
+        _textureRect.Texture = _texturePainter.Pool.GetCurrentTexture();
+        _stepTimer.WaitTime = 0.5f;
 	}
 
     public override void _Input(InputEvent @event)

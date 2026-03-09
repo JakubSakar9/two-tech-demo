@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d2y7dcq8ml31k"]
+
+[ext_resource type="Script" uid="uid://c2wv6x27bljvb" path="res://entities/chunk_pool/ChunkPool.cs" id="1_e4qfi"]
+
+[node name="ChunkPool" type="Node" unique_id=1759920285]
+script = ExtResource("1_e4qfi")

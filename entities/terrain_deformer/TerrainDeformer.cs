@@ -5,6 +5,7 @@ public partial class TerrainDeformer : Node3D
     const float VELOCITY_THRESHOLD = 2.0f;
 
     [Export] public Player Player;
+    [Export] public uint ChunkRange = 2;
     [Export] public float DisplacementMapRange = 64.0f;
     [Export] public float SnowHeight = 0.1f;
 
@@ -16,6 +17,7 @@ public partial class TerrainDeformer : Node3D
         InitNodes();
 
         _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
+        _painter.InitPool(ChunkRange);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -48,9 +50,9 @@ public partial class TerrainDeformer : Node3D
         base._Process(delta);
     }
 
-    public ref Texture2Drd GetDisplacement()
+    public ref readonly Texture2Drd GetDisplacement()
     {
-        return ref _painter.DisplacementTexture;
+        return ref _painter.Pool.GetCurrentTexture();
     }
 
     private void InitNodes()
