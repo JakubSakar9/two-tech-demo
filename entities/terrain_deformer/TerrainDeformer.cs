@@ -6,7 +6,7 @@ public partial class TerrainDeformer : Node3D
     const float VELOCITY_THRESHOLD = 2.0f;
 
     [Export] public Player Player;
-    [Export] public uint ChunkRange = 2;
+    [Export] public uint RadiusChunks = 2;
     [Export] public float DisplacementMapRange = 64.0f;
     [Export] public float SnowHeight = 0.1f;
 
@@ -18,13 +18,14 @@ public partial class TerrainDeformer : Node3D
         InitNodes();
 
         _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
-        _painter.InitPool(ChunkRange);
+        _painter.InitPool(RadiusChunks);
+        _painter.Pool.DisplacementMapRange = DisplacementMapRange;
     }
 
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
-        _painter.Pool.UpdateActiveChunks();
+        _painter.Pool.UpdateActiveChunks(new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z));
         var deformationCenter = Player.LeftFootPosition / DisplacementMapRange;
         _painter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + deformationCenter;
         float carveDepth = 0.0f;

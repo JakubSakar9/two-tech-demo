@@ -94,8 +94,6 @@ public partial class Terrain : StaticBody3D
         _collisionNoiseFunction = new FastNoiseLite();
         UpdateCollisionHeightMap();
 
-        CallDeferred(MethodName.AssignTexture);
-
         SetShaderParam("max_height", MaxHeight);
         SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
         SetShaderParam("snow_height", Deformer.SnowHeight);
@@ -131,6 +129,8 @@ public partial class Terrain : StaticBody3D
         }
         _terrainMesh.GlobalPosition = new Vector3(pos2D.X, 0, pos2D.Y);
         CheckChunkChange(in pos2D);
+
+        CallDeferred(MethodName.AssignTexture);
     }
 
     public ImageTexture GetHeightMap()
