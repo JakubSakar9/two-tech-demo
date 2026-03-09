@@ -135,6 +135,8 @@ public partial class TexturePainter : Node
 			UniformType = RenderingDevice.UniformType.SamplerWithTexture,
 			Binding = 1
 		};
+        footprintTexUniform.AddId(_footprintSampler);
+		footprintTexUniform.AddId(_footprintTex);
 
         List<DTChunk> chunks = Pool.GetTargetChunks();
         foreach (var chunk in chunks)
@@ -150,6 +152,7 @@ public partial class TexturePainter : Node
 			
 			_uniforms.Add(computeTexUniform);
             _uniforms.Add(footprintTexUniform);
+            _uniformSet = _device.UniformSetCreate(_uniforms, _shader, 0);
             DispatchCompute();
 
             _device.FreeRid(_uniformSet);

@@ -41,7 +41,9 @@ public partial class ChunkPool : Node
                 curChunk.ChunkCoord = new Vector2I((int)j - (int)_chunkRange, (int)i - (int)_chunkRange);
             }
         }
-        _activeChunks = new();
+        _activeChunks = [];
+        UpdateActiveChunks();
+
     }
 
     public void Cleanup(ref readonly RenderingDevice device)
@@ -62,9 +64,9 @@ public partial class ChunkPool : Node
     public List<DTChunk> GetTargetChunks()
     {
         List<DTChunk> chunks = new();
-        for (uint i = 0; i < _activeChunks.Count; i++)
+        foreach (uint idx in _activeChunks)
         {
-            chunks.Add(_pool[i]);
+            chunks.Add(_pool[idx]);
         }
         return chunks;
     }

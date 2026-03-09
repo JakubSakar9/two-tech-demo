@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Godot;
 
 public partial class TerrainDeformer : Node3D
@@ -23,6 +24,7 @@ public partial class TerrainDeformer : Node3D
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
+        _painter.Pool.UpdateActiveChunks();
         var deformationCenter = Player.LeftFootPosition / DisplacementMapRange;
         _painter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + deformationCenter;
         float carveDepth = 0.0f;
@@ -41,7 +43,6 @@ public partial class TerrainDeformer : Node3D
             carveDepth = Mathf.Clamp(carveDepth, 0.0f, 1.0f);
         }
         _painter.Params.DepthRight = carveDepth;
-
         _painter.SetAngle(-Player.GlobalRotation.Y);
     }
 
