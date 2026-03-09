@@ -138,6 +138,9 @@ public partial class TexturePainter : Node
         footprintTexUniform.AddId(_footprintSampler);
 		footprintTexUniform.AddId(_footprintTex);
 
+        Vector2 cl = Params.CenterLeft;
+        Vector2 cr = Params.CenterRight;
+
         List<DTChunk> chunks = Pool.GetTargetChunks();
         foreach (var chunk in chunks)
         {
@@ -153,10 +156,17 @@ public partial class TexturePainter : Node
 			_uniforms.Add(computeTexUniform);
             _uniforms.Add(footprintTexUniform);
             _uniformSet = _device.UniformSetCreate(_uniforms, _shader, 0);
+
+            Params.CenterLeft = cl - (Vector2)chunk.ChunkCoord;
+            Params.CenterRight = cr - (Vector2)chunk.ChunkCoord;
+
             DispatchCompute();
 
             _device.FreeRid(_uniformSet);
         }
+
+        Params.CenterLeft = cl;
+        Params.CenterRight = cr;
     }
 
     private void DispatchCompute()

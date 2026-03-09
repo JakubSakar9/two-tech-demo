@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 // TODO:
-// - Update the texture painting shader to take chunk offset into account
 // - Update the terrain displacement shader to use multiple textures at the same time with appropriate offsets
 // - Allow for multiple render targets at once during edge cases
 // - Clear some textures and update their chunk indices as player goes further
