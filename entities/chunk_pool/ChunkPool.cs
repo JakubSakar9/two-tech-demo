@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 // TODO:
-// - Update the terrain displacement shader to use multiple textures at the same time with appropriate offsets
-// - Allow for multiple render targets at once during edge cases
 // - Clear some textures and update their chunk indices as player goes further
 
 public struct DTChunk
@@ -19,32 +17,34 @@ public struct DTChunk
 public partial class ChunkPool : Node
 {
     public float DisplacementMapRange;
+    public int RowChunks;
+    public int NChunks;
 
+    private RenderingDevice _device;
     private RDTextureFormat _format;
     private RDTextureView _view;
     private DTChunk[] _pool = null;
     private List<uint> _activeChunks;
     private uint _chunkIdx;
     private int _radiusChunks;
-    private int _rowChunks;
-    private int _nChunks;
 
     public void Initialize(uint chunkRange, uint textureSize, ref readonly RenderingDevice device)
     {
+        _device = device;
         _radiusChunks = (int)chunkRange;
-        _rowChunks = 2 * _radiusChunks + 1;
-        _nChunks = _rowChunks * _rowChunks;
-        _pool = new DTChunk[_nChunks];
+        RowChunks = 2 * _radiusChunks + 1;
+        NChunks = RowChunks * RowChunks;
+        _pool = new DTChunk[NChunks];
 
-        CreateSharedResources(textureSize, in device);
-        for (uint i = 0; i < _rowChunks; i++)
+        CreateSharedResources(textureSize);
+        for (uint i = 0; i < RowChunks; i++)
         {
-            for (uint j = 0; j < _rowChunks; j++)
+            for (uint j = 0; j < RowChunks; j++)
             {
-                uint idx = i * (uint)_rowChunks + j;
+                uint idx = i * (uint)RowChunks + j;
                 ref DTChunk curChunk = ref _pool[idx];
                 curChunk = new();
-                CreateTexture((int)textureSize, ref curChunk, in device);
+                CreateTexture((int)textureSize, ref curChunk);
                 curChunk.ChunkCoord = new Vector2I((int)j - (int)_radiusChunks, (int)i - (int)_radiusChunks);
             }
         }
@@ -54,7 +54,7 @@ public partial class ChunkPool : Node
 
     public void Cleanup(ref readonly RenderingDevice device)
     {
-        for (uint i = 0; i < _nChunks; i++)
+        for (uint i = 0; i < NChunks; i++)
         {
             device.FreeRid(_pool[i].TexRid);
         }
@@ -64,11 +64,18 @@ public partial class ChunkPool : Node
     {
         Vector2 rawCoords = (playerPosition + Vector2.One * 0.5f * DisplacementMapRange) / DisplacementMapRange;
         Vector2I chunkCoords = Vector2I.Zero;
-        chunkCoords.X = (((int)Mathf.Floor(rawCoords.X)) % _rowChunks) + _rowChunks;
-        chunkCoords.Y = (((int)Mathf.Floor(rawCoords.Y)) % _rowChunks) + _rowChunks;
-        int xCoord = (chunkCoords.X + _radiusChunks) % _rowChunks;
-        int yCoord = (chunkCoords.Y + _radiusChunks) % _rowChunks;
-        _chunkIdx = (uint)(yCoord * _rowChunks + xCoord);
+        chunkCoords.X = (((int)Mathf.Floor(rawCoords.X)) % RowChunks) + RowChunks;
+        chunkCoords.Y = (((int)Mathf.Floor(rawCoords.Y)) % RowChunks) + RowChunks;
+        int xCoord = (chunkCoords.X + _radiusChunks) % RowChunks;
+        int yCoord = (chunkCoords.Y + _radiusChunks) % RowChunks;
+        
+        uint prevChunk = _chunkIdx;
+        _chunkIdx = (uint)(yCoord * RowChunks + xCoord);
+        if (_chunkIdx != prevChunk)
+        {
+            HandleChunkTransition((int)prevChunk);
+        }
+
         _activeChunks.Clear();
         _activeChunks.Add(_chunkIdx);
     }
@@ -88,13 +95,18 @@ public partial class ChunkPool : Node
         return ref _pool[_chunkIdx].Displacement;
     }
 
-    private void CreateSharedResources(uint textureSize, ref readonly RenderingDevice device)
+    public ref readonly Texture2Drd GetTextureAtIdx(uint idx)
+    {
+        return ref _pool[idx].Displacement;
+    }
+
+    private void CreateSharedResources(uint textureSize)
     {
         _format = new()
         {
             Width = textureSize,
             Height = textureSize,
-            Format = RenderingDevice.DataFormat.R32Sfloat,
+            Format = RenderingDevice.DataFormat.R8Unorm,
             UsageBits = RenderingDevice.TextureUsageBits.CanUpdateBit
                 | RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CpuReadBit
@@ -105,11 +117,43 @@ public partial class ChunkPool : Node
         _view = new();
     }
 
-    private void CreateTexture(int textureSize, ref DTChunk targetChunk, ref readonly RenderingDevice device)
+    private void CreateTexture(int textureSize, ref DTChunk targetChunk)
     {
-        var im = Image.CreateEmpty(textureSize, textureSize, false, Image.Format.Rf);
-        targetChunk.TexRid = device.TextureCreate(_format, _view, [im.GetData()]);
+        // var im = Image.CreateEmpty(textureSize, textureSize, false, Image.Format.Rf);
+        byte[] clearData = new byte[textureSize * textureSize];
+        var im = Image.CreateFromData(textureSize, textureSize, false, Image.Format.R8, clearData);
+        targetChunk.TexRid = _device.TextureCreate(_format, _view, [im.GetData()]);
         targetChunk.Displacement = new();
         targetChunk.Displacement.TextureRdRid = targetChunk.TexRid;
+    }
+
+    private void HandleChunkTransition(int prevChunk)
+    {
+        int prevX = prevChunk % RowChunks;
+        int prevY = prevChunk / RowChunks;
+        int curX = (int)_chunkIdx % RowChunks;
+        int curY = (int)_chunkIdx / RowChunks;
+        if (prevX != curX)
+        {
+            int clearX = (RowChunks + curX + RowChunks / 2 * (curX - prevX)) % RowChunks;
+            uint texSize = (uint)_pool[0].Displacement.GetSize().X;
+            byte[] clearData = new byte[texSize * texSize];
+            for (uint i = 0; i < RowChunks; i++)
+            {
+                _device.TextureUpdate(_pool[i * RowChunks + clearX].TexRid, 0, clearData);
+            }
+            GD.Print("Cleared column " + clearX);
+        }
+        if (prevY != curY)
+        {
+            int clearY = (RowChunks + curY + RowChunks / 2 * (curY - prevY)) % RowChunks;
+            uint texSize = (uint)_pool[0].Displacement.GetSize().X;
+            byte[] clearData = new byte[texSize * texSize];
+            for (uint i = 0; i < RowChunks; i++)
+            {
+                _device.TextureUpdate(_pool[clearY * RowChunks + i].TexRid, 0, clearData);
+            }
+            GD.Print("Cleared row " + clearY);
+        }
     }
 }

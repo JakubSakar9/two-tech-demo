@@ -57,6 +57,16 @@ public partial class TerrainDeformer : Node3D
         return ref _painter.Pool.GetCurrentTexture();
     }
 
+    public Texture2Drd[] GetDisplacementTextures()
+    {
+        Texture2Drd[] textures = new Texture2Drd[_painter.Pool.NChunks];
+        for (uint i = 0; i < _painter.Pool.NChunks; i++)
+        {
+            textures[i] = _painter.Pool.GetTextureAtIdx(i);
+        }
+        return textures;
+    }
+
     private void InitNodes()
     {
         _painter = GetNode<TexturePainter>("%TexturePainter");

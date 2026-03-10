@@ -3,7 +3,7 @@
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-layout(set = 0, binding = 0, r32f) uniform image2D disp_tex;
+layout(set = 0, binding = 0, r8) uniform image2D disp_tex;
 layout(set = 0, binding = 1) uniform sampler2D fp_tex;
 
 layout(push_constant, std430) uniform Params {

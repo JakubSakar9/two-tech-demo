@@ -207,7 +207,7 @@ public partial class Terrain : StaticBody3D
     {
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         SetShaderParam("displacement_map_range", Deformer.DisplacementMapRange);
-        SetShaderParam("displacement_map", Deformer.GetDisplacement());
+        SetShaderParam("displacement_maps", Deformer.GetDisplacementTextures());
     }
 
     private void SetShaderParam(string property, Variant value)
