@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c7xb0jrjk7xof" path="res://entities/player/Player.cs" id="1_merdl"]
 [ext_resource type="PackedScene" uid="uid://b6at368peknpr" path="res://assets/models/player/player.glb" id="2_abrql"]
+[ext_resource type="PackedScene" uid="uid://d0i7eg82dkyi3" path="res://entities/wind/snow_particles/snow_particles.tscn" id="3_sglur"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_u3f3p"]
 radius = 0.4
@@ -51,22 +52,22 @@ cull_mask = 1048573
 [node name="PlayerSkin" parent="." unique_id=160291661 instance=ExtResource("2_abrql")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
-[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 1170584340) index="0" unique_id=1907178092]
-bones/0/position = Vector3(-2.0275559e-10, 0.8413561, 0.017193032)
+[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 104445345) index="0" unique_id=628352536]
+bones/0/position = Vector3(-1.3432722e-10, 0.8415769, 0.017193032)
 bones/0/rotation = Quaternion(-0.03667094, 1.1912911e-07, -4.371518e-09, 0.9993274)
-bones/2/rotation = Quaternion(-0.013070447, -0.11680575, 0.9794391, -0.16396593)
+bones/2/rotation = Quaternion(-0.013222319, -0.11682107, 0.9798021, -0.1617592)
 bones/3/rotation = Quaternion(0.120499216, 0.0051755216, -0.09108298, 0.9885126)
-bones/4/rotation = Quaternion(-0.14492907, -0.015655873, 0.98781425, -0.054531403)
+bones/4/rotation = Quaternion(-0.14490822, -0.016058456, 0.98782015, -0.05436049)
 bones/4/scale = Vector3(0.9999639, 1, 0.99999154)
-bones/5/rotation = Quaternion(-0.13482971, 0.00320229, -0.07988425, 0.98763824)
-bones/6/rotation = Quaternion(0.6000276, 0.034993604, 0.27103785, 0.7518517)
+bones/5/rotation = Quaternion(-0.13225487, 0.0032038006, -0.078358725, 0.98810846)
+bones/6/rotation = Quaternion(0.5993723, 0.034916043, 0.27062756, 0.75252545)
 bones/6/scale = Vector3(0.9999807, 1.0000161, 0.9999879)
-bones/7/rotation = Quaternion(0.007433665, -0.10111406, 0.97941583, 0.17454354)
+bones/7/rotation = Quaternion(0.007416171, -0.10111859, 0.9793703, 0.17479677)
 bones/8/rotation = Quaternion(0.12049925, -0.005175505, 0.091082975, 0.9885126)
-bones/9/rotation = Quaternion(0.14702804, -0.014214636, 0.98751163, 0.05478599)
+bones/9/rotation = Quaternion(0.14693423, -0.016042754, 0.9875401, 0.05401429)
 bones/9/scale = Vector3(0.9999629, 1.0000001, 0.9999911)
-bones/10/rotation = Quaternion(-0.13482927, -0.0032022563, 0.07988397, 0.98763835)
-bones/11/rotation = Quaternion(0.5995958, -0.033251967, -0.27207845, 0.7518993)
+bones/10/rotation = Quaternion(-0.1322544, -0.0032037846, 0.07835843, 0.9881085)
+bones/11/rotation = Quaternion(0.5989395, -0.033175673, -0.2716695, 0.7525733)
 bones/11/scale = Vector3(0.9999801, 1.0000168, 0.9999877)
 bones/12/position = Vector3(0.051505342, 0.51271045, 0.22282161)
 bones/12/rotation = Quaternion(-0.04340317, 0.7057735, 0.7057735, -0.04340317)
@@ -78,13 +79,13 @@ bones/15/rotation = Quaternion(0.009165643, 0.7070474, -0.7070474, -0.009165643)
 
 [node name="LeftFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="1" unique_id=307436259]
 unique_name_in_owner = true
-transform = Transform3D(-0.8771719, 0.106493816, -0.46811017, -0.4722288, -0.36698437, 0.80143714, -0.086426795, 0.9241181, 0.37220767, 0.1616614, 0.09431788, -0.097227454)
+transform = Transform3D(-0.8767758, 0.10651742, -0.46884575, -0.4731766, -0.36411428, 0.8021867, -0.085252315, 0.92525, 0.36965823, 0.16214596, 0.09401542, -0.095479995)
 bone_name = "foot.l"
 bone_idx = 6
 
 [node name="RightFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="2" unique_id=1956819650]
 unique_name_in_owner = true
-transform = Transform3D(-0.8767674, -0.10654017, 0.46885437, 0.47318983, -0.36414373, 0.80216545, 0.08525276, 0.92523617, 0.36969286, -0.16230953, 0.0941219, -0.09488146)
+transform = Transform3D(-0.87677425, -0.10651749, 0.46884602, 0.47317678, -0.36411485, 0.80218613, 0.085252196, 0.92525005, 0.3696582, -0.1621463, 0.09401554, -0.095480025)
 bone_name = "foot.r"
 bone_idx = 11
 
@@ -98,5 +99,8 @@ parameters/BlendSpace1D/blend_position = 0.0
 [node name="HeightRaycast" type="RayCast3D" parent="." unique_id=369813681]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+
+[node name="SnowParticles" parent="." unique_id=121143072 instance=ExtResource("3_sglur")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6819016, 0)
 
 [editable path="PlayerSkin"]

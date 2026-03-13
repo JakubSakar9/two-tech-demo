@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://byhehfsbnes1h"]
+
+[ext_resource type="Script" uid="uid://wgokdv20u4v7" path="res://entities/wind/wind_compute/WindCompute.cs" id="1_y5lr3"]
+
+[node name="WindCompute" type="Node" unique_id=37666401]
+script = ExtResource("1_y5lr3")

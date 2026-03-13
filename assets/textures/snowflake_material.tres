@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://co53i58g7yqbm"]
+
+[ext_resource type="Texture2D" uid="uid://bkairhfo4ih55" path="res://assets/textures/snowflake.png" id="1_vat1i"]
+
+[resource]
+transparency = 1
+albedo_texture = ExtResource("1_vat1i")
+billboard_mode = 1
