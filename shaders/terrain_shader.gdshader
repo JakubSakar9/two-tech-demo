@@ -4,19 +4,25 @@ render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_sc
 
 const int DISP_COUNT = 25;
 const float HEIGHTMAP_RANGE = 768.0;
-const float DETAIL_SIZE = 0.02;
+const float DETAIL_SIZE = 0.01;
+const float JITTER_STRENGTH = 0.05;
 
-uniform vec4 albedo;
+//uniform vec4 albedo;
+//uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+uniform float roughness : hint_range(0.0, 1.0);
+uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
+
 uniform sampler2D height_map: source_color, filter_linear_mipmap;
 uniform sampler2D glitter_map: source_color, filter_nearest;
-uniform sampler2D displacement_map: source_color, filter_linear_mipmap;
 uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap;
+
 uniform vec2 chunk_origin = vec2(0.0);
 uniform float snow_height = 1.0f;
 uniform float max_height = 5.0f;
 uniform float displacement_map_range = 64.0;
 uniform float near_fadeout_distance = 128.0;
 uniform float far_fadeout_distance = 192.0;
+uniform float displacement_darkening = 0.0;
 uniform int disp_row = 5;
 
 varying vec2 terrain_uv;
@@ -39,8 +45,8 @@ void vertex() {
 	int tidx = chunk.y * disp_row + chunk.x;
 
 	float height = texture(height_map, terrain_uv).r * max_height;
-	displacement = texture(displacement_maps[tidx], disp_uv).r + DETAIL_SIZE * texture(glitter_map, disp_uv).r;
-	float snow_offset = (1.0 - displacement) * snow_height;
+	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
+	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
 	
 	vec2 detail_uv = disp_uv * 10.0;
@@ -63,6 +69,7 @@ void fragment() {
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
+	displacement = texture(displacement_maps[tidx], disp_uv).r;
 	
 	vec2 duvx = vec2(eps_d, 0);
 	vec2 duvy = vec2(0, eps_d);
@@ -73,28 +80,35 @@ void fragment() {
 	vec3 normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
 	
 	disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
-	
 	float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
 	
-	if (dot_diff > 0.1) {
-		NORMAL = normal_disp;
-	}
-	else if (dot_diff < -0.1) {
+	if (dot_diff > 0.05) {
 		NORMAL = normal_height;
 	}
-	else {
-		float t = (dot_diff + 0.1) / 0.2;
-		NORMAL = mix(normal_height, normal_disp, t);
+	else if (dot_diff < -0.1) {
+		NORMAL = normal_disp;
 	}
+	else {
+		float t = (dot_diff + 0.1) / 0.15;
+		NORMAL = mix(normal_disp, normal_height, t);
+	}
+	//NORMAL = normal_height;
 	
 	float v_distance = length(VERTEX);
 	float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
 	NORMAL = mix(NORMAL, normal_height, fade_t);
-	//NORMAL = normal_height;
+	vec3 v = normalize(-VERTEX);
+	float jitter = texture(glitter_map, detail_uv).r;
+	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * jitter * jitter);
 	
 	NORMAL = (VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
+	ALBEDO = 0.9 * debug_color;
+	//ALBEDO = debug_color;
 	
-	ALBEDO = 0.8 * debug_color;
+	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
+	float roughness_tex = dot(texture(texture_roughness, disp_uv), roughness_texture_channel);
+	ROUGHNESS = roughness_tex * roughness;
+	SPECULAR = 0.1;
 }
 
 void light() {
@@ -102,9 +116,10 @@ void light() {
 	float fresnel2 = fresnel * fresnel;
 	float fresnel3 = fresnel * fresnel2;
 	float fresnel4 = fresnel2 * fresnel2;
-	float glitter = clamp(texture(glitter_map, 100.0 * terrain_uv).r, 0.4, 1.0);
-	vec3 H = normalize(LIGHT + VIEW);
+	float glitter = clamp(texture(glitter_map, 30.0 * disp_uv).r, 0.4, 1.0);
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
-	SPECULAR_LIGHT = vec3(rim_specular * disp_flatness);
-	DIFFUSE_LIGHT = 0.5 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * displacement;
+	float disp_ao = (1.0 - displacement_darkening * displacement);
+	//SPECULAR_LIGHT = vec3(glitter * disp_flatness);
+	SPECULAR_LIGHT = vec3(rim_specular);
+	DIFFUSE_LIGHT = 0.5 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
 }

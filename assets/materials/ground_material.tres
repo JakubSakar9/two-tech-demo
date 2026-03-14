@@ -2,6 +2,42 @@
 
 [ext_resource type="Shader" uid="uid://tnrtre0lfm56" path="res://shaders/terrain_shader.gdshader" id="1_bu8bs"]
 
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_bu8bs"]
+noise_type = 5
+frequency = 0.4876
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_jkxpb"]
+noise = SubResource("FastNoiseLite_bu8bs")
+seamless = true
+seamless_blend_skirt = 0.029
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_jkxpb"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_7orrk"]
+noise = SubResource("FastNoiseLite_jkxpb")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_7orrk"]
+noise_type = 2
+frequency = 0.0179
+fractal_gain = 0.7
+fractal_weighted_strength = 0.25
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_tmqy1"]
+noise = SubResource("FastNoiseLite_7orrk")
+
 [resource]
 render_priority = 0
 shader = ExtResource("1_bu8bs")
+shader_parameter/roughness = 1.0
+shader_parameter/texture_roughness = SubResource("NoiseTexture2D_tmqy1")
+shader_parameter/height_map = SubResource("NoiseTexture2D_7orrk")
+shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
+shader_parameter/displacement_maps = null
+shader_parameter/chunk_origin = Vector2(0, 0)
+shader_parameter/snow_height = 1.0
+shader_parameter/max_height = 5.0
+shader_parameter/displacement_map_range = 64.0
+shader_parameter/near_fadeout_distance = 128.0
+shader_parameter/far_fadeout_distance = 192.0
+shader_parameter/displacement_darkening = 0.15
+shader_parameter/disp_row = 5

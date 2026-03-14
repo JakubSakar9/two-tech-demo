@@ -4,8 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://cscxji62akae1" path="res://assets/textures/footprint.png" id="2_k3ea3"]
 [ext_resource type="PackedScene" uid="uid://d2y7dcq8ml31k" path="res://entities/terrain/chunk_pool/chunk_pool.tscn" id="2_kowy2"]
 
-[node name="TexturePainter" type="Node" unique_id=74182145]
+[node name="TexturePainter" type="Node" unique_id=74182145 node_paths=PackedStringArray("Pool")]
 script = ExtResource("1_36aq0")
 FootprintTexture = ExtResource("2_k3ea3")
+Pool = NodePath("ChunkPool")
 
 [node name="ChunkPool" parent="." unique_id=1759920285 instance=ExtResource("2_kowy2")]

@@ -78,7 +78,11 @@ public partial class Player : CharacterBody3D
         _heightRaycast.ForceRaycastUpdate();
         if (_heightRaycast.IsColliding())
         {
-            float hitDistance = _heightRaycast.GetCollisionPoint().DistanceTo(_heightRaycast.GlobalPosition) - _heightRaycast.Position.Y;
+            float hitDistance = 0.0f;
+            if (!IsOnFloor())
+            {
+                hitDistance = _heightRaycast.GetCollisionPoint().DistanceTo(_heightRaycast.GlobalPosition) - _heightRaycast.Position.Y;
+            }
             LeftFootHitDistance = hitDistance + _leftFootAttachment.Position.Y - _initialAttachmentHeight;
             RightFootHitDistance = hitDistance + _rightFootAttachment.Position.Y - _initialAttachmentHeight;
         }

@@ -19,9 +19,11 @@ sky = SubResource("Sky_j8ivh")
 ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
 reflected_light_source = 2
-ssao_enabled = true
 ssil_radius = 10.0
 ssil_intensity = 4.0
+fog_sky_affect = 0.7
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.015
 
 [node name="TestScene" type="Node3D" unique_id=509472552]
 

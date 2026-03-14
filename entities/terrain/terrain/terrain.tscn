@@ -19,4 +19,6 @@ shape = SubResource("HeightMapShape3D_2ny8j")
 [node name="TerrainMesh" type="MeshInstance3D" parent="." unique_id=435326952]
 unique_name_in_owner = true
 material_override = ExtResource("2_2ny8j")
+extra_cull_margin = 100.0
+gi_mode = 2
 mesh = ExtResource("1_kdop1")

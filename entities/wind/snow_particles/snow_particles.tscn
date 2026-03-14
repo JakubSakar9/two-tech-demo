@@ -4,7 +4,7 @@
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_gg86h"]
 resource_local_to_scene = true
-emission_shape_offset = Vector3(0, 4, 0)
+emission_shape_offset = Vector3(0, 12, 0)
 emission_shape = 3
 emission_box_extents = Vector3(64, 8, 64)
 turbulence_noise_strength = 0.2
@@ -12,20 +12,20 @@ turbulence_noise_strength = 0.2
 [sub_resource type="QuadMesh" id="QuadMesh_8ftpa"]
 resource_local_to_scene = true
 material = ExtResource("1_8ftpa")
-size = Vector2(0.3, 0.3)
+size = Vector2(0.1, 0.1)
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_nvuc5"]
+emission_shape_offset = Vector3(0, 12, 0)
 emission_shape = 3
-emission_box_extents = Vector3(8, 4, 8)
+emission_box_extents = Vector3(8, 8, 8)
 direction = Vector3(1, -1, 0)
 
 [sub_resource type="QuadMesh" id="QuadMesh_yb1o1"]
 material = ExtResource("1_8ftpa")
-size = Vector2(0.3, 0.3)
+size = Vector2(0.1, 0.1)
 
 [sub_resource type="Gradient" id="Gradient_8ftpa"]
-offsets = PackedFloat32Array(0, 0.5060241, 1)
-colors = PackedColorArray(1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1)
+colors = PackedColorArray(1, 0.49803922, 0.49803922, 1, 1, 0.49803922, 0.49803922, 1)
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_nvuc5"]
 frequency = 0.0254
@@ -49,6 +49,7 @@ process_material = SubResource("ParticleProcessMaterial_nvuc5")
 draw_pass_1 = SubResource("QuadMesh_yb1o1")
 
 [node name="GPUParticlesAttractorVectorField3D" type="GPUParticlesAttractorVectorField3D" parent="." unique_id=110266233]
-strength = 5.0
-size = Vector3(16, 6, 16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
+strength = 20.0
+size = Vector3(128, 20, 128)
 texture = SubResource("NoiseTexture3D_2r760")
