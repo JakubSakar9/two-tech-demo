@@ -112,7 +112,6 @@ public partial class ChunkPool : Node
 				| RenderingDevice.TextureUsageBits.CpuReadBit
                 | RenderingDevice.TextureUsageBits.CanCopyFromBit
                 | RenderingDevice.TextureUsageBits.SamplingBit
-				| RenderingDevice.TextureUsageBits.CanUpdateBit
         };
         _view = new();
     }
@@ -121,8 +120,7 @@ public partial class ChunkPool : Node
     {
         // var im = Image.CreateEmpty(textureSize, textureSize, false, Image.Format.Rf);
         byte[] clearData = new byte[textureSize * textureSize];
-        var im = Image.CreateFromData(textureSize, textureSize, false, Image.Format.R8, clearData);
-        targetChunk.TexRid = _device.TextureCreate(_format, _view, [im.GetData()]);
+        targetChunk.TexRid = _device.TextureCreate(_format, _view, [clearData]);
         targetChunk.Displacement = new();
         targetChunk.Displacement.TextureRdRid = targetChunk.TexRid;
     }

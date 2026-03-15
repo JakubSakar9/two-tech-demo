@@ -49,12 +49,13 @@ public struct HeightMap
 
 public partial class Terrain : StaticBody3D
 {
-    const int NOISE_SWAP_COUNT = 4;
+    const int HEIGHTMAP_SWAP_COUNT = 4;
 
     [Signal] public delegate void MapShiftedEventHandler();
 
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
+    [Export] public WindGenerator WindGen;
     [Export] public int ChunkSizeUnits = 256;
     [Export] public int CollisionSizeUnits = 8;
     [Export] public float MaxHeight = 32.0f;
@@ -81,17 +82,21 @@ public partial class Terrain : StaticBody3D
         _terrainMesh = GetNode<MeshInstance3D>("%TerrainMesh");
         _terrainCollider = GetNode<CollisionShape3D>("%TerrainCollider");
         
-        _heightMaps = new HeightMap[NOISE_SWAP_COUNT];
+        _heightMaps = new HeightMap[HEIGHTMAP_SWAP_COUNT];
         _heightMapShape = new HeightMapShape3D();
 
         int heightmapSize = 3 * ChunkSizeUnits;
 
-        for (int i = 0; i < NOISE_SWAP_COUNT; i++)
+        WindGen.Initialize(heightmapSize);
+
+        for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
             _heightMaps[i] = new(heightmapSize);
             _heightMaps[i].noiseFn.FractalLacunarity = 1.7f;
             _heightMaps[i].Generate();
+            WindGen.BindWindTextureRid(i, ref _heightMaps[i].windTexture);
         }
+        WindGen.Generate(0, ref _heightMaps[0].heightImage);
 
         _collisionNoiseFunction = new FastNoiseLite();
         UpdateCollisionHeightMap();
@@ -99,8 +104,6 @@ public partial class Terrain : StaticBody3D
         SetShaderParam("max_height", MaxHeight);
         SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
         SetShaderParam("snow_height", Deformer.SnowHeight);
-
-        // GetViewport().DebugDraw = Viewport.DebugDrawEnum.Wireframe;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -196,7 +199,7 @@ public partial class Terrain : StaticBody3D
 
     private async void UpdateHeightMap()
     {
-        _noiseIndex = (_noiseIndex + 1) % NOISE_SWAP_COUNT;
+        _noiseIndex = (_noiseIndex + 1) % HEIGHTMAP_SWAP_COUNT;
         _heightMaps[_noiseIndex].MoveOrigin(ChunkOrigin);
         var timer = GetTree().CreateTimer(1.0f);
         await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
