@@ -60,3 +60,7 @@ move_back={
 [physics]
 
 3d/default_gravity=9.0
+
+[rendering]
+
+anti_aliasing/quality/msaa_3d=1

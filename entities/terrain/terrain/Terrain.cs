@@ -6,7 +6,8 @@ public struct HeightMap
     public FastNoiseLite noiseFn;
     public Image heightImage;
     public ImageTexture height;
-    private int _size;
+    public Texture3Drd windTexture;
+    private readonly int _size;
 
     public HeightMap(int size)
     {
@@ -14,6 +15,7 @@ public struct HeightMap
         noiseFn = new();
         heightImage = new();
         height = new();
+        windTexture = new();
         _size = size;
 
         noiseFn.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
