@@ -21,7 +21,7 @@ public struct HeightMap
         noiseFn.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
     }
 
-    public unsafe void Generate()
+    public unsafe void Generate(float maxHeight)
     {
         fixed(byte* bytePointer = bytes)
         {
@@ -30,8 +30,8 @@ public struct HeightMap
             {
                 for (int j = 0; j < _size; j++)
                 {
-                    float noiseValue = (noiseFn.GetNoise2D(j, i) + 1.0f) / 2.0f;
-                    floatPointer[i * _size + j] = noiseValue;
+                    float heightValue = maxHeight * (noiseFn.GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    floatPointer[i * _size + j] = heightValue;
                 }
             }
         }
@@ -40,10 +40,10 @@ public struct HeightMap
         height.SetImage(heightImage);
     }
 
-    public void MoveOrigin(Vector2 origin)
+    public void MoveOrigin(Vector2 origin, float maxHeight)
     {
         noiseFn.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
-        Generate();
+        Generate(maxHeight);
     }
 }
 
@@ -66,6 +66,7 @@ public partial class Terrain : StaticBody3D
     private MeshInstance3D _terrainMesh;
     private CollisionShape3D _terrainCollider;
     private HeightMapShape3D _heightMapShape;
+    private GpuParticlesAttractorVectorField3D _windField;
 
 
     private HeightMap[] _heightMaps;
@@ -81,6 +82,7 @@ public partial class Terrain : StaticBody3D
 
         _terrainMesh = GetNode<MeshInstance3D>("%TerrainMesh");
         _terrainCollider = GetNode<CollisionShape3D>("%TerrainCollider");
+        _windField = GetNode<GpuParticlesAttractorVectorField3D>("%WindField");
         
         _heightMaps = new HeightMap[HEIGHTMAP_SWAP_COUNT];
         _heightMapShape = new HeightMapShape3D();
@@ -93,7 +95,7 @@ public partial class Terrain : StaticBody3D
         {
             _heightMaps[i] = new(heightmapSize);
             _heightMaps[i].noiseFn.FractalLacunarity = 1.7f;
-            _heightMaps[i].Generate();
+            _heightMaps[i].Generate(MaxHeight);
             WindGen.BindWindTextureRid(i, ref _heightMaps[i].windTexture);
         }
         WindGen.Generate(0, ref _heightMaps[0].heightImage);
@@ -101,7 +103,10 @@ public partial class Terrain : StaticBody3D
         _collisionNoiseFunction = new FastNoiseLite();
         UpdateCollisionHeightMap();
 
-        SetShaderParam("max_height", MaxHeight);
+        _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
+        _windField.Position = new Vector3(0.0f, _windField.Size.Y / 2.0f, 0.0f);
+        _windField.Texture = _heightMaps[0].windTexture;
+
         SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
         SetShaderParam("snow_height", Deformer.SnowHeight);
     }
@@ -200,7 +205,7 @@ public partial class Terrain : StaticBody3D
     private async void UpdateHeightMap()
     {
         _noiseIndex = (_noiseIndex + 1) % HEIGHTMAP_SWAP_COUNT;
-        _heightMaps[_noiseIndex].MoveOrigin(ChunkOrigin);
+        _heightMaps[_noiseIndex].MoveOrigin(ChunkOrigin, MaxHeight);
         var timer = GetTree().CreateTimer(1.0f);
         await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
         SetShaderParam("height_map", _heightMaps[_noiseIndex].height);

@@ -13,6 +13,7 @@ public partial class WindGenerator : Node
 	private Rid _shader;
 	private Rid _pipeline;
 	private Rid[] _windTextures;
+	private Rid[] _windTexturesLocal;
 	private Rid _heightTexture;
 	private Rid _uniformSet;
 
@@ -26,6 +27,7 @@ public partial class WindGenerator : Node
 		InitShader();
 		InitWindTextures();
 		InitHeightTexture();
+		_pipeline = _device.ComputePipelineCreate(_shader);
 	}
 
 	public void BindWindTextureRid(uint idx, ref Texture3Drd tex)
@@ -59,12 +61,14 @@ public partial class WindGenerator : Node
 
 	private void InitWindTextures()
 	{
+		RenderingDevice mainDevice = RenderingServer.GetRenderingDevice();
 		_windTextures = new Rid[WINDTEX_SWAP_COUNT];
+		_windTexturesLocal = new Rid[WINDTEX_SWAP_COUNT];
 		var format = new RDTextureFormat {
 			Width = (uint)_texSize,
 			Height = 1,
 			Depth = (uint)_texSize,
-			Format = RenderingDevice.DataFormat.R32G32B32Sfloat,
+			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
 			TextureType = RenderingDevice.TextureType.Type3D,
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CpuReadBit
@@ -73,10 +77,14 @@ public partial class WindGenerator : Node
 		};
 		var view = new RDTextureView();
 
-		byte[] initData = new byte[3 * sizeof(float) * _texSize * _texSize];
+		byte[] initData = new byte[4 * sizeof(float) * _texSize * _texSize];
 		for (uint i = 0; i < WINDTEX_SWAP_COUNT; i++)
 		{
-			_windTextures[i] = _device.TextureCreate(format, view, [initData]);
+			_windTextures[i] = mainDevice.TextureCreate(format, view, [initData]);
+			_windTexturesLocal[i] = _device.TextureCreateFromExtension(format.TextureType,
+				format.Format, format.Samples, format.UsageBits,
+				mainDevice.GetDriverResource(RenderingDevice.DriverResource.Texture, _windTextures[i], 0),
+				format.Width, format.Height, format.Depth, format.ArrayLayers);
 		}
 	}
 
@@ -88,9 +96,9 @@ public partial class WindGenerator : Node
 			Width = (uint)_texSize,
 			Height = (uint)_texSize,
 			Format = RenderingDevice.DataFormat.R32Sfloat,
-			UsageBits = RenderingDevice.TextureUsageBits.SamplingBit
+			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CanUpdateBit,
-			Mipmaps = (uint)_heightImage.GetMipmapCount()
+			Mipmaps = (uint)_heightImage.GetMipmapCount() + 1
 		};
 		var view = new RDTextureView();
 		_heightTexture = _device.TextureCreate(format, view, [_heightImage.GetData()]);
@@ -114,20 +122,20 @@ public partial class WindGenerator : Node
 
 	private void BindUniforms(uint idx)
 	{
-		var windTexUniform = new RDUniform
+		var heightmapUniform = new RDUniform
 		{
 			UniformType = RenderingDevice.UniformType.Image,
 			Binding = 0
 		};
-		windTexUniform.AddId(_windTextures[idx]);
-		var heightmapUniform = new RDUniform
+		var windTexUniform = new RDUniform
 		{
 			UniformType = RenderingDevice.UniformType.Image,
 			Binding = 1
 		};
+		windTexUniform.AddId(_windTexturesLocal[idx]);
 		heightmapUniform.AddId(_heightTexture);
 
-		Godot.Collections.Array<RDUniform> uniforms = [windTexUniform, heightmapUniform];
+		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windTexUniform];
 		if (_uniformSet.IsValid && _device.UniformSetIsValid(_uniformSet)) _device.FreeRid(_uniformSet);
 		_uniformSet = _device.UniformSetCreate(uniforms, _shader, 0);
 	}

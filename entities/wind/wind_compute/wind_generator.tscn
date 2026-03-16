@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://wgokdv20u4v7" path="res://entities/wind/wind_compute/WindGenerator.cs" id="1_rlgvp"]
 
-[node name="WindCompute" type="Node" unique_id=37666401]
+[node name="WindGenerator" type="Node" unique_id=37666401]
 script = ExtResource("1_rlgvp")

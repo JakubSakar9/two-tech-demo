@@ -1,6 +1,8 @@
-- Write a compute shader that precomputes a wind vector field over the map (in sets of nine chunks, use asynchronous computation during runtime)
-- Create a snow particle system that follows the player
-- Affect the velocity of the particles using the wind vector field
+- Affect the velocity of the particles using the computed vector field
+- Make heightmap chunk changes more seamless
+- Make vector field shift along with chunk change
+- Fix broken displacement at far distances (again)
+- Improve the wind compute shader to get a more accurate result which uses the heightmap
 - Footprints Audio
 - Wind spatial audio based on the current wind velocity
 - Precompute a snow height texture based on the heightmap and wind vector field

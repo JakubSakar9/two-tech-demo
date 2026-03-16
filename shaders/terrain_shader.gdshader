@@ -7,8 +7,6 @@ const float HEIGHTMAP_RANGE = 768.0;
 const float DETAIL_SIZE = 0.01;
 const float JITTER_STRENGTH = 0.05;
 
-//uniform vec4 albedo;
-//uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
 uniform float roughness : hint_range(0.0, 1.0);
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
 
@@ -18,7 +16,6 @@ uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mip
 
 uniform vec2 chunk_origin = vec2(0.0);
 uniform float snow_height = 1.0f;
-uniform float max_height = 5.0f;
 uniform float displacement_map_range = 64.0;
 uniform float near_fadeout_distance = 128.0;
 uniform float far_fadeout_distance = 192.0;
@@ -44,7 +41,7 @@ void vertex() {
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
 
-	float height = texture(height_map, terrain_uv).r * max_height;
+	float height = texture(height_map, terrain_uv).r;
 	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
@@ -52,10 +49,10 @@ void vertex() {
 	vec2 detail_uv = disp_uv * 10.0;
 	
 	float eps_h = 0.001;
-	vec3 height_px = vec3(VERTEX.x + eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv + vec2(eps_h, 0)).x * max_height, VERTEX.z);
-	vec3 height_mx = vec3(VERTEX.x - eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv - vec2(eps_h, 0)).x * max_height, VERTEX.z);
-	vec3 height_py = vec3(VERTEX.x, texture(height_map, terrain_uv + vec2(0, eps_h)).x * max_height, VERTEX.z + eps_h * HEIGHTMAP_RANGE);
-	vec3 height_my = vec3(VERTEX.x, texture(height_map, terrain_uv - vec2(0, eps_h)).x * max_height, VERTEX.z - eps_h * HEIGHTMAP_RANGE);
+	vec3 height_px = vec3(VERTEX.x + eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv + vec2(eps_h, 0)).x, VERTEX.z);
+	vec3 height_mx = vec3(VERTEX.x - eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv - vec2(eps_h, 0)).x, VERTEX.z);
+	vec3 height_py = vec3(VERTEX.x, texture(height_map, terrain_uv + vec2(0, eps_h)).x, VERTEX.z + eps_h * HEIGHTMAP_RANGE);
+	vec3 height_my = vec3(VERTEX.x, texture(height_map, terrain_uv - vec2(0, eps_h)).x, VERTEX.z - eps_h * HEIGHTMAP_RANGE);
 	normal_height = -normalize(cross(height_px - height_mx, height_py - height_my));
 	
 	debug_color = vec3(1.0);
