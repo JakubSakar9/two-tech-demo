@@ -12,8 +12,9 @@ public partial class WindGenerator : Node
 	private RenderingDevice _device;
 	private Rid _shader;
 	private Rid _pipeline;
-	private Rid[] _windTextures;
-	private Rid[] _windTexturesLocal;
+	// private Rid[] _windTextures;
+	// private Rid[] _windTexturesLocal;
+	private Rid[] _windBuffers;
 	private Rid _heightTexture;
 	private Rid _uniformSet;
 
@@ -26,7 +27,7 @@ public partial class WindGenerator : Node
 		_device = RenderingServer.CreateLocalRenderingDevice();
 		_texSize = texSize;
 		InitShader();
-		InitWindTextures();
+		InitWindBuffer();
 		InitHeightTexture();
 		_pipeline = _device.ComputePipelineCreate(_shader);
 		_layerCount = 1;
@@ -34,17 +35,13 @@ public partial class WindGenerator : Node
 
 	public void CopyWindTexture(uint idx, ref ImageTexture3D tex)
 	{
-		byte[] outData = RenderingServer.GetRenderingDevice().TextureGetData(_windTextures[idx], 0);
 		Godot.Collections.Array<Image> images = [];
-		int strideBytes = 4 * sizeof(float) * _texSize * _layerCount;
-		for (int i = 0; i < _texSize; i++)
+		uint strideBytes = 4 * sizeof(float) * (uint)_texSize * (uint)_layerCount;
+		for (uint i = 0; i < _texSize; i++)
 		{
-			byte[] layerData = new byte[strideBytes];
-			Buffer.BlockCopy(outData, i * strideBytes, layerData, 0, strideBytes);
+			byte[] layerData = _device.BufferGetData(_windBuffers[idx], i * strideBytes, strideBytes);
 			Image layerImage = Image.CreateFromData(_texSize, _layerCount, false, Image.Format.Rgbaf, layerData);
-			GD.Print(layerImage.GetPixel(0, 0));
 			layerImage.Convert(Image.Format.Rgba8);
-			GD.Print(layerImage.GetPixel(0, 0));
 			images.Add(layerImage);
 		}
 		tex.Update(images);
@@ -74,32 +71,14 @@ public partial class WindGenerator : Node
 		_shader = _device.ShaderCreateFromSpirV(shaderBytecode);
 	}
 
-	private void InitWindTextures()
+	private void InitWindBuffer()
 	{
-		RenderingDevice mainDevice = RenderingServer.GetRenderingDevice();
-		_windTextures = new Rid[WINDTEX_SWAP_COUNT];
-		_windTexturesLocal = new Rid[WINDTEX_SWAP_COUNT];
-		var format = new RDTextureFormat {
-			Width = (uint)_texSize,
-			Height = 1,
-			Depth = (uint)_texSize,
-			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
-			TextureType = RenderingDevice.TextureType.Type3D,
-			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
-				| RenderingDevice.TextureUsageBits.CpuReadBit
-                | RenderingDevice.TextureUsageBits.CanCopyFromBit
-                | RenderingDevice.TextureUsageBits.SamplingBit
-		};
-		var view = new RDTextureView();
-
-		byte[] initData = new byte[4 * sizeof(float) * _texSize * _texSize];
+		int dataSize = 4 * sizeof(float) * _texSize * _texSize;
+		byte[] initData = new byte[dataSize];
+		_windBuffers = new Rid[WINDTEX_SWAP_COUNT];
 		for (uint i = 0; i < WINDTEX_SWAP_COUNT; i++)
 		{
-			_windTextures[i] = mainDevice.TextureCreate(format, view, [initData]);
-			_windTexturesLocal[i] = _device.TextureCreateFromExtension(format.TextureType,
-				format.Format, format.Samples, format.UsageBits,
-				mainDevice.GetDriverResource(RenderingDevice.DriverResource.Texture, _windTextures[i], 0),
-				format.Width, format.Height, format.Depth, format.ArrayLayers);
+			_windBuffers[i] = _device.StorageBufferCreate((uint)dataSize, initData);
 		}
 	}
 
@@ -144,10 +123,10 @@ public partial class WindGenerator : Node
 		};
 		var windTexUniform = new RDUniform
 		{
-			UniformType = RenderingDevice.UniformType.Image,
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
 			Binding = 1
 		};
-		windTexUniform.AddId(_windTexturesLocal[idx]);
+		windTexUniform.AddId(_windBuffers[idx]);
 		heightmapUniform.AddId(_heightTexture);
 
 		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windTexUniform];

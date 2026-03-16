@@ -1,5 +1,3 @@
-- Affect the velocity of the particles using the computed vector field
-- Make heightmap chunk changes more seamless
 - Make vector field shift along with chunk change
 - Fix broken displacement at far distances (again)
 - Improve the wind compute shader to get a more accurate result which uses the heightmap
