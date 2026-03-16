@@ -19,6 +19,7 @@ public partial class WindGenerator : Node
 
 	private Image _heightImage;
 	private int _texSize;
+	private int _layerCount;
 
 	public void Initialize(int texSize)
 	{
@@ -28,11 +29,25 @@ public partial class WindGenerator : Node
 		InitWindTextures();
 		InitHeightTexture();
 		_pipeline = _device.ComputePipelineCreate(_shader);
+		_layerCount = 1;
 	}
 
-	public void BindWindTextureRid(uint idx, ref Texture3Drd tex)
+	public void CopyWindTexture(uint idx, ref ImageTexture3D tex)
 	{
-		tex.TextureRdRid = _windTextures[idx];
+		byte[] outData = RenderingServer.GetRenderingDevice().TextureGetData(_windTextures[idx], 0);
+		Godot.Collections.Array<Image> images = [];
+		int strideBytes = 4 * sizeof(float) * _texSize * _layerCount;
+		for (int i = 0; i < _texSize; i++)
+		{
+			byte[] layerData = new byte[strideBytes];
+			Buffer.BlockCopy(outData, i * strideBytes, layerData, 0, strideBytes);
+			Image layerImage = Image.CreateFromData(_texSize, _layerCount, false, Image.Format.Rgbaf, layerData);
+			GD.Print(layerImage.GetPixel(0, 0));
+			layerImage.Convert(Image.Format.Rgba8);
+			GD.Print(layerImage.GetPixel(0, 0));
+			images.Add(layerImage);
+		}
+		tex.Update(images);
 	}
 
 	public void Generate(uint idx, ref Image heightImage)
@@ -109,7 +124,7 @@ public partial class WindGenerator : Node
 		_device.TextureUpdate(_heightTexture, 0, _heightImage.GetData());
 		BindUniforms(idx);
 		uint xGroups = (uint)_texSize / 16;
-		uint yGroups = 1;
+		uint yGroups = (uint)_layerCount;
 		uint zGroups = (uint)_texSize / 16;
 
 		var computeList = _device.ComputeListBegin();

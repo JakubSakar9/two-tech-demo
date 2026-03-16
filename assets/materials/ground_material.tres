@@ -35,7 +35,6 @@ shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
 shader_parameter/displacement_maps = null
 shader_parameter/chunk_origin = Vector2(0, 0)
 shader_parameter/snow_height = 1.0
-shader_parameter/max_height = 5.0
 shader_parameter/displacement_map_range = 64.0
 shader_parameter/near_fadeout_distance = 128.0
 shader_parameter/far_fadeout_distance = 192.0

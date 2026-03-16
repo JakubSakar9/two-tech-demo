@@ -6,7 +6,7 @@ public struct HeightMap
     public FastNoiseLite noiseFn;
     public Image heightImage;
     public ImageTexture height;
-    public Texture3Drd windTexture;
+    public ImageTexture3D windTexture;
     private readonly int _size;
 
     public HeightMap(int size)
@@ -58,8 +58,10 @@ public partial class Terrain : StaticBody3D
     [Export] public WindGenerator WindGen;
     [Export] public int ChunkSizeUnits = 256;
     [Export] public int CollisionSizeUnits = 8;
+    [Export] public int WindLayerCount = 1;
     [Export] public float MaxHeight = 32.0f;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
+    
 
     public Vector2 ChunkOrigin = Vector2.Zero;
 
@@ -96,7 +98,14 @@ public partial class Terrain : StaticBody3D
             _heightMaps[i] = new(heightmapSize);
             _heightMaps[i].noiseFn.FractalLacunarity = 1.7f;
             _heightMaps[i].Generate(MaxHeight);
-            WindGen.BindWindTextureRid(i, ref _heightMaps[i].windTexture);
+            _heightMaps[i].windTexture = new ImageTexture3D();
+            Godot.Collections.Array<Image> initImages = [];
+            for (uint j = 0; j < heightmapSize; j++)
+            {
+                initImages.Add(Image.CreateEmpty(heightmapSize, WindLayerCount, false, Image.Format.Rgba8));
+            }
+            _heightMaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindLayerCount, heightmapSize,
+                false, initImages);
         }
         WindGen.Generate(0, ref _heightMaps[0].heightImage);
 
@@ -105,7 +114,9 @@ public partial class Terrain : StaticBody3D
 
         _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
         _windField.Position = new Vector3(0.0f, _windField.Size.Y / 2.0f, 0.0f);
+        WindGen.CopyWindTexture(0, ref _heightMaps[0].windTexture);
         _windField.Texture = _heightMaps[0].windTexture;
+        GD.Print(_heightMaps[0].windTexture.GetData()[10].GetPixel(10, 0));
 
         SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
         SetShaderParam("snow_height", Deformer.SnowHeight);
