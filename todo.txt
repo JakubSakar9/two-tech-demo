@@ -1,4 +1,3 @@
-- Make vector field shift along with chunk change
 - Fix broken displacement at far distances (again)
 - Improve the wind compute shader to get a more accurate result which uses the heightmap
 - Footprints Audio

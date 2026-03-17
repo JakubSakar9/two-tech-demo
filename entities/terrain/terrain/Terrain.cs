@@ -51,7 +51,7 @@ public partial class Terrain : StaticBody3D
 {
     const int HEIGHTMAP_SWAP_COUNT = 4;
 
-    [Signal] public delegate void MapShiftedEventHandler();
+    // [Signal] public delegate void MapShiftedEventHandler();
 
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
@@ -76,7 +76,7 @@ public partial class Terrain : StaticBody3D
     private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
     
-    private int _noiseIndex = 0;
+    private int _heightmapIndex = 0;
 
     public override void _Ready()
     {
@@ -116,9 +116,8 @@ public partial class Terrain : StaticBody3D
         _windField.Position = new Vector3(0.0f, _windField.Size.Y / 2.0f, 0.0f);
         WindGen.CopyWindTexture(0, ref _heightMaps[0].windTexture);
         _windField.Texture = _heightMaps[0].windTexture;
-        GD.Print(_heightMaps[0].windTexture.GetData()[10].GetPixel(10, 0));
 
-        SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
+        SetShaderParam("height_map", _heightMaps[_heightmapIndex].height);
         SetShaderParam("snow_height", Deformer.SnowHeight);
     }
 
@@ -156,7 +155,7 @@ public partial class Terrain : StaticBody3D
 
     public ImageTexture GetHeightMap()
     {
-        return _heightMaps[_noiseIndex].height;
+        return _heightMaps[_heightmapIndex].height;
     }
 
     private void CheckChunkChange(ref readonly Vector2 position2D)
@@ -215,13 +214,18 @@ public partial class Terrain : StaticBody3D
 
     private async void UpdateHeightMap()
     {
-        _noiseIndex = (_noiseIndex + 1) % HEIGHTMAP_SWAP_COUNT;
-        _heightMaps[_noiseIndex].MoveOrigin(ChunkOrigin, MaxHeight);
-        var timer = GetTree().CreateTimer(1.0f);
-        await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
-        SetShaderParam("height_map", _heightMaps[_noiseIndex].height);
+        _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
+        _heightMaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight);
+        WindGen.Generate((uint)_heightmapIndex, ref _heightMaps[_heightmapIndex].heightImage);
+        // await ToSignal(WindGen, WindGenerator.SignalName.ComputeDone);
+
+        _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
+        WindGen.CopyWindTexture(0, ref _heightMaps[0].windTexture);
+        _windField.Texture = _heightMaps[_heightmapIndex].windTexture;
+        SetShaderParam("height_map", _heightMaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
-        EmitSignal(SignalName.MapShifted);
+        GD.Print("Swapped to index " + _heightmapIndex);
+        // EmitSignal(SignalName.MapShifted);
     }
 
     private async void AssignTexture()

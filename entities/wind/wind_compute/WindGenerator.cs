@@ -59,10 +59,13 @@ public partial class WindGenerator : Node
 		_heightImage = heightImage;
 		DispatchCompute(idx);
 		Thread waitThread = new(() => {
-			_device.Sync();
+            GD.Print("Sync called");
+            _device.Sync();
+			GD.Print("Sync over");
 			CallDeferred("emit_signal", SignalName.ComputeDone);
 		});
-	}
+        waitThread.Start();
+    }
 
 	private void InitShader()
 	{
