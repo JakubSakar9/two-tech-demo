@@ -3,8 +3,8 @@
 [ext_resource type="Material" uid="uid://co53i58g7yqbm" path="res://assets/textures/snowflake_material.tres" id="1_8ftpa"]
 
 [sub_resource type="Gradient" id="Gradient_8ftpa"]
-offsets = PackedFloat32Array(0, 0.17213115, 0.8114754, 1)
-colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 0.8606557, 0.8606557, 0.8606557, 1, 1, 1, 1, 0)
+offsets = PackedFloat32Array(0, 0.18857142, 0.7885714, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_nvuc5"]
 gradient = SubResource("Gradient_8ftpa")
@@ -15,7 +15,9 @@ emission_shape_offset = Vector3(0, 12, 0)
 emission_shape = 3
 emission_box_extents = Vector3(64, 8, 64)
 color_ramp = SubResource("GradientTexture1D_nvuc5")
+turbulence_enabled = true
 turbulence_noise_strength = 0.2
+turbulence_noise_scale = 4.0
 
 [sub_resource type="QuadMesh" id="QuadMesh_8ftpa"]
 resource_local_to_scene = true

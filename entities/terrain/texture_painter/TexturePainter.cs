@@ -160,6 +160,8 @@ public partial class TexturePainter : Node
             Params.CenterLeft = cl - (Vector2)chunk.ChunkCoord;
             Params.CenterRight = cr - (Vector2)chunk.ChunkCoord;
 
+            // GD.Print(Params.CenterLeft);
+
             DispatchCompute();
 
             _device.FreeRid(_uniformSet);
