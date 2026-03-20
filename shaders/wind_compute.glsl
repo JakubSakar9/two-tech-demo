@@ -1,8 +1,13 @@
 #[compute]
 #version 450
 
-const vec3 WIND_VEC = vec3(0.3, 0.0, 0.4);
+/// Base wind vector at sea level
+const vec2 WIND_VEC = vec2(0.3, 0.4);
+// Venturi effect strength (very high here for demostration purposes)
 const float K_VENTURI = 1.0;
+/// Topography effect on wind
+const float K_TERRAIN = 0.6;
+/// Maximum strength for the wind vector field particle attractor. Used for normalization.
 const float MAX_FIELD_STRENGTH = 64.0;
 
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;
@@ -16,16 +21,49 @@ void main() {
     uint px = gl_GlobalInvocationID.x;
     uint pz = gl_GlobalInvocationID.z;
     uint size = gl_NumWorkGroups.x * gl_WorkGroupSize.x;
-    uint idx = pz * size + px;
 
-    ivec3 pixel = ivec3(px, 0, pz);
-    float a = imageLoad(heightmap, ivec2(px, pz)).r;
-    vec3 w_venturi = (1.0 + K_VENTURI * a) * WIND_VEC;
+    vec3 p = vec3(px, imageLoad(heightmap, ivec2(px, pz)).r, pz);
+    float a = p.y;
+
+    // Horizontal wind speed calculation
+    float a_mx = a;
+    float a_px = a;
+    float a_mz = a;
+    float a_pz = a;
+
+    if (px > 0) {
+        a_mx = imageLoad(heightmap, ivec2(px - 1, pz)).r;
+    }
+    if (px < size - 1) {
+        a_px = imageLoad(heightmap, ivec2(px + 1, pz)).r;
+    }
+    if (pz > 0) {
+        a_mz = imageLoad(heightmap, ivec2(px, pz - 1)).r;
+    }
+    if (pz < size - 1) {
+        a_pz = imageLoad(heightmap, ivec2(px, pz + 1)).r;
+    }
+
+    vec3 n = normalize(vec3((a_mx - a_px), 2, (a_mz - a_pz)));
+    vec2 n_xz = n.xz;
+    vec2 n_xz_p = vec2(n_xz.y, -n_xz.x);
+
+    // Venturi effect
+    vec2 w_venturi = (1.0 + K_VENTURI * a) * WIND_VEC;
+    // Topographic effect
+    if (dot(w_venturi, n_xz_p) < 0) n_xz_p = -n_xz_p;
+    vec2 w_topo = w_venturi * (1 - length(n_xz)) + K_TERRAIN * length(w_venturi) * n_xz_p;
     
-    vec3 w_dir = normalize(w_venturi);
-    float strength = length(w_venturi);
+    // Vertical wind calculation TODO
+    float w_vert = 0.0;
+
+    // Final wind calculation and interpolation
+    vec3 w_a = vec3(w_topo.x, w_vert, w_topo.y); // Wind at the terrain altitude
+    vec3 w_dir = normalize(w_a);
+    float strength = length(w_a);
     float mult = min(1.0, strength / MAX_FIELD_STRENGTH);
     vec3 w = (w_dir * mult + 1.0) / 2.0;
     
+    uint idx = pz * size + px;
     wind_vec[idx] = vec4(w, 1.0);
 }
