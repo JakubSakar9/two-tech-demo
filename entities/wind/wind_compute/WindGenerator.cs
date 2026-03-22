@@ -6,7 +6,7 @@ public partial class WindGenerator : Node
 {
 	[Signal] public delegate void ComputeDoneEventHandler();
 	
-	const string SHADER_PATH = "res://shaders/wind_compute.glsl";
+	const string SHADER_PATH = "res://shaders/wind_surf_compute.glsl";
 	const int WINDTEX_SWAP_COUNT = 4;
 
 	private RenderingDevice _device;

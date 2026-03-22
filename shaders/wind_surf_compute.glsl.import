@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://sclksrbwqnj0"
+path="res://.godot/imported/wind_surf_compute.glsl-d1485d68ef5478ee19f46553ef040b6a.res"
+
+[deps]
+
+source_file="res://shaders/wind_surf_compute.glsl"
+dest_files=["res://.godot/imported/wind_surf_compute.glsl-d1485d68ef5478ee19f46553ef040b6a.res"]
+
+[params]
+

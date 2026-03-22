@@ -1,5 +1,4 @@
-- Fix broken displacement at far distances (again)
-- Improve the wind compute shader to get a more accurate result which uses the heightmap
+- Add third dimension to the wind compute
 - Footprints Audio
 - Wind spatial audio based on the current wind velocity
 - Precompute a snow height texture based on the heightmap and wind vector field

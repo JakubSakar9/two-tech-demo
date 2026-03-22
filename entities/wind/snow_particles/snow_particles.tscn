@@ -14,9 +14,12 @@ resource_local_to_scene = true
 emission_shape_offset = Vector3(0, 12, 0)
 emission_shape = 3
 emission_box_extents = Vector3(64, 8, 64)
+gravity = Vector3(0, -4.9, 0)
 color_ramp = SubResource("GradientTexture1D_nvuc5")
+turbulence_enabled = true
 turbulence_noise_strength = 0.2
-turbulence_noise_scale = 4.0
+turbulence_noise_scale = 8.145
+turbulence_influence_min = 0.0
 
 [sub_resource type="QuadMesh" id="QuadMesh_8ftpa"]
 resource_local_to_scene = true
@@ -26,7 +29,7 @@ size = Vector2(0.1, 0.1)
 [node name="SnowParticles" type="Node3D" unique_id=121143072]
 
 [node name="FarParticles" type="GPUParticles3D" parent="." unique_id=1594113800]
-amount = 4096
-lifetime = 5.0
+amount = 8192
+lifetime = 10.0
 process_material = SubResource("ParticleProcessMaterial_gg86h")
 draw_pass_1 = SubResource("QuadMesh_8ftpa")
