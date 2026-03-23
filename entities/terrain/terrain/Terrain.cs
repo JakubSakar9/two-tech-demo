@@ -212,20 +212,17 @@ public partial class Terrain : StaticBody3D
         _terrainCollider.GlobalPosition = new Vector3(Player.GlobalPosition.X, 0, Player.GlobalPosition.Z);
     }
 
-    private async void UpdateHeightMap()
+    private void UpdateHeightMap()
     {
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
         _heightMaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight);
         WindGen.Generate((uint)_heightmapIndex, ref _heightMaps[_heightmapIndex].heightImage);
-        // await ToSignal(WindGen, WindGenerator.SignalName.ComputeDone);
 
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
-        WindGen.CopyWindTexture(0, ref _heightMaps[0].windTexture);
+        WindGen.CopyWindTexture((uint)_heightmapIndex, ref _heightMaps[_heightmapIndex].windTexture);
         _windField.Texture = _heightMaps[_heightmapIndex].windTexture;
         SetShaderParam("height_map", _heightMaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
-        GD.Print("Swapped to index " + _heightmapIndex);
-        // EmitSignal(SignalName.MapShifted);
     }
 
     private async void AssignTexture()

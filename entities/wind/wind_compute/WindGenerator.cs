@@ -84,7 +84,7 @@ public partial class WindGenerator : Node
 
     private void InitSurfaceBuffer()
     {
-        int dataSize = 4 * sizeof(float) * _texSize * _layerCount * _texSize;
+        int dataSize = 4 * sizeof(float) * _texSize * _texSize;
 		byte[] initData = new byte[dataSize];
 		_surfaceBuffer = _device.StorageBufferCreate((uint)dataSize, initData);
     }
@@ -134,7 +134,7 @@ public partial class WindGenerator : Node
 		
 		yGroups = (uint)_layerCount;
 		_device.ComputeListBindComputePipeline(computeList, _pipeline3D);
-        _device.ComputeListBindUniformSet(computeList, _uniformSet3D, 1);
+        _device.ComputeListBindUniformSet(computeList, _uniformSet3D, 0);
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 
         _device.ComputeListEnd();
@@ -185,6 +185,6 @@ public partial class WindGenerator : Node
 
 		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windSurfUniform, wind3DUniform];
 		if (_uniformSet3D.IsValid && _device.UniformSetIsValid(_uniformSet3D)) _device.FreeRid(_uniformSet3D);
-		_uniformSet3D = _device.UniformSetCreate(uniforms, _shader3D, 1);
+		_uniformSet3D = _device.UniformSetCreate(uniforms, _shader3D, 0);
 	}
 }

@@ -4,7 +4,7 @@
 /// Base wind vector at sea level
 const vec2 WIND_VEC = vec2(0.3, 0.4);
 // Venturi effect strength (very high here for demostration purposes)
-const float K_VENTURI = 1.0;
+const float K_VENTURI = 1.0; // TODO: Pass using push constants
 /// Topography effect on wind
 const float K_TERRAIN = 0.6;
 /// Maximum strength for the wind vector field particle attractor. Used for normalization.

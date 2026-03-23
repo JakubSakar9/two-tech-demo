@@ -1,4 +1,3 @@
-- Add third dimension to the wind compute
 - Footprints Audio
 - Wind spatial audio based on the current wind velocity
 - Precompute a snow height texture based on the heightmap and wind vector field
@@ -11,7 +10,8 @@
 - Update the discard policy to not discard textures which are nearby
 - [Visual Improvements]
 - [Test with users]
-- [Experiment with hardware tesselation to improve performance]
+- [Make everything giant (terrain LODs)]
 - [Vegetation/obstacles]
+- [Experiment with hardware tesselation to improve performance]
 - [UI/Gamey stuff]
 - [Add procedural animation]
