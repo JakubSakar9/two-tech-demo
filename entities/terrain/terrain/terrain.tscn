@@ -25,4 +25,4 @@ mesh = ExtResource("1_kdop1")
 
 [node name="WindField" type="GPUParticlesAttractorVectorField3D" parent="." unique_id=366154156]
 unique_name_in_owner = true
-strength = 64.0
+strength = 32.0

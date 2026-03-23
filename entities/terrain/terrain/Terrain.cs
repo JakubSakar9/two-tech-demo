@@ -91,7 +91,7 @@ public partial class Terrain : StaticBody3D
 
         int heightmapSize = 3 * ChunkSizeUnits;
 
-        WindGen.Initialize(heightmapSize);
+        WindGen.Initialize(heightmapSize, WindLayerCount);
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {

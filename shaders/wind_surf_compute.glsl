@@ -8,9 +8,10 @@ const float K_VENTURI = 1.0;
 /// Topography effect on wind
 const float K_TERRAIN = 0.6;
 /// Maximum strength for the wind vector field particle attractor. Used for normalization.
-const float MAX_FIELD_STRENGTH = 64.0;
+const float MAX_FIELD_STRENGTH = 32.0;
 // Offset used to approximate wind shadowing
 const float V_FALLOFF_OFFSET = 0.2;
+// Multiplier that increases the upwards motion of the wind along slopes
 const float VERTICAL_BOOST = 2.0;
 
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;

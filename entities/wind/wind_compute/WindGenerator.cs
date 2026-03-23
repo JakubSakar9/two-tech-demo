@@ -6,31 +6,36 @@ public partial class WindGenerator : Node
 {
 	[Signal] public delegate void ComputeDoneEventHandler();
 	
-	const string SHADER_PATH = "res://shaders/wind_surf_compute.glsl";
+	const string SHADER_PATH_SURFACE = "res://shaders/wind_surf_compute.glsl";
+	const string SHADER_PATH_3D = "res://shaders/wind_3d_compute.glsl";
 	const int WINDTEX_SWAP_COUNT = 4;
 
 	private RenderingDevice _device;
-	private Rid _shader;
-	private Rid _pipeline;
-	// private Rid[] _windTextures;
-	// private Rid[] _windTexturesLocal;
-	private Rid[] _windBuffers;
+	private Rid _shaderSurface;
+    private Rid _shader3D;
+    private Rid _pipelineSurface;
+	private Rid _pipeline3D;
+    private Rid _surfaceBuffer;
+    private Rid[] _windBuffers;
 	private Rid _heightTexture;
-	private Rid _uniformSet;
+	private Rid _uniformSetSurface;
+    private Rid _uniformSet3D;
 
-	private Image _heightImage;
+    private Image _heightImage;
 	private int _texSize;
 	private int _layerCount;
 
-	public void Initialize(int texSize)
+	public void Initialize(int texSize, int layerCount)
 	{
 		_device = RenderingServer.CreateLocalRenderingDevice();
 		_texSize = texSize;
-		InitShader();
-		InitWindBuffer();
+		_layerCount = layerCount;
+		InitShaders();
+        InitSurfaceBuffer();
+        InitWindBuffers();
 		InitHeightTexture();
-		_pipeline = _device.ComputePipelineCreate(_shader);
-		_layerCount = 1;
+		_pipelineSurface = _device.ComputePipelineCreate(_shaderSurface);
+        _pipeline3D = _device.ComputePipelineCreate(_shader3D);
 	}
 
 	public void CopyWindTexture(uint idx, ref ImageTexture3D tex)
@@ -59,24 +64,34 @@ public partial class WindGenerator : Node
 		_heightImage = heightImage;
 		DispatchCompute(idx);
 		Thread waitThread = new(() => {
-            GD.Print("Sync called");
             _device.Sync();
-			GD.Print("Sync over");
 			CallDeferred("emit_signal", SignalName.ComputeDone);
 		});
         waitThread.Start();
     }
 
-	private void InitShader()
+	private void InitShaders()
 	{
-		var shaderFile = GD.Load<RDShaderFile>(SHADER_PATH);
+		var shaderFile = GD.Load<RDShaderFile>(SHADER_PATH_SURFACE);
 		var shaderBytecode = shaderFile.GetSpirV();
-		_shader = _device.ShaderCreateFromSpirV(shaderBytecode);
-	}
+		_shaderSurface = _device.ShaderCreateFromSpirV(shaderBytecode);
+		
+		shaderFile = GD.Load<RDShaderFile>(SHADER_PATH_3D);
+		shaderBytecode = shaderFile.GetSpirV();
+        _shader3D = _device.ShaderCreateFromSpirV(shaderBytecode);
 
-	private void InitWindBuffer()
+    }
+
+    private void InitSurfaceBuffer()
+    {
+        int dataSize = 4 * sizeof(float) * _texSize * _layerCount * _texSize;
+		byte[] initData = new byte[dataSize];
+		_surfaceBuffer = _device.StorageBufferCreate((uint)dataSize, initData);
+    }
+
+    private void InitWindBuffers()
 	{
-		int dataSize = 4 * sizeof(float) * _texSize * _texSize;
+		int dataSize = 4 * sizeof(float) * _texSize * _layerCount * _texSize;
 		byte[] initData = new byte[dataSize];
 		_windBuffers = new Rid[WINDTEX_SWAP_COUNT];
 		for (uint i = 0; i < WINDTEX_SWAP_COUNT; i++)
@@ -104,36 +119,72 @@ public partial class WindGenerator : Node
 	private void DispatchCompute(uint idx)
 	{
 		_device.TextureUpdate(_heightTexture, 0, _heightImage.GetData());
-		BindUniforms(idx);
-		uint xGroups = (uint)_texSize / 16;
-		uint yGroups = (uint)_layerCount;
+		BindSurfaceUniforms();
+        Bind3DUniforms(idx);
+        uint xGroups = (uint)_texSize / 16;
+		uint yGroups = 1;
 		uint zGroups = (uint)_texSize / 16;
 
 		var computeList = _device.ComputeListBegin();
-		_device.ComputeListBindComputePipeline(computeList, _pipeline);
-		_device.ComputeListBindUniformSet(computeList, _uniformSet, 0);
+		
+		_device.ComputeListBindComputePipeline(computeList, _pipelineSurface);
+		_device.ComputeListBindUniformSet(computeList, _uniformSetSurface, 0);
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
-		_device.ComputeListEnd();
-		_device.Submit();
-	}
+		_device.ComputeListAddBarrier(computeList);
+		
+		yGroups = (uint)_layerCount;
+		_device.ComputeListBindComputePipeline(computeList, _pipeline3D);
+        _device.ComputeListBindUniformSet(computeList, _uniformSet3D, 1);
+		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 
-	private void BindUniforms(uint idx)
+        _device.ComputeListEnd();
+        _device.Submit();
+    }
+
+	private void BindSurfaceUniforms()
 	{
 		var heightmapUniform = new RDUniform
 		{
 			UniformType = RenderingDevice.UniformType.Image,
 			Binding = 0
 		};
-		var windTexUniform = new RDUniform
+		var windSurfUniform = new RDUniform
 		{
 			UniformType = RenderingDevice.UniformType.StorageBuffer,
 			Binding = 1
 		};
-		windTexUniform.AddId(_windBuffers[idx]);
+		windSurfUniform.AddId(_surfaceBuffer);
 		heightmapUniform.AddId(_heightTexture);
 
-		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windTexUniform];
-		if (_uniformSet.IsValid && _device.UniformSetIsValid(_uniformSet)) _device.FreeRid(_uniformSet);
-		_uniformSet = _device.UniformSetCreate(uniforms, _shader, 0);
+		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windSurfUniform];
+		if (_uniformSetSurface.IsValid && _device.UniformSetIsValid(_uniformSetSurface)) _device.FreeRid(_uniformSetSurface);
+		_uniformSetSurface = _device.UniformSetCreate(uniforms, _shaderSurface, 0);
+	}
+
+    private void Bind3DUniforms(uint idx)
+    {
+		var heightmapUniform = new RDUniform
+		{
+			UniformType = RenderingDevice.UniformType.Image,
+			Binding = 0
+		};
+		var windSurfUniform = new RDUniform
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 1
+		};
+        var wind3DUniform = new RDUniform
+        {
+            UniformType = RenderingDevice.UniformType.StorageBuffer,
+            Binding = 2
+        };
+
+		heightmapUniform.AddId(_heightTexture);
+		windSurfUniform.AddId(_surfaceBuffer);
+        wind3DUniform.AddId(_windBuffers[idx]);
+
+		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windSurfUniform, wind3DUniform];
+		if (_uniformSet3D.IsValid && _device.UniformSetIsValid(_uniformSet3D)) _device.FreeRid(_uniformSet3D);
+		_uniformSet3D = _device.UniformSetCreate(uniforms, _shader3D, 1);
 	}
 }
