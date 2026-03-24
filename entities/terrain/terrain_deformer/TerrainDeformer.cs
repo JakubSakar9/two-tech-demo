@@ -11,6 +11,8 @@ public partial class TerrainDeformer : Node3D
     [Export] public float SnowHeight = 0.1f;
 
     private TexturePainter _painter;
+    private bool _leftCarving;
+    private bool _rightCarving;
 
     public override void _Ready()
     {
@@ -29,6 +31,15 @@ public partial class TerrainDeformer : Node3D
         var deformationCenter = Player.LeftFootPosition / DisplacementMapRange;
         _painter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + deformationCenter;
         float carveDepth = 0.0f;
+        if (Player.LeftFootHitDistance <= SnowHeight && !_leftCarving)
+        {
+            _leftCarving = true;
+            Player.PlayFootstep(Player.FootSide.Left);
+        }
+        else if (Player.LeftFootHitDistance > SnowHeight)
+        {
+            _leftCarving = false;
+        }
         if (Player.LeftFootHitDistance < 1.0f && Player.Velocity.Length() > 0.1f)
         {
             carveDepth = (SnowHeight - Player.LeftFootHitDistance) / SnowHeight;
@@ -38,6 +49,15 @@ public partial class TerrainDeformer : Node3D
 
         deformationCenter = Player.RightFootPosition / DisplacementMapRange;
         _painter.Params.CenterRight = new Vector2(0.5f, 0.5f) + deformationCenter;
+        if (Player.RightFootHitDistance <= SnowHeight && !_rightCarving)
+        {
+            _rightCarving = true;
+            Player.PlayFootstep(Player.FootSide.Right);
+        }
+        else if (Player.RightFootHitDistance > SnowHeight)
+        {
+            _rightCarving = false;
+        }
         if (Player.RightFootHitDistance < 1.0f && Player.Velocity.Length() > 0.1f)
         {
             carveDepth = (SnowHeight - Player.RightFootHitDistance) / SnowHeight;

@@ -1,9 +1,18 @@
 using Godot;
+using Microsoft.VisualBasic;
 using System;
+using System.Resources;
 
 public partial class Player : CharacterBody3D
 {
+    public enum FootSide
+    {
+        Left,
+        Right
+    }
+
     const float MAX_PITCH = 2.0f * Mathf.Pi / 5.0f;
+    const string AUDIO_DIR_FOOTSTEP_SNOW = "res://assets/audio/footstep_snow/";
 
     [Export] public Vector2 MouseSensitivity = new(0.01f, 0.005f);
     [Export] public float WalkSpeed = 40.0f;
@@ -19,6 +28,8 @@ public partial class Player : CharacterBody3D
     private Camera3D _mainCamera;
     private BoneAttachment3D _leftFootAttachment;
     private BoneAttachment3D _rightFootAttachment;
+    private AudioStreamPlayer3D _leftFootAudio;
+    private AudioStreamPlayer3D _rightFootAudio;
     private RayCast3D _heightRaycast;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
@@ -27,7 +38,8 @@ public partial class Player : CharacterBody3D
     public override void _Ready()
     {
         base._Ready();
-        NodeInit();
+        InitNodes();
+        InitPlayerAudio();
 
         _initialAttachmentHeight = _leftFootAttachment.Position.Y;
     }
@@ -98,12 +110,26 @@ public partial class Player : CharacterBody3D
         RightFootPosition = new Vector2(rightPos3D.X, rightPos3D.Z);
     }
 
-    private void NodeInit()
+    public void PlayFootstep(FootSide side)
+    {
+        if (side == FootSide.Left)
+        {
+            _leftFootAudio.Play();
+        }
+        else
+        {
+            _rightFootAudio.Play();
+        }
+    }
+
+    private void InitNodes()
     { 
         _animationTree = GetNode<AnimationTree>("%AnimationTree");
         _mainCamera = GetNode<Camera3D>("%MainCamera");
         _leftFootAttachment = GetNode<BoneAttachment3D>("%LeftFootAttachment");
         _rightFootAttachment = GetNode<BoneAttachment3D>("%RightFootAttachment");
+        _leftFootAudio = GetNode<AudioStreamPlayer3D>("%LeftFootAudio");
+        _rightFootAudio = GetNode<AudioStreamPlayer3D>("%RightFootAudio");
         _heightRaycast = GetNode<RayCast3D>("%HeightRaycast");
     }
 
@@ -127,5 +153,34 @@ public partial class Player : CharacterBody3D
             return Vector3.Zero;
         }
         return _gravityVelocity.MoveToward(new Vector3(0, Velocity.Y - _gravity, 0), _gravity * (float) delta);
+    }
+
+    private void InitPlayerAudio()
+    {
+        InitFootstepAudio();
+    }
+
+    private void InitFootstepAudio()
+    {
+        var footstepStream = new AudioStreamRandomizer();
+
+        using var snowFootstepDir = DirAccess.Open(AUDIO_DIR_FOOTSTEP_SNOW);
+        if (snowFootstepDir == null)
+        {
+            GD.PrintErr("Failed to locate audio folder at " + AUDIO_DIR_FOOTSTEP_SNOW);
+            return;
+        }
+        snowFootstepDir.ListDirBegin();
+        string fileName = snowFootstepDir.GetNext();
+        while (fileName != "")
+        {
+            if (fileName.EndsWith(".ogg"))
+            {
+                footstepStream.AddStream(-1, ResourceLoader.Load<AudioStreamOggVorbis>(AUDIO_DIR_FOOTSTEP_SNOW + fileName));
+            }
+            fileName = snowFootstepDir.GetNext();
+        }
+        _leftFootAudio.Stream = footstepStream;
+        _rightFootAudio.Stream = footstepStream;
     }
 }

@@ -12,6 +12,12 @@ height = 1.8
 radius = 0.4
 height = 1.8
 
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_fkugw"]
+streams_count = 1
+
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_8fjmc"]
+streams_count = 1
+
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_abrql"]
 animation = &"idle"
 
@@ -53,21 +59,21 @@ cull_mask = 1048573
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 104445345) index="0" unique_id=628352536]
-bones/0/position = Vector3(-2.648614e-10, 0.8416437, 0.017193034)
+bones/0/position = Vector3(-3.1851968e-10, 0.8418922, 0.017193034)
 bones/0/rotation = Quaternion(-0.03667094, 1.1912911e-07, -4.371518e-09, 0.9993274)
-bones/2/rotation = Quaternion(-0.013135191, -0.116812356, 0.97959435, -0.16302553)
+bones/2/rotation = Quaternion(-0.013263645, -0.116825186, 0.97990006, -0.1611584)
 bones/3/rotation = Quaternion(0.120499216, 0.0051755216, -0.09108298, 0.9885126)
-bones/4/rotation = Quaternion(-0.14490542, -0.016112724, 0.987821, -0.054337442)
+bones/4/rotation = Quaternion(-0.14488228, -0.016560046, 0.9878275, -0.05414756)
 bones/4/scale = Vector3(0.9999639, 1, 0.99999154)
-bones/5/rotation = Quaternion(-0.13405652, 0.003202752, -0.07942616, 0.98778045)
-bones/6/rotation = Quaternion(0.59973085, 0.034958478, 0.27085206, 0.752157)
+bones/5/rotation = Quaternion(-0.13128915, 0.0032043648, -0.07778653, 0.98828244)
+bones/6/rotation = Quaternion(0.5989958, 0.034871563, 0.27039173, 0.7529119)
 bones/6/scale = Vector3(0.9999807, 1.0000161, 0.9999879)
-bones/7/rotation = Quaternion(0.0074519226, -0.10110932, 0.97946316, 0.17427926)
+bones/7/rotation = Quaternion(0.0074676927, -0.101105206, 0.9795041, 0.17405093)
 bones/8/rotation = Quaternion(0.12049925, -0.005175505, 0.091082975, 0.9885126)
-bones/9/rotation = Quaternion(0.14698845, -0.014987493, 0.98752415, 0.054459654)
+bones/9/rotation = Quaternion(0.14690833, -0.016544763, 0.9875472, 0.053802423)
 bones/9/scale = Vector3(0.9999629, 1.0000001, 0.9999911)
-bones/10/rotation = Quaternion(-0.1340561, -0.0032027117, 0.07942588, 0.9877805)
-bones/11/rotation = Quaternion(0.59929854, -0.033217415, -0.2718933, 0.7522047)
+bones/10/rotation = Quaternion(-0.13128868, -0.003204364, 0.07778624, 0.9882825)
+bones/11/rotation = Quaternion(0.5985624, -0.033131868, -0.27143452, 0.7529599)
 bones/11/scale = Vector3(0.9999801, 1.0000168, 0.9999877)
 bones/12/position = Vector3(0.051505342, 0.51271045, 0.22282161)
 bones/12/rotation = Quaternion(-0.04340317, 0.7057735, 0.7057735, -0.04340317)
@@ -79,15 +85,29 @@ bones/15/rotation = Quaternion(0.009165643, 0.7070474, -0.7070474, -0.009165643)
 
 [node name="LeftFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="1" unique_id=307436259]
 unique_name_in_owner = true
-transform = Transform3D(-0.8771845, 0.10649404, -0.468086, -0.47219786, -0.3670811, 0.8014109, -0.086465836, 0.9240797, 0.37229416, 0.16165356, 0.094494194, -0.09725625)
+transform = Transform3D(-0.87677455, 0.10652004, -0.46884763, -0.47317922, -0.36411452, 0.802185, -0.08525127, 0.92524964, 0.36965948, 0.16216747, 0.094184965, -0.09540208)
 bone_name = "foot.l"
 bone_idx = 6
 
+[node name="LeftFootAudio" type="AudioStreamPlayer3D" parent="PlayerSkin/Armature/Skeleton3D/LeftFootAttachment" unique_id=1472622970]
+unique_name_in_owner = true
+stream = SubResource("AudioStreamRandomizer_fkugw")
+unit_size = 4.0
+max_polyphony = 4
+bus = &"PlayerAudio"
+
 [node name="RightFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="2" unique_id=1956819650]
 unique_name_in_owner = true
-transform = Transform3D(-0.87686795, -0.10653135, 0.46866795, 0.47294906, -0.36487073, 0.801977, 0.08555272, 0.9249507, 0.37033728, -0.16215988, 0.09434095, -0.09543006)
+transform = Transform3D(-0.87677294, -0.106520236, 0.4688479, 0.4731795, -0.36411512, 0.8021846, 0.085250944, 0.9252496, 0.3696595, -0.16216749, 0.094184905, -0.09540198)
 bone_name = "foot.r"
 bone_idx = 11
+
+[node name="RightFootAudio" type="AudioStreamPlayer3D" parent="PlayerSkin/Armature/Skeleton3D/RightFootAttachment" unique_id=624507762]
+unique_name_in_owner = true
+stream = SubResource("AudioStreamRandomizer_8fjmc")
+unit_size = 4.0
+max_polyphony = 4
+bus = &"PlayerAudio"
 
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=1883167356]
 unique_name_in_owner = true
