@@ -46,6 +46,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5091324, -1.5258789e-05, 0
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
+WindLayerCount = 8
 MaxHeight = 48.0
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]

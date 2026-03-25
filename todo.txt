@@ -1,4 +1,3 @@
-- Footprints Audio
 - Wind spatial audio based on the current wind velocity
 - Precompute a snow height texture based on the heightmap and wind vector field
 - Use the snow height texture in the terrain shader and use a ground texture for places with no snow

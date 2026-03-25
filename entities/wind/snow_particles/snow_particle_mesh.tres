@@ -1,0 +1,8 @@
+[gd_resource type="QuadMesh" format=3 uid="uid://v6k57ptcju8r"]
+
+[ext_resource type="Material" uid="uid://co53i58g7yqbm" path="res://assets/textures/snowflake_material.tres" id="1_65wn5"]
+
+[resource]
+resource_local_to_scene = true
+material = ExtResource("1_65wn5")
+size = Vector2(0.1, 0.1)

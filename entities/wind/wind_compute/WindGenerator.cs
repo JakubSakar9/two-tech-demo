@@ -48,6 +48,10 @@ public partial class WindGenerator : Node
 			Image layerImage = Image.CreateFromData(_texSize, _layerCount, false, Image.Format.Rgbaf, layerData);
 			layerImage.Convert(Image.Format.Rgba8);
 			images.Add(layerImage);
+			if (i == 0)
+			{
+				layerImage.SavePng("res://layer0.png");
+			}
 		}
 		tex.Update(images);
 	}

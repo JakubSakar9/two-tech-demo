@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://d0i7eg82dkyi3"]
 
-[ext_resource type="Material" uid="uid://co53i58g7yqbm" path="res://assets/textures/snowflake_material.tres" id="1_8ftpa"]
+[ext_resource type="Script" uid="uid://bsvj22p1wat5u" path="res://entities/wind/snow_particles/SnowParticles.cs" id="1_8ftpa"]
+[ext_resource type="QuadMesh" uid="uid://v6k57ptcju8r" path="res://entities/wind/snow_particles/snow_particle_mesh.tres" id="2_2r760"]
+[ext_resource type="RibbonTrailMesh" uid="uid://b5prk5qy3qluf" path="res://entities/wind/snow_particles/debug_particle_mesh.tres" id="3_yb1o1"]
 
 [sub_resource type="Gradient" id="Gradient_8ftpa"]
 offsets = PackedFloat32Array(0, 0.18857142, 0.7885714, 1)
@@ -14,21 +16,22 @@ resource_local_to_scene = true
 emission_shape_offset = Vector3(0, 4, 0)
 emission_shape = 3
 emission_box_extents = Vector3(64, 12, 64)
-gravity = Vector3(0, -2.4, 0)
+gravity = Vector3(0, 0, 0)
 color_ramp = SubResource("GradientTexture1D_nvuc5")
 turbulence_noise_strength = 0.2
 turbulence_noise_scale = 8.145
 turbulence_influence_min = 0.0
 
-[sub_resource type="QuadMesh" id="QuadMesh_8ftpa"]
-resource_local_to_scene = true
-material = ExtResource("1_8ftpa")
-size = Vector2(0.1, 0.1)
-
 [node name="SnowParticles" type="Node3D" unique_id=121143072]
+script = ExtResource("1_8ftpa")
+DefaultParticlePass = ExtResource("2_2r760")
+DebugParticlePass = ExtResource("3_yb1o1")
 
-[node name="FarParticles" type="GPUParticles3D" parent="." unique_id=1594113800]
+[node name="Particles" type="GPUParticles3D" parent="." unique_id=1594113800]
+unique_name_in_owner = true
 amount = 8192
 lifetime = 10.0
+trail_enabled = true
+trail_lifetime = 0.5
 process_material = SubResource("ParticleProcessMaterial_gg86h")
-draw_pass_1 = SubResource("QuadMesh_8ftpa")
+draw_pass_1 = ExtResource("3_yb1o1")

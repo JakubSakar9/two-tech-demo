@@ -1,0 +1,11 @@
+[gd_resource type="RibbonTrailMesh" format=3 uid="uid://b5prk5qy3qluf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gg86h"]
+cull_mode = 2
+shading_mode = 0
+use_particle_trails = true
+
+[resource]
+material = SubResource("StandardMaterial3D_gg86h")
+size = 0.2
+section_segments = 5
