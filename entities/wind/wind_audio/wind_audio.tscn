@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://c0wofd32gc28f"]
 
 [ext_resource type="Script" uid="uid://bh6myrwi8ceiw" path="res://entities/wind/wind_audio/WindAudio.cs" id="1_nq5fk"]
-[ext_resource type="AudioStream" uid="uid://c5lmr7gy5nj4r" path="res://assets/audio/wind/strong_wind_ambient.ogg" id="2_ou22y"]
 
 [sub_resource type="AudioStreamPolyphonic" id="AudioStreamPolyphonic_rsaii"]
 
@@ -14,7 +13,4 @@ unique_name_in_owner = true
 [node name="AmbientAudio" type="AudioStreamPlayer" parent="." unique_id=2112048929]
 unique_name_in_owner = true
 stream = SubResource("AudioStreamPolyphonic_rsaii")
-
-[node name="AmbientAudioStrong" type="AudioStreamPlayer" parent="." unique_id=1018293614]
-unique_name_in_owner = true
-stream = ExtResource("2_ou22y")
+volume_db = -4.0

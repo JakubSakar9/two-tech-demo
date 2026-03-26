@@ -200,7 +200,7 @@ public partial class Terrain : StaticBody3D
         Vector3 c0 = c00.Lerp(c10, fy);
         Vector3 c1 = c01.Lerp(c11, fy);
         Vector3 sampled = c0.Lerp(c1, fz);
-        return 2.0f * sampled - Vector3.One;
+        return _windField.Strength * (2.0f * sampled - Vector3.One);
     }
 
     private void CheckChunkChange(ref readonly Vector2 position2D)
