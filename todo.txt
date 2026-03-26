@@ -5,6 +5,8 @@
 - When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing
 - Optimize footprints render distance by only using textures for the chunks where footprints are rendered
+- Configurable precipitation intensity
+- Sample only a 2D texture to get wind velocity on CPU
 - Limit a number of chunks with footprints and discard the latest ones (speedup)
 - Update the discard policy to not discard textures which are nearby
 - [Visual Improvements]
@@ -14,3 +16,8 @@
 - [Experiment with hardware tesselation to improve performance]
 - [UI/Gamey stuff]
 - [Add procedural animation]
+
+Questions:
+- To what extent should "snow transfer" be simulated? Should it happen in real-time?
+- The wind vector field has very low precision, would it make sense to make base wind velocity constant in the vector field regardless of altitude and only change the vector field strength on the CPU side?
+

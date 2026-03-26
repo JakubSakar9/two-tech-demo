@@ -37,7 +37,7 @@ void main() {
     //float y = y_m - 1.0 - float(py);
     float y = float(py);
     float a = imageLoad(heightmap, ivec2(px, pz)).r;
-    float y_l = y_m * a / (1.5 * MAX_HEIGHT);
+    float y_l = y_m * a / (1.25 * MAX_HEIGHT);
     float y_f = floor(y_l - 0.5);
     vec3 w = vec3(0.5);
     vec3 w_surf = surf_vec[idx2d].xyz;

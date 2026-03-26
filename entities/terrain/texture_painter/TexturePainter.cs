@@ -59,7 +59,7 @@ public partial class TexturePainter : Node
 
     public override void _Process(double delta)
     {
-        RenderingServer.CallOnRenderThread(Callable.From(DrawTextures));
+        // RenderingServer.CallOnRenderThread(Callable.From(DrawTextures));
     }
 
     public override void _ExitTree()

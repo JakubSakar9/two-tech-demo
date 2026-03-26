@@ -71,8 +71,8 @@ public partial class Terrain : StaticBody3D
     private GpuParticlesAttractorVectorField3D _windField;
 
 
-    private HeightMap[] _heightMaps;
-
+    private HeightMap[] _heightmaps;
+    private Godot.Collections.Array<Image> _windImages;
     private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
     
@@ -86,7 +86,7 @@ public partial class Terrain : StaticBody3D
         _terrainCollider = GetNode<CollisionShape3D>("%TerrainCollider");
         _windField = GetNode<GpuParticlesAttractorVectorField3D>("%WindField");
         
-        _heightMaps = new HeightMap[HEIGHTMAP_SWAP_COUNT];
+        _heightmaps = new HeightMap[HEIGHTMAP_SWAP_COUNT];
         _heightMapShape = new HeightMapShape3D();
 
         int heightmapSize = 3 * ChunkSizeUnits;
@@ -95,29 +95,29 @@ public partial class Terrain : StaticBody3D
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
-            _heightMaps[i] = new(heightmapSize);
-            _heightMaps[i].noiseFn.FractalLacunarity = 1.7f;
-            _heightMaps[i].Generate(MaxHeight);
-            _heightMaps[i].windTexture = new ImageTexture3D();
+            _heightmaps[i] = new(heightmapSize);
+            _heightmaps[i].noiseFn.FractalLacunarity = 1.7f;
+            _heightmaps[i].Generate(MaxHeight);
+            _heightmaps[i].windTexture = new ImageTexture3D();
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
             {
                 initImages.Add(Image.CreateEmpty(heightmapSize, WindLayerCount, false, Image.Format.Rgba8));
             }
-            _heightMaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindLayerCount, heightmapSize,
+            _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindLayerCount, heightmapSize,
                 false, initImages);
         }
-        WindGen.Generate(0, ref _heightMaps[0].heightImage);
+        WindGen.Generate(ref _heightmaps[0].heightImage);
 
         _collisionNoiseFunction = new FastNoiseLite();
         UpdateCollisionHeightMap();
 
         _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
         _windField.Position = new Vector3(0.0f, _windField.Size.Y / 2.0f, 0.0f);
-        WindGen.CopyWindTexture(0, ref _heightMaps[0].windTexture);
-        _windField.Texture = _heightMaps[0].windTexture;
+        WindGen.CopyWindTexture(ref _heightmaps[0].windTexture, ref _windImages);
+        _windField.Texture = _heightmaps[0].windTexture;
 
-        SetShaderParam("height_map", _heightMaps[_heightmapIndex].height);
+        SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("snow_height", Deformer.SnowHeight);
     }
 
@@ -155,7 +155,52 @@ public partial class Terrain : StaticBody3D
 
     public ImageTexture GetHeightMap()
     {
-        return _heightMaps[_heightmapIndex].height;
+        return _heightmaps[_heightmapIndex].height;
+    }
+
+    public Vector3 GetWindAtPoint(Vector3 point)
+    {
+        Aabb windAabb = _windField.GetAabb();
+        Vector3 b = windAabb.Position + _windField.GlobalPosition;
+        Vector3 e = windAabb.End + _windField.GlobalPosition;
+        Vector3 uvw = (point - b) / (e - b);
+        uvw = uvw.Clamp(Vector3.Zero, Vector3.One);
+
+        int size = 3 * ChunkSizeUnits;
+        int lCount = WindLayerCount;
+        float tx = uvw.X * (size   - 1);
+        float ty = uvw.Y * (lCount - 1);
+        float tz = uvw.Z * (size   - 1);
+
+        int x0 = (int)tx;
+        int y0 = (int)ty;
+        int z0 = (int)tz;
+        int x1 = Mathf.Min((int)tx + 1, size   - 1);
+        int y1 = Mathf.Min((int)ty + 1, lCount - 1);
+        int z1 = Mathf.Min((int)tz + 1, size   - 1);
+
+        float fx = tx - (int)tx;
+        float fy = ty - (int)ty;
+        float fz = tz - (int)tz;
+
+        Vector3 c000 = GetImgVec(_windImages[z0], x0, y0);
+        Vector3 c100 = GetImgVec(_windImages[z0], x1, y0);
+        Vector3 c010 = GetImgVec(_windImages[z0], x0, y1);
+        Vector3 c110 = GetImgVec(_windImages[z0], x1, y1);
+        Vector3 c001 = GetImgVec(_windImages[z1], x0, y0);
+        Vector3 c101 = GetImgVec(_windImages[z1], x1, y0);
+        Vector3 c011 = GetImgVec(_windImages[z1], x0, y1);
+        Vector3 c111 = GetImgVec(_windImages[z1], x1, y1);
+
+        Vector3 c00 = c000.Lerp(c100, fx);
+        Vector3 c01 = c001.Lerp(c101, fx);
+        Vector3 c10 = c010.Lerp(c110, fx);
+        Vector3 c11 = c011.Lerp(c111, fx);
+
+        Vector3 c0 = c00.Lerp(c10, fy);
+        Vector3 c1 = c01.Lerp(c11, fy);
+        Vector3 sampled = c0.Lerp(c1, fz);
+        return 2.0f * sampled - Vector3.One;
     }
 
     private void CheckChunkChange(ref readonly Vector2 position2D)
@@ -215,13 +260,13 @@ public partial class Terrain : StaticBody3D
     private void UpdateHeightMap()
     {
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
-        _heightMaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight);
-        WindGen.Generate((uint)_heightmapIndex, ref _heightMaps[_heightmapIndex].heightImage);
+        _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight);
+        WindGen.Generate(ref _heightmaps[_heightmapIndex].heightImage);
 
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
-        WindGen.CopyWindTexture((uint)_heightmapIndex, ref _heightMaps[_heightmapIndex].windTexture);
-        _windField.Texture = _heightMaps[_heightmapIndex].windTexture;
-        SetShaderParam("height_map", _heightMaps[_heightmapIndex].height);
+        WindGen.CopyWindTexture(ref _heightmaps[_heightmapIndex].windTexture, ref _windImages);
+        _windField.Texture = _heightmaps[_heightmapIndex].windTexture;
+        SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
     }
 
@@ -235,5 +280,11 @@ public partial class Terrain : StaticBody3D
     private void SetShaderParam(string property, Variant value)
     {
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter(property, value);
+    }
+
+    private Vector3 GetImgVec(Image img, int x, int y)
+    {
+        Color c = img.GetPixel(x, y);
+        return new Vector3(c.R, c.G, c.B);
     }
 }

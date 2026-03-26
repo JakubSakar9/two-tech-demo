@@ -16,7 +16,7 @@ public partial class WindGenerator : Node
     private Rid _pipelineSurface;
 	private Rid _pipeline3D;
     private Rid _surfaceBuffer;
-    private Rid[] _windBuffers;
+    private Rid _windBuffer;
 	private Rid _heightTexture;
 	private Rid _uniformSetSurface;
     private Rid _uniformSet3D;
@@ -38,13 +38,13 @@ public partial class WindGenerator : Node
         _pipeline3D = _device.ComputePipelineCreate(_shader3D);
 	}
 
-	public void CopyWindTexture(uint idx, ref ImageTexture3D tex)
+	public void CopyWindTexture(ref ImageTexture3D tex, ref Godot.Collections.Array<Image> imgs)
 	{
 		Godot.Collections.Array<Image> images = [];
 		uint strideBytes = 4 * sizeof(float) * (uint)_texSize * (uint)_layerCount;
 		for (uint i = 0; i < _texSize; i++)
 		{
-			byte[] layerData = _device.BufferGetData(_windBuffers[idx], i * strideBytes, strideBytes);
+			byte[] layerData = _device.BufferGetData(_windBuffer, i * strideBytes, strideBytes);
 			Image layerImage = Image.CreateFromData(_texSize, _layerCount, false, Image.Format.Rgbaf, layerData);
 			layerImage.Convert(Image.Format.Rgba8);
 			images.Add(layerImage);
@@ -54,25 +54,15 @@ public partial class WindGenerator : Node
 			}
 		}
 		tex.Update(images);
+		imgs = images;
 	}
 
-	public void Generate(uint idx, ref Image heightImage)
+	public void Generate(ref Image heightImage)
 	{
 		_heightImage = heightImage;
-		DispatchCompute(idx);
+		DispatchCompute();
 		_device.Sync();
 	}
-
-	public void GenerateAsync(uint idx, ref Image heightImage)
-	{
-		_heightImage = heightImage;
-		DispatchCompute(idx);
-		Thread waitThread = new(() => {
-            _device.Sync();
-			CallDeferred("emit_signal", SignalName.ComputeDone);
-		});
-        waitThread.Start();
-    }
 
 	private void InitShaders()
 	{
@@ -97,11 +87,7 @@ public partial class WindGenerator : Node
 	{
 		int dataSize = 4 * sizeof(float) * _texSize * _layerCount * _texSize;
 		byte[] initData = new byte[dataSize];
-		_windBuffers = new Rid[WINDTEX_SWAP_COUNT];
-		for (uint i = 0; i < WINDTEX_SWAP_COUNT; i++)
-		{
-			_windBuffers[i] = _device.StorageBufferCreate((uint)dataSize, initData);
-		}
+		_windBuffer = _device.StorageBufferCreate((uint)dataSize, initData);
 	}
 
 	private void InitHeightTexture()
@@ -120,11 +106,11 @@ public partial class WindGenerator : Node
 		_heightTexture = _device.TextureCreate(format, view, [_heightImage.GetData()]);
 	}
 
-	private void DispatchCompute(uint idx)
+	private void DispatchCompute()
 	{
 		_device.TextureUpdate(_heightTexture, 0, _heightImage.GetData());
 		BindSurfaceUniforms();
-        Bind3DUniforms(idx);
+        Bind3DUniforms();
         uint xGroups = (uint)_texSize / 16;
 		uint yGroups = 1;
 		uint zGroups = (uint)_texSize / 16;
@@ -165,7 +151,7 @@ public partial class WindGenerator : Node
 		_uniformSetSurface = _device.UniformSetCreate(uniforms, _shaderSurface, 0);
 	}
 
-    private void Bind3DUniforms(uint idx)
+    private void Bind3DUniforms()
     {
 		var heightmapUniform = new RDUniform
 		{
@@ -185,7 +171,7 @@ public partial class WindGenerator : Node
 
 		heightmapUniform.AddId(_heightTexture);
 		windSurfUniform.AddId(_surfaceBuffer);
-        wind3DUniform.AddId(_windBuffers[idx]);
+        wind3DUniform.AddId(_windBuffer);
 
 		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windSurfUniform, wind3DUniform];
 		if (_uniformSet3D.IsValid && _device.UniformSetIsValid(_uniformSet3D)) _device.FreeRid(_uniformSet3D);

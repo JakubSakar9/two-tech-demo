@@ -34,6 +34,10 @@ window/vsync/vsync_mode=3
 
 project/assembly_name="two-tech-demo"
 
+[global_group]
+
+terrain=""
+
 [input]
 
 move_left={
