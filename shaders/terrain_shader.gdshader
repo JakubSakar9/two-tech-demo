@@ -12,6 +12,7 @@ uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, re
 
 uniform sampler2D height_map: source_color, filter_linear_mipmap;
 uniform sampler2D glitter_map: source_color, filter_nearest;
+uniform sampler2D grass_texture: filter_linear_mipmap_anisotropic;
 uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap;
 
 uniform vec2 chunk_origin = vec2(0.0);
@@ -27,6 +28,7 @@ varying vec3 debug_color;
 varying float disp_flatness;
 varying float displacement;
 varying vec3 normal_height;
+varying float snowiness;
 
 void vertex() {
 	vec4 transformedPosition = MODEL_MATRIX * vec4(VERTEX, 1.0);
@@ -100,14 +102,15 @@ void fragment() {
 	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * jitter * jitter);
 	NORMAL = (VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
 	
-	float snow_var = -0.5 * texture(glitter_map, detail_uv + vec2(0.5)).r;
-	float snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
-	ALBEDO = mix(vec3(0.0, 1.0, 0.0), vec3(0.95), snowiness);
+	float snow_var = -0.6 * texture(glitter_map, detail_uv).r;
+	snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
+	vec3 grass_color = texture(grass_texture, detail_uv).rgb;
+	ALBEDO = mix(grass_color, vec3(0.95), snowiness);
 	//ALBEDO = debug_color;
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
-	float roughness_tex = dot(texture(texture_roughness, disp_uv), roughness_texture_channel);
-	ROUGHNESS = roughness_tex * roughness;
+	float roughness_snow = 1.0 - (dot(texture(texture_roughness, disp_uv), roughness_texture_channel) + 3.0) / 4.0;
+	ROUGHNESS = mix(0.9, roughness_snow, snowiness);
 	SPECULAR = 0.1;
 }
 
@@ -120,6 +123,9 @@ void light() {
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
 	float disp_ao = (1.0 - displacement_darkening * displacement);
 	//SPECULAR_LIGHT = vec3(glitter * disp_flatness);
-	SPECULAR_LIGHT = vec3(rim_specular);
-	DIFFUSE_LIGHT = 0.5 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
+	SPECULAR_LIGHT = (1.0 - ROUGHNESS) * vec3(rim_specular);
+	vec3 snow_diffuse = ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
+	vec3 grass_diffuse = ALBEDO * dot(LIGHT, NORMAL);
+	DIFFUSE_LIGHT = mix(grass_diffuse, snow_diffuse, snowiness);
+	//DIFFUSE_LIGHT = 0.7 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
 }

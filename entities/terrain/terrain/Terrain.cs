@@ -41,7 +41,6 @@ public struct HeightMap
         }
         heightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgf, bytes);
         heightImage.GenerateMipmaps();
-        heightImage.SavePng("res://debug_img.png");
         height.SetImage(heightImage);
     }
 

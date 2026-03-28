@@ -1,7 +1,35 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://bi05ksh61ogm1"]
 
 [ext_resource type="Shader" uid="uid://tnrtre0lfm56" path="res://shaders/terrain_shader.gdshader" id="1_bu8bs"]
+[ext_resource type="Texture2D" uid="uid://boe1go5pge6c0" path="res://assets/textures/leafy_grass_diff_2k.jpg" id="2_jkxpb"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_bu8bs"]
+noise_type = 5
+frequency = 0.2279
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_jkxpb"]
+noise = SubResource("FastNoiseLite_bu8bs")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_jkxpb"]
+noise_type = 2
+frequency = 0.0542
+fractal_weighted_strength = 0.07
+cellular_return_type = 2
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_7orrk"]
+noise = SubResource("FastNoiseLite_jkxpb")
 
 [resource]
 render_priority = 0
 shader = ExtResource("1_bu8bs")
+shader_parameter/roughness = 0.0
+shader_parameter/texture_roughness = SubResource("NoiseTexture2D_7orrk")
+shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
+shader_parameter/grass_texture = ExtResource("2_jkxpb")
+shader_parameter/displacement_maps = null
+shader_parameter/chunk_origin = Vector2(0, 0)
+shader_parameter/displacement_map_range = 64.0
+shader_parameter/near_fadeout_distance = 128.0
+shader_parameter/far_fadeout_distance = 192.0
+shader_parameter/displacement_darkening = 0.0
+shader_parameter/disp_row = 5
