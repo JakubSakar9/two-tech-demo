@@ -16,7 +16,7 @@ const float VERTICAL_BOOST = 2.0;
 
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;
 
-layout(set = 0, binding = 0, r32f) uniform readonly image2D heightmap;
+layout(set = 0, binding = 0, rg32f) uniform readonly image2D heightmap;
 layout(std140, binding = 1) buffer WindSSBOOut {
     vec4 wind_vec[ ];
 };

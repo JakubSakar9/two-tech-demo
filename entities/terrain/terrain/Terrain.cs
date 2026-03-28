@@ -5,13 +5,13 @@ public struct HeightMap
     public byte[] bytes;
     public FastNoiseLite noiseFn;
     public Image heightImage;
-    public ImageTexture height;
+    public ImageTexture height; // R = terrain height, G = snow height
     public ImageTexture3D windTexture;
     private readonly int _size;
 
     public HeightMap(int size)
     {
-        bytes = new byte[size * size * sizeof(float)];
+        bytes = new byte[2 * size * size * sizeof(float)];
         noiseFn = new();
         heightImage = new();
         height = new();
@@ -21,7 +21,7 @@ public struct HeightMap
         noiseFn.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
     }
 
-    public unsafe void Generate(float maxHeight)
+    public unsafe void Generate(float maxHeight, float maxSnowHeight)
     {
         fixed(byte* bytePointer = bytes)
         {
@@ -30,28 +30,31 @@ public struct HeightMap
             {
                 for (int j = 0; j < _size; j++)
                 {
-                    float heightValue = maxHeight * (noiseFn.GetNoise2D(j, i) + 1.0f) / 2.0f;
-                    floatPointer[i * _size + j] = heightValue;
+                    float noiseValue = (noiseFn.GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    float height = maxHeight * noiseValue;
+                    float sHeight = maxSnowHeight * (noiseValue - 0.3f) / 0.7f;
+                    sHeight = Mathf.Max(sHeight, 0.0f);
+                    floatPointer[2 * (i * _size + j)] = height;
+                    floatPointer[2 * (i * _size + j) + 1] = sHeight;
                 }
             }
         }
-        heightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rf, bytes);
+        heightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgf, bytes);
         heightImage.GenerateMipmaps();
+        heightImage.SavePng("res://debug_img.png");
         height.SetImage(heightImage);
     }
 
-    public void MoveOrigin(Vector2 origin, float maxHeight)
+    public void MoveOrigin(Vector2 origin, float maxHeight, float maxSnowHeight)
     {
         noiseFn.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
-        Generate(maxHeight);
+        Generate(maxHeight, maxSnowHeight);
     }
 }
 
 public partial class Terrain : StaticBody3D
 {
     const int HEIGHTMAP_SWAP_COUNT = 4;
-
-    // [Signal] public delegate void MapShiftedEventHandler();
 
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
@@ -61,6 +64,7 @@ public partial class Terrain : StaticBody3D
     [Export] public int WindLayerCount = 1;
     [Export] public float MaxHeight = 32.0f;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
+    [Export] public float MaxSnowHeight = 0.25f;
     
 
     public Vector2 ChunkOrigin = Vector2.Zero;
@@ -97,7 +101,7 @@ public partial class Terrain : StaticBody3D
         {
             _heightmaps[i] = new(heightmapSize);
             _heightmaps[i].noiseFn.FractalLacunarity = 1.7f;
-            _heightmaps[i].Generate(MaxHeight);
+            _heightmaps[i].Generate(MaxHeight, MaxSnowHeight);
             _heightmaps[i].windTexture = new ImageTexture3D();
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
@@ -118,7 +122,6 @@ public partial class Terrain : StaticBody3D
         _windField.Texture = _heightmaps[0].windTexture;
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
-        SetShaderParam("snow_height", Deformer.SnowHeight);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -183,14 +186,14 @@ public partial class Terrain : StaticBody3D
         float fy = ty - (int)ty;
         float fz = tz - (int)tz;
 
-        Vector3 c000 = GetImgVec(_windImages[z0], x0, y0);
-        Vector3 c100 = GetImgVec(_windImages[z0], x1, y0);
-        Vector3 c010 = GetImgVec(_windImages[z0], x0, y1);
-        Vector3 c110 = GetImgVec(_windImages[z0], x1, y1);
-        Vector3 c001 = GetImgVec(_windImages[z1], x0, y0);
-        Vector3 c101 = GetImgVec(_windImages[z1], x1, y0);
-        Vector3 c011 = GetImgVec(_windImages[z1], x0, y1);
-        Vector3 c111 = GetImgVec(_windImages[z1], x1, y1);
+        Vector3 c000 = GetImgVec3(_windImages[z0], x0, y0);
+        Vector3 c100 = GetImgVec3(_windImages[z0], x1, y0);
+        Vector3 c010 = GetImgVec3(_windImages[z0], x0, y1);
+        Vector3 c110 = GetImgVec3(_windImages[z0], x1, y1);
+        Vector3 c001 = GetImgVec3(_windImages[z1], x0, y0);
+        Vector3 c101 = GetImgVec3(_windImages[z1], x1, y0);
+        Vector3 c011 = GetImgVec3(_windImages[z1], x0, y1);
+        Vector3 c111 = GetImgVec3(_windImages[z1], x1, y1);
 
         Vector3 c00 = c000.Lerp(c100, fx);
         Vector3 c01 = c001.Lerp(c101, fx);
@@ -201,6 +204,36 @@ public partial class Terrain : StaticBody3D
         Vector3 c1 = c01.Lerp(c11, fy);
         Vector3 sampled = c0.Lerp(c1, fz);
         return _windField.Strength * (2.0f * sampled - Vector3.One);
+    }
+
+    public float GetSnowHeight()
+    {
+        int size = 3 * ChunkSizeUnits;
+        Vector2 b = ChunkOrigin - size * Vector2.One / 2.0f;
+        Vector2 e = ChunkOrigin + size * Vector2.One / 2.0f;
+        Vector3 plPos = Player.GlobalPosition;
+        Vector2 uv = (new Vector2(plPos.X, plPos.Z) - b) / (e - b);
+        uv = uv.Clamp(Vector2.Zero, Vector2.One);
+
+        float tx = uv.X * (size - 1);
+        float ty = uv.Y * (size - 1);
+
+        int x0 = (int)tx;
+        int y0 = (int)ty;
+        int x1 = Mathf.Min((int)tx + 1, size - 1);
+        int y1 = Mathf.Min((int)ty + 1, size - 1);
+
+        float fx = tx - (int)tx;
+        float fy = ty - (int)ty;
+
+        float c00 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x0, y0);
+        float c01 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x0, y1);
+        float c10 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x1, y0);
+        float c11 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x1, y1);
+
+        float c0 = Mathf.Lerp(c00, c10, fx);
+        float c1 = Mathf.Lerp(c01, c11, fx);
+        return Mathf.Lerp(c0, c1, fy);
     }
 
     private void CheckChunkChange(ref readonly Vector2 position2D)
@@ -260,7 +293,7 @@ public partial class Terrain : StaticBody3D
     private void UpdateHeightMap()
     {
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
-        _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight);
+        _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight, MaxSnowHeight);
         WindGen.Generate(ref _heightmaps[_heightmapIndex].heightImage);
 
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
@@ -282,9 +315,15 @@ public partial class Terrain : StaticBody3D
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter(property, value);
     }
 
-    private Vector3 GetImgVec(Image img, int x, int y)
+    private Vector3 GetImgVec3(Image img, int x, int y)
     {
         Color c = img.GetPixel(x, y);
         return new Vector3(c.R, c.G, c.B);
+    }
+
+    private float GetImgSH(Image img, int x, int y)
+    {
+        Color c = img.GetPixel(x, y);
+        return c.G;
     }
 }

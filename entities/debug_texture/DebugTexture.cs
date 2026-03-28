@@ -19,5 +19,6 @@ public partial class DebugTexture : Control
     {
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         _textureRect.Texture = Deformer.GetDisplacement();
+        _textureRect.Scale = new Vector2(0.5f, 0.5f);
     }
 }

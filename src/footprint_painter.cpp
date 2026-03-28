@@ -39,7 +39,6 @@ void FootprintPainter::set_angle(float p_angle)
 
 FootprintPainter::FootprintPainter()
 {
-    // footprint_texture =  Ref<Texture2D>(memnew(Texture2D));
     displacement_texture = Ref<Texture2DRD>(memnew(Texture2DRD));
     params = {
         .center_left = Vector2(0.5f, 0.5f),

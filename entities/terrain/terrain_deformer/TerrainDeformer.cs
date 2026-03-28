@@ -8,8 +8,8 @@ public partial class TerrainDeformer : Node3D
     [Export] public Player Player;
     [Export] public uint RadiusChunks = 2;
     [Export] public float DisplacementMapRange = 64.0f;
-    [Export] public float SnowHeight = 0.1f;
 
+    private Terrain _terrain;
     private TexturePainter _painter;
     private bool _leftCarving;
     private bool _rightCarving;
@@ -22,6 +22,8 @@ public partial class TerrainDeformer : Node3D
         _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
         _painter.InitPool(RadiusChunks);
         _painter.Pool.DisplacementMapRange = DisplacementMapRange;
+
+        _terrain = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -30,37 +32,41 @@ public partial class TerrainDeformer : Node3D
         _painter.Pool.UpdateActiveChunks(new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z));
         var deformationCenter = Player.LeftFootPosition / DisplacementMapRange;
         _painter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + deformationCenter;
+        float snowHeight = _terrain.GetSnowHeight();
+        
+        // GD.Print("R: " + Player.RightFootHitDistance + ", L: " + Player.LeftFootHitDistance);
+
         float carveDepth = 0.0f;
-        if (Player.LeftFootHitDistance <= SnowHeight && !_leftCarving)
+        if (Player.LeftFootHitDistance <= snowHeight && !_leftCarving)
         {
             _leftCarving = true;
             Player.PlayFootstep(Player.FootSide.Left);
         }
-        else if (Player.LeftFootHitDistance > SnowHeight)
+        else if (Player.LeftFootHitDistance > snowHeight)
         {
             _leftCarving = false;
         }
         if (Player.LeftFootHitDistance < 1.0f && Player.Velocity.Length() > 0.1f)
         {
-            carveDepth = (SnowHeight - Player.LeftFootHitDistance) / SnowHeight;
+            carveDepth = (snowHeight - Player.LeftFootHitDistance) / snowHeight;
             carveDepth = Mathf.Clamp(carveDepth, 0.0f, 1.0f);
         }
         _painter.Params.DepthLeft = carveDepth;
 
         deformationCenter = Player.RightFootPosition / DisplacementMapRange;
         _painter.Params.CenterRight = new Vector2(0.5f, 0.5f) + deformationCenter;
-        if (Player.RightFootHitDistance <= SnowHeight && !_rightCarving)
+        if (Player.RightFootHitDistance <= snowHeight && !_rightCarving)
         {
             _rightCarving = true;
             Player.PlayFootstep(Player.FootSide.Right);
         }
-        else if (Player.RightFootHitDistance > SnowHeight)
+        else if (Player.RightFootHitDistance > snowHeight)
         {
             _rightCarving = false;
         }
         if (Player.RightFootHitDistance < 1.0f && Player.Velocity.Length() > 0.1f)
         {
-            carveDepth = (SnowHeight - Player.RightFootHitDistance) / SnowHeight;
+            carveDepth = (snowHeight - Player.RightFootHitDistance) / snowHeight;
             carveDepth = Mathf.Clamp(carveDepth, 0.0f, 1.0f);
         }
         _painter.Params.DepthRight = carveDepth;

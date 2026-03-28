@@ -48,10 +48,6 @@ public partial class WindGenerator : Node
 			Image layerImage = Image.CreateFromData(_texSize, _layerCount, false, Image.Format.Rgbaf, layerData);
 			layerImage.Convert(Image.Format.Rgba8);
 			images.Add(layerImage);
-			if (i == 0)
-			{
-				layerImage.SavePng("res://layer0.png");
-			}
 		}
 		tex.Update(images);
 		imgs = images;
@@ -92,12 +88,12 @@ public partial class WindGenerator : Node
 
 	private void InitHeightTexture()
 	{
-		_heightImage = Image.CreateEmpty(_texSize, _texSize, true, Image.Format.Rf);
+		_heightImage = Image.CreateEmpty(_texSize, _texSize, true, Image.Format.Rgf);
 		var format = new RDTextureFormat
 		{
 			Width = (uint)_texSize,
 			Height = (uint)_texSize,
-			Format = RenderingDevice.DataFormat.R32Sfloat,
+			Format = RenderingDevice.DataFormat.R32G32Sfloat,
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CanUpdateBit,
 			Mipmaps = (uint)_heightImage.GetMipmapCount() + 1

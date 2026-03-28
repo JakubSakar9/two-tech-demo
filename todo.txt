@@ -1,6 +1,6 @@
-- Wind spatial audio based on the current wind velocity
-- Precompute a snow height texture based on the heightmap and wind vector field
-- Use the snow height texture in the terrain shader and use a ground texture for places with no snow
+- Use grass texture instead of plain green color
+- Use different step sounds when walking on grass
+- Precompute the snow height texture based on the heightmap and wind vector field
 - Create a data structure that stores past footprints
 - When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing

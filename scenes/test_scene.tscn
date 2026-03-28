@@ -48,9 +48,11 @@ Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
 WindLayerCount = 8
 MaxHeight = 48.0
+MaxSnowHeight = 0.3
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.427174, 0)
+WalkSpeed = 1.6
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
 visible = false

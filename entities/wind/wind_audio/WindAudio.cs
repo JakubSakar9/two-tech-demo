@@ -75,7 +75,6 @@ public partial class WindAudio : Node3D
         _directional.GlobalPosition = GlobalPosition - windVec.Normalized() * DIR_DISTANCE;
 
         float windSpeed = windVec.Length();
-        GD.Print(windSpeed);
         float td = (windSpeed - MinSpeed) / (MaxSpeed - MinSpeed);
         td = Mathf.Clamp(td, 0.0f, 1.0f);
         float td1 = Mathf.Min(2.0f * td, 1.0f);

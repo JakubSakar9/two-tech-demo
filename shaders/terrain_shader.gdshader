@@ -15,7 +15,6 @@ uniform sampler2D glitter_map: source_color, filter_nearest;
 uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap;
 
 uniform vec2 chunk_origin = vec2(0.0);
-uniform float snow_height = 1.0f;
 uniform float displacement_map_range = 64.0;
 uniform float near_fadeout_distance = 128.0;
 uniform float far_fadeout_distance = 192.0;
@@ -42,6 +41,7 @@ void vertex() {
 	int tidx = chunk.y * disp_row + chunk.x;
 
 	float height = texture(height_map, terrain_uv).r;
+	float snow_height = texture(height_map, terrain_uv).g;
 	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
@@ -66,6 +66,7 @@ void fragment() {
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
+	float snow_height = texture(height_map, terrain_uv).g;
 	displacement = texture(displacement_maps[tidx], disp_uv).r;
 	
 	vec2 duvx = vec2(eps_d, 0);
@@ -97,9 +98,11 @@ void fragment() {
 	vec3 v = normalize(-VERTEX);
 	float jitter = texture(glitter_map, detail_uv).r;
 	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * jitter * jitter);
-	
 	NORMAL = (VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
-	ALBEDO = 0.9 * debug_color;
+	
+	float snow_var = -0.5 * texture(glitter_map, detail_uv + vec2(0.5)).r;
+	float snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
+	ALBEDO = mix(vec3(0.0, 1.0, 0.0), vec3(0.95), snowiness);
 	//ALBEDO = debug_color;
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
