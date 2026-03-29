@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bjitlm7kd0uu3"
+path="res://.godot/imported/sc_precipitation_compute.glsl-c370ba6c2d4239c9ad3e0cab76dac473.res"
+
+[deps]
+
+source_file="res://shaders/sc_precipitation_compute.glsl"
+dest_files=["res://.godot/imported/sc_precipitation_compute.glsl-c370ba6c2d4239c9ad3e0cab76dac473.res"]
+
+[params]
+

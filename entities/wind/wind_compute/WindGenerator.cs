@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Threading;
 
 public partial class WindGenerator : Node
 {
@@ -149,7 +148,7 @@ public partial class WindGenerator : Node
 
     private void Bind3DUniforms()
     {
-		var heightmapUniform = new RDUniform
+		var heightMapUniform = new RDUniform
 		{
 			UniformType = RenderingDevice.UniformType.Image,
 			Binding = 0
@@ -165,11 +164,11 @@ public partial class WindGenerator : Node
             Binding = 2
         };
 
-		heightmapUniform.AddId(_heightTexture);
+		heightMapUniform.AddId(_heightTexture);
 		windSurfUniform.AddId(_surfaceBuffer);
         wind3DUniform.AddId(_windBuffer);
 
-		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windSurfUniform, wind3DUniform];
+		Godot.Collections.Array<RDUniform> uniforms = [heightMapUniform, windSurfUniform, wind3DUniform];
 		if (_uniformSet3D.IsValid && _device.UniformSetIsValid(_uniformSet3D)) _device.FreeRid(_uniformSet3D);
 		_uniformSet3D = _device.UniformSetCreate(uniforms, _shader3D, 0);
 	}

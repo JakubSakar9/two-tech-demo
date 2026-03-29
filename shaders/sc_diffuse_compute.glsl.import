@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dqmsntmpxr7t8"
+path="res://.godot/imported/sc_diffuse_compute.glsl-eb80a41aa6c17073ddff43d84c1ada75.res"
+
+[deps]
+
+source_file="res://shaders/sc_diffuse_compute.glsl"
+dest_files=["res://.godot/imported/sc_diffuse_compute.glsl-eb80a41aa6c17073ddff43d84c1ada75.res"]
+
+[params]
+

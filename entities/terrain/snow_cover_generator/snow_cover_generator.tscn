@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://damced38v685b"]
+
+[ext_resource type="Script" uid="uid://dvvr2ityfqr1x" path="res://entities/terrain/snow_cover_generator/SnowCoverGenerator.cs" id="1_fvw13"]
+
+[node name="SnowCoverGenerator" type="Node" unique_id=1921976969]
+script = ExtResource("1_fvw13")

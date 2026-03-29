@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://vt8b0hpklc3u"
+path="res://.godot/imported/sc_melting_compute.glsl-c1f1bb6f2ccdf400325679017825e67d.res"
+
+[deps]
+
+source_file="res://shaders/sc_melting_compute.glsl"
+dest_files=["res://.godot/imported/sc_melting_compute.glsl-c1f1bb6f2ccdf400325679017825e67d.res"]
+
+[params]
+

@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dxev4x0rree6a"
+path="res://.godot/imported/sc_temperature_compute.glsl-a9e457a31430e410d7757e620294ffa1.res"
+
+[deps]
+
+source_file="res://shaders/sc_temperature_compute.glsl"
+dest_files=["res://.godot/imported/sc_temperature_compute.glsl-a9e457a31430e410d7757e620294ffa1.res"]
+
+[params]
+

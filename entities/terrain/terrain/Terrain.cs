@@ -5,7 +5,7 @@ public struct HeightMap
     public byte[] bytes;
     public FastNoiseLite noiseFn;
     public Image heightImage;
-    public ImageTexture height; // R = terrain height, G = snow height
+    public ImageTexture height; // R = terrain height, G = snow height, B = powdered snow height
     public ImageTexture3D windTexture;
     private readonly int _size;
 
