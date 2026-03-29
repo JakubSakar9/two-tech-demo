@@ -1,6 +1,9 @@
-- Use grass texture instead of plain green color
+- Compute normal and powdered snow height using precipitation calculations
+- Compute temperature texture based on altitude and direct sun exposure
+- Compute snow melting
+- Snow diffusion
+- Wind snow transfer
 - Use different step sounds when walking on grass
-- Precompute the snow height texture based on the heightmap and wind vector field
 - Create a data structure that stores past footprints
 - When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing
@@ -20,4 +23,5 @@
 Questions:
 - To what extent should "snow transfer" be simulated? Should it happen in real-time?
 - The wind vector field has very low precision, would it make sense to make base wind velocity constant in the vector field regardless of altitude and only change the vector field strength on the CPU side?
-
+- If snow transfer should happen in Realtime, it would no longer be possible to sample the heightmap on the CPU. How should I then handle/compute displacement textures?
+- In case of offline snow transfer computation, would it be instead possible to simulate long-term wind transfer in the precipitation stage?
