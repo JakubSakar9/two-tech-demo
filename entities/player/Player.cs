@@ -41,6 +41,7 @@ public partial class Player : CharacterBody3D
         InitNodes();
         InitPlayerAudio();
 
+        Input.MouseMode = Input.MouseModeEnum.Captured;
         _initialAttachmentHeight = _leftFootAttachment.Position.Y;
     }
 

@@ -103,6 +103,7 @@ void fragment() {
 	NORMAL = (VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
 	
 	float snow_var = -0.6 * texture(glitter_map, detail_uv).r;
+	snow_height -= 0.8 * displacement * snow_height;
 	snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
 	vec3 grass_color = texture(grass_texture, detail_uv).rgb;
 	ALBEDO = mix(grass_color, vec3(0.95), snowiness);

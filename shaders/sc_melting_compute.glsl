@@ -10,7 +10,7 @@ void main() {
     
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
-    ivec2 pixel = ivec2(px, py);s
+    ivec2 pixel = ivec2(px, py);
     vec4 h_vec = imageLoad(heightmap, pixel);
     imageStore(heightmap, pixel, h_vec);   
 }
