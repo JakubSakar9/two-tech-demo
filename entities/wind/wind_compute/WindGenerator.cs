@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Data.SqlTypes;
 
 public partial class WindGenerator : Node
 {
@@ -20,11 +21,11 @@ public partial class WindGenerator : Node
 	private Rid _uniformSetSurface;
     private Rid _uniformSet3D;
 
-    private Image _heightImage;
+    private HeightMap _heightMap;
 	private int _texSize;
 	private int _layerCount;
 
-	public void Initialize(int texSize, int layerCount)
+	public void Init(int texSize, int layerCount)
 	{
 		_device = RenderingServer.CreateLocalRenderingDevice();
 		_texSize = texSize;
@@ -52,9 +53,9 @@ public partial class WindGenerator : Node
 		imgs = images;
 	}
 
-	public void Generate(ref Image heightImage)
+	public void Generate(ref HeightMap heightMap)
 	{
-		_heightImage = heightImage;
+		_heightMap = heightMap;
 		DispatchCompute();
 		_device.Sync();
 	}
@@ -87,23 +88,23 @@ public partial class WindGenerator : Node
 
 	private void InitHeightTexture()
 	{
-		_heightImage = Image.CreateEmpty(_texSize, _texSize, true, Image.Format.Rgf);
+		byte[] bytes = new byte[4 * sizeof(float) * _texSize * _texSize];
 		var format = new RDTextureFormat
 		{
 			Width = (uint)_texSize,
 			Height = (uint)_texSize,
-			Format = RenderingDevice.DataFormat.R32G32Sfloat,
+			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CanUpdateBit,
-			Mipmaps = (uint)_heightImage.GetMipmapCount() + 1
+			Mipmaps = 1
 		};
 		var view = new RDTextureView();
-		_heightTexture = _device.TextureCreate(format, view, [_heightImage.GetData()]);
+		_heightTexture = _device.TextureCreate(format, view, [bytes]);
 	}
 
 	private void DispatchCompute()
 	{
-		_device.TextureUpdate(_heightTexture, 0, _heightImage.GetData());
+		_device.TextureUpdate(_heightTexture, 0, _heightMap.bytes);
 		BindSurfaceUniforms();
         Bind3DUniforms();
         uint xGroups = (uint)_texSize / 16;

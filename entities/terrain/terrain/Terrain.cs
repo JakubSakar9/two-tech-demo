@@ -11,7 +11,7 @@ public struct HeightMap
 
     public HeightMap(int size)
     {
-        bytes = new byte[2 * size * size * sizeof(float)];
+        bytes = new byte[4 * size * size * sizeof(float)];
         noiseFn = new();
         heightImage = new();
         height = new();
@@ -34,12 +34,12 @@ public struct HeightMap
                     float height = maxHeight * noiseValue;
                     float sHeight = maxSnowHeight * (noiseValue - 0.3f) / 0.7f;
                     sHeight = Mathf.Max(sHeight, 0.0f);
-                    floatPointer[2 * (i * _size + j)] = height;
-                    floatPointer[2 * (i * _size + j) + 1] = sHeight;
+                    floatPointer[4 * (i * _size + j)] = height;
+                    floatPointer[4 * (i * _size + j) + 1] = sHeight;
                 }
             }
         }
-        heightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgf, bytes);
+        heightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgbaf, bytes);
         heightImage.GenerateMipmaps();
         height.SetImage(heightImage);
     }
@@ -72,6 +72,7 @@ public partial class Terrain : StaticBody3D
     private CollisionShape3D _terrainCollider;
     private HeightMapShape3D _heightMapShape;
     private GpuParticlesAttractorVectorField3D _windField;
+    private SnowCoverGenerator _scGen;
 
 
     private HeightMap[] _heightmaps;
@@ -79,7 +80,7 @@ public partial class Terrain : StaticBody3D
     private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
     
-    private int _heightmapIndex = 0;
+    private int _heightmapIndex = HEIGHTMAP_SWAP_COUNT - 1;
 
     public override void _Ready()
     {
@@ -88,19 +89,20 @@ public partial class Terrain : StaticBody3D
         _terrainMesh = GetNode<MeshInstance3D>("%TerrainMesh");
         _terrainCollider = GetNode<CollisionShape3D>("%TerrainCollider");
         _windField = GetNode<GpuParticlesAttractorVectorField3D>("%WindField");
+        _scGen = GetNode<SnowCoverGenerator>("%SnowCoverGenerator");
         
         _heightmaps = new HeightMap[HEIGHTMAP_SWAP_COUNT];
         _heightMapShape = new HeightMapShape3D();
 
         int heightmapSize = 3 * ChunkSizeUnits;
 
-        WindGen.Initialize(heightmapSize, WindLayerCount);
+        WindGen.Init(heightmapSize, WindLayerCount);
+        _scGen.Init((uint)(3 * ChunkSizeUnits));
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
             _heightmaps[i] = new(heightmapSize);
             _heightmaps[i].noiseFn.FractalLacunarity = 1.7f;
-            _heightmaps[i].Generate(MaxHeight, MaxSnowHeight);
             _heightmaps[i].windTexture = new ImageTexture3D();
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
@@ -110,17 +112,9 @@ public partial class Terrain : StaticBody3D
             _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindLayerCount, heightmapSize,
                 false, initImages);
         }
-        WindGen.Generate(ref _heightmaps[0].heightImage);
-
         _collisionNoiseFunction = new FastNoiseLite();
-        UpdateCollisionHeightMap();
-
         _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
-        _windField.Position = new Vector3(0.0f, _windField.Size.Y / 2.0f, 0.0f);
-        WindGen.CopyWindTexture(ref _heightmaps[0].windTexture, ref _windImages);
-        _windField.Texture = _heightmaps[0].windTexture;
-
-        SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
+        UpdateHeightMap();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -293,11 +287,18 @@ public partial class Terrain : StaticBody3D
     {
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
         _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight, MaxSnowHeight);
-        WindGen.Generate(ref _heightmaps[_heightmapIndex].heightImage);
+        WindGen.Generate(ref _heightmaps[_heightmapIndex]);
 
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
         WindGen.CopyWindTexture(ref _heightmaps[_heightmapIndex].windTexture, ref _windImages);
         _windField.Texture = _heightmaps[_heightmapIndex].windTexture;
+
+        _scGen.UseHeightMap(in _heightmaps[_heightmapIndex]);
+        _scGen.Preprocess();
+        // _scGen.Iterate(4);
+        _scGen.Postprocess();
+        _scGen.UpdateHeightMap(ref _heightmaps[_heightmapIndex]);
+
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
     }

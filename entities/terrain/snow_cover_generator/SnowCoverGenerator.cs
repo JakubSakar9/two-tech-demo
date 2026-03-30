@@ -27,11 +27,12 @@ public partial class SnowCoverGenerator : Node
     private Dictionary<SCComputePass, Rid> _pipelines;
     private Dictionary<SCComputePass, Rid> _uniformSets;
     private Rid[] _hmImages;
+    private long _computeList;
     private uint _texSize;
 
     private uint _swapIdx = 0;
 
-    public void Init(uint texSize, uint mipCount)
+    public void Init(uint texSize)
     {
         _texSize = texSize;
         _device = RenderingServer.CreateLocalRenderingDevice();
@@ -40,22 +41,41 @@ public partial class SnowCoverGenerator : Node
         _pipelines = new Dictionary<SCComputePass, Rid>();
         _uniformSets = new Dictionary<SCComputePass, Rid>();
 
-        CreatePipelines();
-        CreateImages(mipCount);
+        foreach (SCComputePass pass in Enum.GetValues(typeof(SCComputePass)))
+        {
+            var shaderFile = GD.Load<RDShaderFile>(SC_SHADER_FILES[pass]);
+            var shaderBytecode = shaderFile.GetSpirV();
+            _shaders[pass] = _device.ShaderCreateFromSpirV(shaderBytecode);
+            _pipelines[pass] = _device.ComputePipelineCreate(_shaders[pass]);
+            _uniformSets[pass] = new Rid();
+        }
+        CreateImages();
     }
     
+    /// <summary>
+    /// Passes the height map to the compute pipeline and initiates the compute list.
+    /// </summary>
+    /// <param name="heightMap">Height map struct</param>
     public void UseHeightMap(ref readonly HeightMap heightMap)
     {
         _swapIdx = 0;
-        byte[] bytes = heightMap.heightImage.GetData();
-        _device.TextureUpdate(_hmImages[_swapIdx], 0, bytes);
+        _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
+        _computeList = _device.ComputeListBegin();
     }
 
+    /// <summary>
+    /// Updates the height map based on the computation result. Ends the compute list and blocks the current thread until the result is retrieved.s
+    /// </summary>
+    /// <param name="heightMap">Height map struct</param>
     public void UpdateHeightMap(ref HeightMap heightMap)
     {
-        byte[] bytes = _device.TextureGetData(_hmImages[_swapIdx], 0);
-        heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, true, Image.Format.Rgbaf, bytes);
+        _device.ComputeListEnd();
+        _device.Submit();
+        _device.Sync();
+        heightMap.bytes = _device.TextureGetData(_hmImages[_swapIdx], 0);
+        heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, false, Image.Format.Rgbaf, heightMap.bytes);
         heightMap.heightImage.GenerateMipmaps();
+        heightMap.height.SetImage(heightMap.heightImage);
     }
 
     public void Preprocess()
@@ -81,18 +101,7 @@ public partial class SnowCoverGenerator : Node
         ComputeMelting();
     }
 
-    private void CreatePipelines()
-    {
-        foreach (SCComputePass pass in Enum.GetValues(typeof(SCComputePass)))
-        {
-            var shaderFile = GD.Load<RDShaderFile>(SC_SHADER_FILES[pass]);
-            var shaderBytecode = shaderFile.GetSpirV();
-            _shaders[pass] = _device.ShaderCreateFromSpirV(shaderBytecode);
-            _pipelines[pass] = _device.ComputePipelineCreate(_shaders[pass]);
-        }
-    }
-
-    private void CreateImages(uint mipCount)
+    private void CreateImages()
     {
         var format = new RDTextureFormat
 		{
@@ -101,11 +110,12 @@ public partial class SnowCoverGenerator : Node
 			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CanUpdateBit
-                | RenderingDevice.TextureUsageBits.CpuReadBit,
-			Mipmaps = mipCount + 1
-            // Mipmaps = 1
+                | RenderingDevice.TextureUsageBits.CpuReadBit
+                | RenderingDevice.TextureUsageBits.CanCopyFromBit,
+            Mipmaps = 1
 		};
         var view = new RDTextureView();
+        _hmImages = new Rid[2];
         for (uint i = 0; i < 2; i++)
         {
             _hmImages[i] = _device.TextureCreate(format, view);
@@ -115,47 +125,44 @@ public partial class SnowCoverGenerator : Node
     private void ComputeTemperature()
     {
         BindTemperatureUniforms();
-        // TODO
+        DispatchCompute(SCComputePass.Temperature);
     }
     
     private void ComputePrecipitation()
     {
         BindPrecipitationUniforms();
-        // TODO
+        DispatchCompute(SCComputePass.Precipitation);
     }
 
     private void ComputeDiffuse()
     {
         BindDiffuseUniforms();
-        // TODO
+        DispatchCompute(SCComputePass.Diffuse);
     }
 
     private void ComputeAdvect()
     {
         BindAdvectUniforms();
-        // TODO
+        DispatchCompute(SCComputePass.Advect);
     }
 
     private void ComputeMelting()
     {
         BindMeltingUniforms();
-        // TODO
+        DispatchCompute(SCComputePass.Melting);
     }
 
     private void DispatchCompute(SCComputePass pass)
     {
+        GD.Print(_texSize);
         uint xGroups = _texSize / 16;
-		uint yGroups = 1;
-		uint zGroups = _texSize / 16;
+		uint yGroups = _texSize / 16;
+        uint zGroups = 1;
 
-		var computeList = _device.ComputeListBegin();
-
-        _device.ComputeListBindComputePipeline(computeList, _pipelines[pass]);
-        _device.ComputeListBindUniformSet(computeList, _uniformSets[pass], 0);
-        _device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
-
-        _device.ComputeListEnd();
-        _device.Submit();
+        _device.ComputeListBindComputePipeline(_computeList, _pipelines[pass]);
+        _device.ComputeListBindUniformSet(_computeList, _uniformSets[pass], 0);
+        _device.ComputeListDispatch(_computeList, xGroups, yGroups, zGroups);
+        _device.ComputeListAddBarrier(_computeList);
     }
 
     private void BindTemperatureUniforms()

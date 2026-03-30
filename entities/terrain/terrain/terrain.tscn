@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cr3qdo1jq7hu7" path="res://entities/terrain/terrain/Terrain.cs" id="1_b5q0i"]
 [ext_resource type="ArrayMesh" uid="uid://81yborix7arf" path="res://assets/models/terrain.obj" id="1_kdop1"]
 [ext_resource type="Material" uid="uid://bi05ksh61ogm1" path="res://assets/materials/ground_material.tres" id="2_2ny8j"]
+[ext_resource type="PackedScene" uid="uid://damced38v685b" path="res://entities/terrain/snow_cover_generator/snow_cover_generator.tscn" id="4_k2y3k"]
 
 [sub_resource type="HeightMapShape3D" id="HeightMapShape3D_2ny8j"]
 map_width = 257
@@ -26,3 +27,6 @@ mesh = ExtResource("1_kdop1")
 [node name="WindField" type="GPUParticlesAttractorVectorField3D" parent="." unique_id=366154156]
 unique_name_in_owner = true
 strength = 32.0
+
+[node name="SnowCoverGenerator" parent="." unique_id=1921976969 instance=ExtResource("4_k2y3k")]
+unique_name_in_owner = true
