@@ -13,7 +13,7 @@ public enum SCComputePass
 
 public partial class SnowCoverGenerator : Node
 {
-    public readonly Dictionary<SCComputePass, string> SC_SHADER_FILES = new Dictionary<SCComputePass, string>
+    public readonly Dictionary<SCComputePass, string> SC_SHADER_FILES = new()
     {
         {SCComputePass.Temperature,"res://shaders/sc_temperature_compute.glsl"},
         {SCComputePass.Precipitation, "res://shaders/sc_precipitation_compute.glsl"},
@@ -37,9 +37,9 @@ public partial class SnowCoverGenerator : Node
         _texSize = texSize;
         _device = RenderingServer.CreateLocalRenderingDevice();
         
-        _shaders = new Dictionary<SCComputePass, Rid>();
-        _pipelines = new Dictionary<SCComputePass, Rid>();
-        _uniformSets = new Dictionary<SCComputePass, Rid>();
+        _shaders = [];
+        _pipelines = [];
+        _uniformSets = [];
 
         foreach (SCComputePass pass in Enum.GetValues(typeof(SCComputePass)))
         {
@@ -74,6 +74,9 @@ public partial class SnowCoverGenerator : Node
         _device.Sync();
         heightMap.bytes = _device.TextureGetData(_hmImages[_swapIdx], 0);
         heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, false, Image.Format.Rgbaf, heightMap.bytes);
+
+        heightMap.heightImage.SaveExr("res://debug_output/height_map.exr");
+
         heightMap.heightImage.GenerateMipmaps();
         heightMap.height.SetImage(heightMap.heightImage);
     }
