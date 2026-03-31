@@ -18,6 +18,7 @@ public struct HeightMap
         windTexture = new();
         _size = size;
 
+        noiseFn.FractalType = FastNoiseLite.FractalTypeEnum.Ridged;
         noiseFn.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
     }
 
@@ -58,12 +59,14 @@ public partial class Terrain : StaticBody3D
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
     [Export] public WindGenerator WindGen;
+    [Export] public FastNoiseLite NoiseFunction;
     [Export] public int ChunkSizeUnits = 256;
     [Export] public int CollisionSizeUnits = 8;
     [Export] public int WindLayerCount = 1;
     [Export] public float MaxHeight = 32.0f;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
     [Export] public float MaxSnowHeight = 0.25f;
+
     
 
     public Vector2 ChunkOrigin = Vector2.Zero;
@@ -113,6 +116,7 @@ public partial class Terrain : StaticBody3D
                 false, initImages);
         }
         _collisionNoiseFunction = new FastNoiseLite();
+        _collisionNoiseFunction.FractalType = FastNoiseLite.FractalTypeEnum.Ridged;
         _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
         UpdateHeightMap();
     }

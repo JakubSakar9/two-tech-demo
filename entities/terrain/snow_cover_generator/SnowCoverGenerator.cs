@@ -91,11 +91,8 @@ public partial class SnowCoverGenerator : Node
     {
         for (uint i = 0; i < nIters; i++)
         {
-            ComputeDiffuse();
-        }
-        for (uint i = 0; i < nIters; i++)
-        {
             ComputeAdvect();
+            ComputeDiffuse();
         }
     }
 
