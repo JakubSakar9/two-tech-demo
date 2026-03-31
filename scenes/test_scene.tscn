@@ -1,8 +1,10 @@
 [gd_scene format=3 uid="uid://rlxdv0y863e"]
 
 [ext_resource type="PackedScene" uid="uid://beg2rrt3l6i6w" path="res://entities/terrain/terrain/terrain.tscn" id="1_j8ivh"]
+[ext_resource type="FastNoiseLite" uid="uid://blaoicf2sdqe1" path="res://entities/terrain/terrain/terrain_noise_function_hf.tres" id="2_3qnke"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
 [ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="3_nd71p"]
+[ext_resource type="FastNoiseLite" uid="uid://b81fr5ihv7v3j" path="res://entities/terrain/terrain/terrain_noise_function_lf.tres" id="3_wtsjf"]
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain/terrain_deformer/terrain_deformer.tscn" id="4_7ddre"]
 [ext_resource type="PackedScene" uid="uid://byhehfsbnes1h" path="res://entities/wind/wind_compute/wind_generator.tscn" id="5_qjeyg"]
 
@@ -46,12 +48,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5091324, -1.5258789e-05, 0
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
+NoiseFunctionHF = ExtResource("2_3qnke")
+NoiseFunctionLF = ExtResource("3_wtsjf")
 WindLayerCount = 8
-MaxHeight = 40.0
+MaxHeight = 48.0
 MaxSnowHeight = 0.3
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 57.421055, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.734995, 52.842808, -23.136724)
 WalkSpeed = 1.6
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]

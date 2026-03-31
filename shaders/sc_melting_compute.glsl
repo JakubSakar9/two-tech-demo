@@ -14,5 +14,6 @@ void main() {
     ivec2 pixel = ivec2(px, py);
     vec4 h_vec = imageLoad(heightmap, pixel);
     h_vec.g -= K_MELT * max(0.0, h_vec.a - T0_MELT);
+    h_vec.g = max(0.0, h_vec.g);
     imageStore(heightmap, pixel, h_vec);   
 }

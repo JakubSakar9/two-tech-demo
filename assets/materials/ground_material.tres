@@ -2,6 +2,7 @@
 
 [ext_resource type="Shader" uid="uid://tnrtre0lfm56" path="res://shaders/terrain_shader.gdshader" id="1_bu8bs"]
 [ext_resource type="Texture2D" uid="uid://boe1go5pge6c0" path="res://assets/textures/leafy_grass_diff_2k.jpg" id="2_jkxpb"]
+[ext_resource type="Texture2D" uid="uid://csxpg1plcalqb" path="res://assets/textures/seaside_rock_diff_2k.jpg" id="3_7orrk"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_bu8bs"]
 noise_type = 5
@@ -26,10 +27,13 @@ shader_parameter/roughness = 0.0
 shader_parameter/texture_roughness = SubResource("NoiseTexture2D_7orrk")
 shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
 shader_parameter/grass_texture = ExtResource("2_jkxpb")
+shader_parameter/rock_texture = ExtResource("3_7orrk")
 shader_parameter/displacement_maps = null
 shader_parameter/chunk_origin = Vector2(0, 0)
 shader_parameter/displacement_map_range = 64.0
 shader_parameter/near_fadeout_distance = 128.0
 shader_parameter/far_fadeout_distance = 192.0
 shader_parameter/displacement_darkening = 0.0
+shader_parameter/rock_fade_start = 19.0
+shader_parameter/rock_fade_end = 20.0
 shader_parameter/disp_row = 5

@@ -13,6 +13,7 @@ uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, re
 uniform sampler2D height_map: source_color, filter_linear_mipmap;
 uniform sampler2D glitter_map: source_color, filter_nearest;
 uniform sampler2D grass_texture: filter_linear_mipmap_anisotropic;
+uniform sampler2D rock_texture: filter_linear_mipmap_anisotropic;
 uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap;
 
 uniform vec2 chunk_origin = vec2(0.0);
@@ -20,6 +21,8 @@ uniform float displacement_map_range = 64.0;
 uniform float near_fadeout_distance = 128.0;
 uniform float far_fadeout_distance = 192.0;
 uniform float displacement_darkening = 0.0;
+uniform float rock_fade_start = 11.0;
+uniform float rock_fade_end = 12.0;
 uniform int disp_row = 5;
 
 varying vec2 terrain_uv;
@@ -28,6 +31,7 @@ varying vec3 debug_color;
 varying float disp_flatness;
 varying float displacement;
 varying vec3 normal_height;
+varying float height;
 varying float snowiness;
 
 void vertex() {
@@ -42,7 +46,7 @@ void vertex() {
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
 
-	float height = texture(height_map, terrain_uv).r;
+	height = texture(height_map, terrain_uv).r;
 	float snow_height = texture(height_map, terrain_uv).g;
 	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
 	float snow_offset = (1.0 - displacement_v) * snow_height;
@@ -92,7 +96,6 @@ void fragment() {
 		float t = (dot_diff + 0.1) / 0.15;
 		NORMAL = mix(normal_disp, normal_height, t);
 	}
-	//NORMAL = normal_height;
 	
 	float v_distance = length(VERTEX);
 	float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
@@ -105,8 +108,11 @@ void fragment() {
 	float snow_var = -0.6 * texture(glitter_map, detail_uv).r;
 	snow_height -= 0.8 * displacement * snow_height;
 	snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
+	float rockiness = clamp((height - rock_fade_start) / (rock_fade_end - rock_fade_start), 0.0, 1.0);
 	vec3 grass_color = texture(grass_texture, detail_uv).rgb;
-	ALBEDO = mix(grass_color, vec3(0.95), snowiness);
+	vec3 rock_color = texture(rock_texture, detail_uv).rgb;
+	vec3 ground_color = mix(grass_color, rock_color, rockiness);
+	ALBEDO = mix(ground_color, vec3(0.95), snowiness);
 	//ALBEDO = debug_color;
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
@@ -124,8 +130,8 @@ void light() {
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
 	float disp_ao = (1.0 - displacement_darkening * displacement);
 	//SPECULAR_LIGHT = vec3(glitter * disp_flatness);
-	SPECULAR_LIGHT = (1.0 - ROUGHNESS) * vec3(rim_specular);
-	vec3 snow_diffuse = ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
+	SPECULAR_LIGHT = 0.5 * (1.0 - ROUGHNESS) * vec3(rim_specular);
+	vec3 snow_diffuse = 0.4 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
 	vec3 grass_diffuse = ALBEDO * dot(LIGHT, NORMAL);
 	DIFFUSE_LIGHT = mix(grass_diffuse, snow_diffuse, snowiness);
 	//DIFFUSE_LIGHT = 0.7 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;

@@ -3,23 +3,24 @@ using Godot;
 public struct HeightMap
 {
     public byte[] bytes;
-    public FastNoiseLite noiseFn;
     public Image heightImage;
     public ImageTexture height; // R = terrain height, G = snow height, B = powdered snow height
     public ImageTexture3D windTexture;
+    public FastNoiseLite noiseFnHF;
+    public FastNoiseLite noiseFnLF;
     private readonly int _size;
 
-    public HeightMap(int size)
+    public HeightMap(FastNoiseLite pNoiseFnHF, FastNoiseLite pNoiseFnLF, int size)
     {
         bytes = new byte[4 * size * size * sizeof(float)];
-        noiseFn = new();
+        noiseFnHF = pNoiseFnHF.DuplicateDeep() as FastNoiseLite;
+        noiseFnLF = pNoiseFnLF.DuplicateDeep() as FastNoiseLite;
         heightImage = new();
         height = new();
         windTexture = new();
         _size = size;
-
-        noiseFn.FractalType = FastNoiseLite.FractalTypeEnum.Ridged;
-        noiseFn.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
+        noiseFnHF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
+        noiseFnLF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
     }
 
     public unsafe void Generate(float maxHeight, float maxSnowHeight)
@@ -31,12 +32,11 @@ public struct HeightMap
             {
                 for (int j = 0; j < _size; j++)
                 {
-                    float noiseValue = (noiseFn.GetNoise2D(j, i) + 1.0f) / 2.0f;
-                    float height = maxHeight * noiseValue;
-                    float sHeight = maxSnowHeight * (noiseValue - 0.3f) / 0.7f;
-                    sHeight = Mathf.Max(sHeight, 0.0f);
+                    float noiseValueHF = (noiseFnHF.GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    float noiseValueLF = (noiseFnLF.GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    float combined = noiseValueHF * noiseValueLF;
+                    float height = maxHeight * combined;
                     floatPointer[4 * (i * _size + j)] = height;
-                    floatPointer[4 * (i * _size + j) + 1] = sHeight;
                 }
             }
         }
@@ -47,7 +47,8 @@ public struct HeightMap
 
     public void MoveOrigin(Vector2 origin, float maxHeight, float maxSnowHeight)
     {
-        noiseFn.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
+        noiseFnHF.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
+        noiseFnLF.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
         Generate(maxHeight, maxSnowHeight);
     }
 }
@@ -59,7 +60,8 @@ public partial class Terrain : StaticBody3D
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
     [Export] public WindGenerator WindGen;
-    [Export] public FastNoiseLite NoiseFunction;
+    [Export] public FastNoiseLite NoiseFunctionHF;
+    [Export] public FastNoiseLite NoiseFunctionLF;
     [Export] public int ChunkSizeUnits = 256;
     [Export] public int CollisionSizeUnits = 8;
     [Export] public int WindLayerCount = 1;
@@ -80,7 +82,6 @@ public partial class Terrain : StaticBody3D
 
     private HeightMap[] _heightmaps;
     private Godot.Collections.Array<Image> _windImages;
-    private FastNoiseLite _collisionNoiseFunction;
     private Image _collisionImage;
     
     private int _heightmapIndex = HEIGHTMAP_SWAP_COUNT - 1;
@@ -104,9 +105,10 @@ public partial class Terrain : StaticBody3D
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
-            _heightmaps[i] = new(heightmapSize);
-            _heightmaps[i].noiseFn.FractalLacunarity = 1.7f;
-            _heightmaps[i].windTexture = new ImageTexture3D();
+            _heightmaps[i] = new(NoiseFunctionHF, NoiseFunctionLF, heightmapSize)
+            {
+                windTexture = new ImageTexture3D()
+            };
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
             {
@@ -115,8 +117,6 @@ public partial class Terrain : StaticBody3D
             _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindLayerCount, heightmapSize,
                 false, initImages);
         }
-        _collisionNoiseFunction = new FastNoiseLite();
-        _collisionNoiseFunction.FractalType = FastNoiseLite.FractalTypeEnum.Ridged;
         _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
         UpdateHeightMap();
     }
@@ -269,8 +269,9 @@ public partial class Terrain : StaticBody3D
 
     private void UpdateCollisionHeightMap()
     {
-        _collisionNoiseFunction.FractalLacunarity = 1.7f;
-        _collisionNoiseFunction.Offset = new Vector3(Player.GlobalPosition.X - 0.5f, Player.GlobalPosition.Z - 0.5f, 0.0f);
+        Vector3 noiseOffset = new(Player.GlobalPosition.X - 0.5f, Player.GlobalPosition.Z - 0.5f, 0.0f);
+        NoiseFunctionHF.Offset = noiseOffset;
+        NoiseFunctionLF.Offset = noiseOffset;
         _collisionImage = Image.CreateEmpty(CollisionSizeUnits + 1, CollisionSizeUnits + 1, false, Image.Format.Rf);
         for (int i = 0; i <= CollisionSizeUnits; i++)
         {
@@ -278,8 +279,9 @@ public partial class Terrain : StaticBody3D
             for (int j = 0; j <= CollisionSizeUnits; j++)
             {
                 float x = j - CollisionSizeUnits / 2;
-                float value = (_collisionNoiseFunction.GetNoise2D(x, y) + 1.0f) / 2.0f;
-                _collisionImage.SetPixel(j, i, new Color(value, 0.0f, 0.0f, 1.0f));
+                float valueHF = (NoiseFunctionHF.GetNoise2D(x, y) + 1.0f) / 2.0f;
+                float valueLF = (NoiseFunctionLF.GetNoise2D(x, y) + 1.0f) / 2.0f;
+                _collisionImage.SetPixel(j, i, new Color(valueHF * valueLF, 0.0f, 0.0f, 1.0f));
             }
         }
         _heightMapShape.UpdateMapDataFromImage(_collisionImage, 0f, MaxHeight);
@@ -319,13 +321,13 @@ public partial class Terrain : StaticBody3D
         (_terrainMesh.MaterialOverride as ShaderMaterial).SetShaderParameter(property, value);
     }
 
-    private Vector3 GetImgVec3(Image img, int x, int y)
+    private static Vector3 GetImgVec3(Image img, int x, int y)
     {
         Color c = img.GetPixel(x, y);
         return new Vector3(c.R, c.G, c.B);
     }
 
-    private float GetImgSH(Image img, int x, int y)
+    private static float GetImgSH(Image img, int x, int y)
     {
         Color c = img.GetPixel(x, y);
         return c.G;
