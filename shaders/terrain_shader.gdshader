@@ -46,8 +46,10 @@ void vertex() {
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
 
-	height = texture(height_map, terrain_uv).r;
-	float snow_height = texture(height_map, terrain_uv).g;
+	vec4 height_val = texture(height_map, terrain_uv);
+	height = height_val.r;
+	float snow_height = height_val.g + height_val.b;
+	snow_height = max(0.0, snow_height - 1.0);
 	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
@@ -72,7 +74,8 @@ void fragment() {
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
-	float snow_height = texture(height_map, terrain_uv).g;
+	vec4 height_val = texture(height_map, terrain_uv);
+	float snow_height = height_val.g + height_val.b;
 	displacement = texture(displacement_maps[tidx], disp_uv).r;
 	
 	vec2 duvx = vec2(eps_d, 0);
@@ -129,10 +132,8 @@ void light() {
 	float glitter = clamp(texture(glitter_map, 30.0 * disp_uv).r, 0.4, 1.0);
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
 	float disp_ao = (1.0 - displacement_darkening * displacement);
-	//SPECULAR_LIGHT = vec3(glitter * disp_flatness);
 	SPECULAR_LIGHT = 0.5 * (1.0 - ROUGHNESS) * vec3(rim_specular);
 	vec3 snow_diffuse = 0.4 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
-	vec3 grass_diffuse = ALBEDO * dot(LIGHT, NORMAL);
-	DIFFUSE_LIGHT = mix(grass_diffuse, snow_diffuse, snowiness);
-	//DIFFUSE_LIGHT = 0.7 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
+	vec3 ground_diffuse = ALBEDO * dot(LIGHT, NORMAL);
+	DIFFUSE_LIGHT = mix(ground_diffuse, snow_diffuse, snowiness);
 }

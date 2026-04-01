@@ -1,9 +1,6 @@
-- Compute temperature texture based on altitude and direct sun exposure
-- Compute normal and powdered snow height using precipitation calculations
-- Compute snow melting
-- Snow diffusion
-- Wind snow transfer
 - Use different step sounds when walking on grass
+- Initialize terrain as a set of random events
+- Optimize terrain shader
 - Create a data structure that stores past footprints
 - When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing

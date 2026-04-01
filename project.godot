@@ -23,6 +23,10 @@ config/icon="res://icon.svg"
 
 buses/default_bus_layout="uid://53rxdd03xqeb"
 
+[debug]
+
+settings/stdout/print_fps=true
+
 [display]
 
 window/size/viewport_width=1920

@@ -301,10 +301,11 @@ public partial class Terrain : StaticBody3D
 
         _scGen.UseHeightMap(in _heightmaps[_heightmapIndex]);
         _scGen.Preprocess();
-        // _scGen.Iterate(4);
+        _scGen.Iterate(4);
         _scGen.Postprocess();
         _scGen.UpdateHeightMap(ref _heightmaps[_heightmapIndex]);
 
+        GD.Print("Using uniform hm...");
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
     }
@@ -330,6 +331,6 @@ public partial class Terrain : StaticBody3D
     private static float GetImgSH(Image img, int x, int y)
     {
         Color c = img.GetPixel(x, y);
-        return c.G;
+        return c.G + c.B;
     }
 }

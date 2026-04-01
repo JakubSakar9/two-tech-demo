@@ -76,6 +76,7 @@ public partial class SnowCoverGenerator : Node
         heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, false, Image.Format.Rgbaf, heightMap.bytes);
 
         heightMap.heightImage.SaveExr("res://debug_output/height_map.exr");
+        GD.Print("Saved to exr");
 
         heightMap.heightImage.GenerateMipmaps();
         heightMap.height.SetImage(heightMap.heightImage);
@@ -92,7 +93,7 @@ public partial class SnowCoverGenerator : Node
         for (uint i = 0; i < nIters; i++)
         {
             ComputeAdvect();
-            ComputeDiffuse();
+            // ComputeDiffuse();
         }
     }
 
