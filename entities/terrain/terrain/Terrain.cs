@@ -68,6 +68,7 @@ public partial class Terrain : StaticBody3D
     [Export] public float MaxHeight = 32.0f;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
     [Export] public float MaxSnowHeight = 0.25f;
+    [Export] public float RockGroundHeight = 11.0f;
 
     
 
@@ -119,6 +120,8 @@ public partial class Terrain : StaticBody3D
         }
         _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
         UpdateHeightMap();
+        SetShaderParam("rock_fade_start", RockGroundHeight);
+        SetShaderParam("rock_fade_end", RockGroundHeight + 1.0f);
     }
 
     public override void _PhysicsProcess(double delta)

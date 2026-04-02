@@ -8,6 +8,8 @@ public partial class TerrainDeformer : Node3D
     [Export] public Player Player;
     [Export] public uint RadiusChunks = 2;
     [Export] public float DisplacementMapRange = 64.0f;
+    [Export] public float MinSoundHeight = 0.05f;
+    [Export] public float GrassThreshold = 0.02f;
 
     private Terrain _terrain;
     private TexturePainter _painter;
@@ -33,16 +35,16 @@ public partial class TerrainDeformer : Node3D
         var deformationCenter = Player.LeftFootPosition / DisplacementMapRange;
         _painter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + deformationCenter;
         float snowHeight = _terrain.GetSnowHeight();
+        float snowHeightCl = Mathf.Max(MinSoundHeight, snowHeight);
         
-        // GD.Print("R: " + Player.RightFootHitDistance + ", L: " + Player.LeftFootHitDistance);
 
         float carveDepth = 0.0f;
-        if (Player.LeftFootHitDistance <= snowHeight && !_leftCarving)
+        if (Player.LeftFootHitDistance <= snowHeightCl && !_leftCarving)
         {
             _leftCarving = true;
-            Player.PlayFootstep(Player.FootSide.Left);
+            Player.PlayFootstep(Player.FootSide.Left, snowHeight <= GrassThreshold);
         }
-        else if (Player.LeftFootHitDistance > snowHeight)
+        else if (Player.LeftFootHitDistance > snowHeightCl)
         {
             _leftCarving = false;
         }
@@ -55,12 +57,12 @@ public partial class TerrainDeformer : Node3D
 
         deformationCenter = Player.RightFootPosition / DisplacementMapRange;
         _painter.Params.CenterRight = new Vector2(0.5f, 0.5f) + deformationCenter;
-        if (Player.RightFootHitDistance <= snowHeight && !_rightCarving)
+        if (Player.RightFootHitDistance <= snowHeightCl && !_rightCarving)
         {
             _rightCarving = true;
-            Player.PlayFootstep(Player.FootSide.Right);
+            Player.PlayFootstep(Player.FootSide.Right, snowHeight <= GrassThreshold);
         }
-        else if (Player.RightFootHitDistance > snowHeight)
+        else if (Player.RightFootHitDistance > snowHeightCl)
         {
             _rightCarving = false;
         }

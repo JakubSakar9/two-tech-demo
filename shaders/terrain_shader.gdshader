@@ -121,7 +121,6 @@ void fragment() {
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
 	float roughness_snow = 1.0 - (dot(texture(texture_roughness, disp_uv), roughness_texture_channel) + 3.0) / 4.0;
 	ROUGHNESS = mix(0.9, roughness_snow, snowiness);
-	SPECULAR = 0.1;
 }
 
 void light() {

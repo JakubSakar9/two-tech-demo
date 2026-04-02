@@ -44,7 +44,6 @@ environment = SubResource("Environment_nd71p")
 transform = Transform3D(0.9375372, 0.1361418, -0.32013953, 0.17701465, 0.6055196, 0.77589405, 0.2994824, -0.7840989, 0.5435981, 0, 8.436316, 0)
 
 [node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen") instance=ExtResource("1_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5091324, -1.5258789e-05, 0.5162506)
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
@@ -53,9 +52,10 @@ NoiseFunctionLF = ExtResource("3_wtsjf")
 WindLayerCount = 8
 MaxHeight = 48.0
 MaxSnowHeight = 0.3
+RockGroundHeight = 21.0
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.734995, 52.842808, -23.136724)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.23542, 25.579044, -36.768616)
 WalkSpeed = 1.6
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
