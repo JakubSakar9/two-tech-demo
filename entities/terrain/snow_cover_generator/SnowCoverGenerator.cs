@@ -199,7 +199,7 @@ public partial class SnowCoverGenerator : Node
         {
             DirectSunTemperatureIncrease = DirectSunlightHeat,
             SunIntensity = 1.0f,
-            AltitudeTemperatureDecrease = (TopTemperature - SeaTemperature) / maxAltitude,
+            AltitudeTemperatureDecrease = (SeaTemperature - TopTemperature) / maxAltitude,
             SeaTemperature = SeaTemperature
         };
 
