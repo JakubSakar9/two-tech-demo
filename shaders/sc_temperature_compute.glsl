@@ -1,10 +1,6 @@
 #[compute]
 #version 450
 
-const float K_SUN = 0.5;    // Temperature increase per one hour of direct sunlight
-const float K_T = 0.5;      // Temperature decrease per meter of altitude
-const float T0 = 279.0;    // Temperature at sea level in Kelvin
-
 const uint N_HOURS = 13;
 
 const vec3[] I_VECS = vec3[13](
@@ -26,6 +22,13 @@ const vec3[] I_VECS = vec3[13](
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform image2D heightmap;
+
+layout(push_constant, std430) uniform Params {
+    float sun_heat; // Temperature increase under direct sunlight
+    float k_sun;    // Sunlight intensity
+    float k_t;      // Temperature decrease per meter of altitude
+    float t0;       // Temperature at the sea level given in kelvin
+} params;
 
 vec3 surf_normal(uvec2 p2, float a) {
     uint size = gl_NumWorkGroups.x * gl_WorkGroupSize.x;
@@ -61,8 +64,8 @@ void main() {
     for (uint i = 0; i < N_HOURS; i++) {
         I += max(0.0, dot(n, -I_VECS[i]));
     }
-    I *= K_SUN;
-    h_vec.a = T0 - K_T * h_vec.r + I;
+    I *= params.sun_heat / float(N_HOURS);
+    h_vec.a = params.t0 - params.k_t * h_vec.r + params.k_sun * I;
     // Debug normalization:
     // h_vec.a = (h_vec.a - 255.0) / 30.0;
     imageStore(heightmap, pixel, h_vec);

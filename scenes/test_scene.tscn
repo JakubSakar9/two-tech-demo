@@ -47,12 +47,10 @@ transform = Transform3D(0.9375372, 0.1361418, -0.32013953, 0.17701465, 0.6055196
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
+MaxAltitude = 48.0
+RockGroundHeight = 17.0
 NoiseFunctionHF = ExtResource("2_3qnke")
 NoiseFunctionLF = ExtResource("3_wtsjf")
-WindLayerCount = 8
-MaxHeight = 48.0
-MaxSnowHeight = 0.3
-RockGroundHeight = 21.0
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.23542, 25.579044, -36.768616)

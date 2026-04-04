@@ -1,19 +1,22 @@
 #[compute]
 #version 450
 
-const vec2 WIND_VEC = vec2(0.3, 0.4);   // Base wind vector (TODO: Replace with wind field later)
-const float WIND_STRENGTH = 4.0;        // Wind distance multiplier per time unit.
-const float K_WSLOPE = 0.3;             // Highest slope enabling wind advection
+const float K_WSLOPE = 0.3; // Highest slope enabling wind advection
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform readonly image2D heightmap_in;
 layout(set = 0, binding = 1, rgba32f) uniform image2D heightmap_out;
 
+layout(push_constant, std430) uniform Params {
+    vec2 wind_vec;          // Constant wind speed vector (TODO: Replace with wind field later)
+    float step_multiplier;  // Wind vector multiplier for this advection step, determines the influence of wind on powdery snow transfer
+} params;
+
 void advect_lossy() {
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
-    vec2 w = WIND_VEC * WIND_STRENGTH;
+    vec2 w = params.wind_vec * params.step_multiplier;
     float w_len = length(w);
     ivec2 pixel = ivec2(px, py);
     ivec2 pixel_src = ivec2(vec2(pixel) - w);
@@ -29,7 +32,7 @@ void advect_lossy() {
 void advect_lossless() {
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
-    vec2 w = WIND_VEC * WIND_STRENGTH;
+    vec2 w = params.wind_vec * params.step_multiplier;
     float w_len = length(w);
     ivec2 pixel = ivec2(px, py);
     vec4 h = imageLoad(heightmap_in, pixel);

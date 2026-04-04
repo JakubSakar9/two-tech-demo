@@ -10,6 +10,9 @@ public partial class WindGenerator : Node
 	const string SHADER_PATH_3D = "res://shaders/wind_3d_compute.glsl";
 	const int WINDTEX_SWAP_COUNT = 4;
 
+	[Export] public Vector2 BaseWindVelocity = new Vector2(0.3f, 0.4f);
+	[Export] public int LayerCount = 8;
+
 	private RenderingDevice _device;
 	private Rid _shaderSurface;
     private Rid _shader3D;
@@ -23,13 +26,12 @@ public partial class WindGenerator : Node
 
     private HeightMap _heightMap;
 	private int _texSize;
-	private int _layerCount;
 
-	public void Init(int texSize, int layerCount)
+
+	public void Init(int texSize)
 	{
 		_device = RenderingServer.CreateLocalRenderingDevice();
 		_texSize = texSize;
-		_layerCount = layerCount;
 		InitShaders();
         InitSurfaceBuffer();
         InitWindBuffers();
@@ -41,11 +43,11 @@ public partial class WindGenerator : Node
 	public void CopyWindTexture(ref ImageTexture3D tex, ref Godot.Collections.Array<Image> imgs)
 	{
 		Godot.Collections.Array<Image> images = [];
-		uint strideBytes = 4 * sizeof(float) * (uint)_texSize * (uint)_layerCount;
+		uint strideBytes = 4 * sizeof(float) * (uint)_texSize * (uint)LayerCount;
 		for (uint i = 0; i < _texSize; i++)
 		{
 			byte[] layerData = _device.BufferGetData(_windBuffer, i * strideBytes, strideBytes);
-			Image layerImage = Image.CreateFromData(_texSize, _layerCount, false, Image.Format.Rgbaf, layerData);
+			Image layerImage = Image.CreateFromData(_texSize, LayerCount, false, Image.Format.Rgbaf, layerData);
 			layerImage.Convert(Image.Format.Rgba8);
 			images.Add(layerImage);
 		}
@@ -81,7 +83,7 @@ public partial class WindGenerator : Node
 
     private void InitWindBuffers()
 	{
-		int dataSize = 4 * sizeof(float) * _texSize * _layerCount * _texSize;
+		int dataSize = 4 * sizeof(float) * _texSize * LayerCount * _texSize;
 		byte[] initData = new byte[dataSize];
 		_windBuffer = _device.StorageBufferCreate((uint)dataSize, initData);
 	}
@@ -118,7 +120,7 @@ public partial class WindGenerator : Node
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 		_device.ComputeListAddBarrier(computeList);
 		
-		yGroups = (uint)_layerCount;
+		yGroups = (uint)LayerCount;
 		_device.ComputeListBindComputePipeline(computeList, _pipeline3D);
         _device.ComputeListBindUniformSet(computeList, _uniformSet3D, 0);
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);

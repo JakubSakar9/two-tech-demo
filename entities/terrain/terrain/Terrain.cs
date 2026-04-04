@@ -23,7 +23,7 @@ public struct HeightMap
         noiseFnLF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
     }
 
-    public unsafe void Generate(float maxHeight, float maxSnowHeight)
+    public unsafe void Generate(float maxHeight)
     {
         fixed(byte* bytePointer = bytes)
         {
@@ -45,11 +45,11 @@ public struct HeightMap
         height.SetImage(heightImage);
     }
 
-    public void MoveOrigin(Vector2 origin, float maxHeight, float maxSnowHeight)
+    public void MoveOrigin(Vector2 origin, float maxHeight)
     {
         noiseFnHF.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
         noiseFnLF.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
-        Generate(maxHeight, maxSnowHeight);
+        Generate(maxHeight);
     }
 }
 
@@ -57,19 +57,21 @@ public partial class Terrain : StaticBody3D
 {
     const int HEIGHTMAP_SWAP_COUNT = 4;
 
+    [ExportCategory("References")]
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
     [Export] public WindGenerator WindGen;
+
+    [ExportCategory("Generation")]
+    [Export] public float MaxAltitude = 32.0f;
+    [Export] public float RockGroundHeight = 11.0f;
     [Export] public FastNoiseLite NoiseFunctionHF;
     [Export] public FastNoiseLite NoiseFunctionLF;
     [Export] public int ChunkSizeUnits = 256;
-    [Export] public int CollisionSizeUnits = 8;
-    [Export] public int WindLayerCount = 1;
-    [Export] public float MaxHeight = 32.0f;
-    [Export] public float ChunkThresholdMultiplier = 1.125f;
-    [Export] public float MaxSnowHeight = 0.25f;
-    [Export] public float RockGroundHeight = 11.0f;
 
+    [ExportCategory("Misc")]
+    [Export] public int CollisionSizeUnits = 8;
+    [Export] public float ChunkThresholdMultiplier = 1.125f;
     
 
     public Vector2 ChunkOrigin = Vector2.Zero;
@@ -101,8 +103,8 @@ public partial class Terrain : StaticBody3D
 
         int heightmapSize = 3 * ChunkSizeUnits;
 
-        WindGen.Init(heightmapSize, WindLayerCount);
-        _scGen.Init((uint)(3 * ChunkSizeUnits));
+        WindGen.Init(heightmapSize);
+        _scGen.Init((uint)(3 * ChunkSizeUnits), WindGen);
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
@@ -113,12 +115,12 @@ public partial class Terrain : StaticBody3D
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
             {
-                initImages.Add(Image.CreateEmpty(heightmapSize, WindLayerCount, false, Image.Format.Rgba8));
+                initImages.Add(Image.CreateEmpty(heightmapSize, WindGen.LayerCount, false, Image.Format.Rgba8));
             }
-            _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindLayerCount, heightmapSize,
+            _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindGen.LayerCount, heightmapSize,
                 false, initImages);
         }
-        _windField.Size = new Vector3(heightmapSize, MaxHeight * 1.25f, heightmapSize);
+        _windField.Size = new Vector3(heightmapSize, MaxAltitude * 1.25f, heightmapSize);
         UpdateHeightMap();
         SetShaderParam("rock_fade_start", RockGroundHeight);
         SetShaderParam("rock_fade_end", RockGroundHeight + 1.0f);
@@ -170,7 +172,7 @@ public partial class Terrain : StaticBody3D
         uvw = uvw.Clamp(Vector3.Zero, Vector3.One);
 
         int size = 3 * ChunkSizeUnits;
-        int lCount = WindLayerCount;
+        int lCount = WindGen.LayerCount;
         float tx = uvw.X * (size   - 1);
         float ty = uvw.Y * (lCount - 1);
         float tz = uvw.Z * (size   - 1);
@@ -287,7 +289,7 @@ public partial class Terrain : StaticBody3D
                 _collisionImage.SetPixel(j, i, new Color(valueHF * valueLF, 0.0f, 0.0f, 1.0f));
             }
         }
-        _heightMapShape.UpdateMapDataFromImage(_collisionImage, 0f, MaxHeight);
+        _heightMapShape.UpdateMapDataFromImage(_collisionImage, 0f, MaxAltitude);
         _terrainCollider.Shape = _heightMapShape;
         _terrainCollider.GlobalPosition = new Vector3(Player.GlobalPosition.X, 0, Player.GlobalPosition.Z);
     }
@@ -295,7 +297,7 @@ public partial class Terrain : StaticBody3D
     private void UpdateHeightMap()
     {
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
-        _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxHeight, MaxSnowHeight);
+        _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxAltitude);
         WindGen.Generate(ref _heightmaps[_heightmapIndex]);
 
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);

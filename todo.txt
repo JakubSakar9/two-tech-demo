@@ -1,6 +1,9 @@
-- Use different step sounds when walking on grass
+- Use push constants for all shaders
+- Use wind field for advection shader
 - Initialize terrain as a set of random events
 - Optimize terrain shader
+- Create a loading screen
+- Create spectator mode
 - Create a data structure that stores past footprints
 - When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing
@@ -22,3 +25,4 @@ Otázky:
 - Pokud by byla simulována v reálném čase, už by nebylo možné vzorkovat výškovou mapu na CPU. Jak v takovém případě počítat displacement?
 - Vektorové pole pro vítr má velmi malý dynamický rozsah. Dávalo by smysl ukládat do vektorového pole pouze normalizovaný vektor větru vzhledem k nějaké standardní rychlosti větru v dané výšce a poté měnit sílu atraktoru čistě v závislosti na výšce? 
 - Iterativní výpočet difuze sněhu bude dost časově náročný a komplexní, nebyl by dobrý nápad tento efekt aproximovat přímo ve srážkovém shaderu?
++
