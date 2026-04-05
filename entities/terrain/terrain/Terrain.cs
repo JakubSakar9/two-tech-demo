@@ -307,7 +307,7 @@ public partial class Terrain : StaticBody3D
 
         _scGen.UseHeightMap(in _heightmaps[_heightmapIndex]);
         _scGen.Preprocess();
-        _scGen.Iterate(4);
+        _scGen.Iterate();
         _scGen.Postprocess();
         _scGen.UpdateHeightMap(ref _heightmaps[_heightmapIndex]);
 

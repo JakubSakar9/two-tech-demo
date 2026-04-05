@@ -31,9 +31,10 @@ public struct PrecipitationParams
 
 public struct AdvectionParams
 {
-    public Vector2 WindVec; // TODO: Replace this with surface wind field sampling later
+    public float MaxWindSpeed;
     public float WindStrengthStepMultiplier;
     uint _padding0;
+    uint _padding1;
 }
 
 public struct MeltingParams
@@ -98,6 +99,7 @@ public partial class SnowCoverGenerator : Node
     private Dictionary<SCComputePass, Rid> _pipelines;
     private Dictionary<SCComputePass, Rid> _uniformSets;
     private Rid[] _hmImages;
+    private Rid _windSurfTex;
 
     private TemperatureParams _tParams;
     private PrecipitationParams _pParams;
@@ -158,9 +160,10 @@ public partial class SnowCoverGenerator : Node
         ComputePrecipitation();
     }
 
-    public void Iterate(uint nIters)
+    public void Iterate()
     {
-        for (uint i = 0; i < nIters; i++)
+        _windGen.LoadWindSurface(_device, _windSurfTex); // TODO: Do this only when needed
+        for (uint i = 0; i < AdvectionIterations; i++)
         {
             ComputeAdvect();
             // ComputeDiffuse();
@@ -213,8 +216,7 @@ public partial class SnowCoverGenerator : Node
 
         _aParams = new()
         {
-            WindVec = _windGen.BaseWindVelocity,
-            WindStrengthStepMultiplier = 4.0f
+            WindStrengthStepMultiplier = AdvectionInfluence / AdvectionIterations
         };
 
         _mParams = new()
@@ -243,6 +245,7 @@ public partial class SnowCoverGenerator : Node
         {
             _hmImages[i] = _device.TextureCreate(format, view);
         }
+        _windSurfTex = _device.TextureCreate(format, view);
     }
 
     private void ComputeTemperature()
@@ -359,10 +362,16 @@ public partial class SnowCoverGenerator : Node
             UniformType = RenderingDevice.UniformType.Image,
             Binding = 1
         };
+        var windSurfaceUniform = new RDUniform
+        {
+            UniformType = RenderingDevice.UniformType.Image,
+            Binding = 2
+        };
         heightMapInUniform.AddId(_hmImages[_swapIdx]);
         heightMapOutUniform.AddId(_hmImages[1 - _swapIdx]);
+        windSurfaceUniform.AddId(_windSurfTex);
 
-        Godot.Collections.Array<RDUniform> uniforms = [heightMapInUniform, heightMapOutUniform];
+        Godot.Collections.Array<RDUniform> uniforms = [heightMapInUniform, heightMapOutUniform, windSurfaceUniform];
         if (_uniformSets[SCComputePass.Advect].IsValid && _device.UniformSetIsValid(_uniformSets[SCComputePass.Advect]))
         {
             _device.FreeRid(_uniformSets[SCComputePass.Advect]);

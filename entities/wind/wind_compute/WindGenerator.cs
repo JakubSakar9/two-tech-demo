@@ -79,6 +79,13 @@ public partial class WindGenerator : Node
 		_device.Sync();
 	}
 
+	public void LoadWindSurface(RenderingDevice device, Rid targetTex)
+	{
+		uint size = 4 * sizeof(float) * (uint)_texSize * (uint)_texSize;
+		byte[] surfaceData = _device.BufferGetData(_surfaceBuffer);
+		device.TextureUpdate(targetTex, 0, surfaceData);
+	}
+
 	private void InitParams()
 	{
 		var tr = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
