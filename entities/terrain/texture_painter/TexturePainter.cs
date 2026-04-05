@@ -2,7 +2,6 @@ using Godot;
 using Godot.Collections;
 using System;
 using System.Collections.Generic;
-using System.Net.Security;
 using System.Runtime.InteropServices;
 
 public struct TexturePainterParams
@@ -159,8 +158,6 @@ public partial class TexturePainter : Node
 
             Params.CenterLeft = cl - (Vector2)chunk.ChunkCoord;
             Params.CenterRight = cr - (Vector2)chunk.ChunkCoord;
-
-            // GD.Print(Params.CenterLeft);
 
             DispatchCompute();
 

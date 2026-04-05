@@ -277,7 +277,6 @@ public partial class SnowCoverGenerator : Node
 
     private void DispatchCompute(SCComputePass pass)
     {
-        GD.Print(_texSize);
         uint xGroups = _texSize / 16;
 		uint yGroups = _texSize / 16;
         uint zGroups = 1;

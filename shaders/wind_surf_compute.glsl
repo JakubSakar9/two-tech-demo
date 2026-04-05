@@ -1,14 +1,6 @@
 #[compute]
 #version 450
 
-/// Base wind vector at sea level
-const vec2 WIND_VEC = vec2(0.3, 0.4);
-// Venturi effect strength (very high here for demostration purposes)
-const float K_VENTURI = 1.0; // TODO: Pass using push constants
-/// Topography effect on wind
-const float K_TERRAIN = 0.6;
-/// Maximum strength for the wind vector field particle attractor. Used for normalization.
-const float MAX_FIELD_STRENGTH = 32.0;
 // Offset used to approximate wind shadowing
 const float V_FALLOFF_OFFSET = 0.2;
 // Multiplier that increases the upwards motion of the wind along slopes
@@ -20,6 +12,15 @@ layout(set = 0, binding = 0, rg32f) uniform readonly image2D heightmap;
 layout(std140, binding = 1) buffer WindSSBOOut {
     vec4 wind_vec[ ];
 };
+
+layout(push_constant, std430) uniform Params {
+    vec2 w_base;        // Base wind velocity
+    float k_venturi;    // Venturi effect strength
+    float k_topo;       // Topographic effect strength
+    float w_max;        // Max. wind speed
+    float a_max;        // Max. terrain altitude
+    float k_sky;        // Controls how much space is reserved for the velocity field above the maximum altitude
+} params;
 
 vec2 get_a_grad(uvec2 p2, uint size, float a)
 {
@@ -58,10 +59,10 @@ void main() {
     vec2 n_xz_p = vec2(n_xz.y, -n_xz.x);
 
     // Venturi effect
-    vec2 w_venturi = (1.0 + K_VENTURI * a) * WIND_VEC;
+    vec2 w_venturi = (1.0 + params.k_venturi * a) * params.w_base;
     // Topographic effect
     if (dot(w_venturi, n_xz_p) < 0) n_xz_p = -n_xz_p;
-    vec2 w_topo = w_venturi * (1 - length(n_xz)) + K_TERRAIN * length(w_venturi) * n_xz_p;
+    vec2 w_topo = w_venturi * (1 - length(n_xz)) + params.k_topo * length(w_venturi) * n_xz_p;
     
     // Vertical wind calculation
     float w_vert = dot(w_topo, a_grad);
@@ -77,7 +78,7 @@ void main() {
     vec3 w_a = vec3(w_topo.x, w_vert, w_topo.y); // Wind at the terrain altitude
     vec3 w_dir = normalize(w_a);
     float strength = length(w_a);
-    float mult = min(1.0, strength / MAX_FIELD_STRENGTH);
+    float mult = min(1.0, strength / params.w_max);
     vec3 w = (w_dir * mult + 1.0) / 2.0;
     
     uint idx = pz * size + px;

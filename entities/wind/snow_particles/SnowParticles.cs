@@ -28,7 +28,6 @@ public partial class SnowParticles : Node3D
     private void UseDefaultParticles()
     {
         _particles.DrawPass1 = DefaultParticlePass;
-        GD.Print((float)ProjectSettings.GetSetting("default_gravity"));
         (_particles.ProcessMaterial as ParticleProcessMaterial).Gravity = Vector3.Down * (float)ProjectSettings.GetSetting("physics/3d/default_gravity") * ParticleGravityMultiplier;
         _particles.TrailEnabled = false;
     }

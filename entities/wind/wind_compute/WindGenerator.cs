@@ -1,6 +1,17 @@
 using Godot;
 using System;
-using System.Data.SqlTypes;
+using System.Runtime.InteropServices;
+
+public struct WindComputeParameters
+{
+	public Vector2 BaseWindVelocity;
+	public float VenturiStrength;
+	public float TopographicStrength;
+	public float MaxWindSpeed;
+	public float MaxAltitude;
+	public float SkyHeightRatio;
+	uint _padding;
+}
 
 public partial class WindGenerator : Node
 {
@@ -12,6 +23,10 @@ public partial class WindGenerator : Node
 
 	[Export] public Vector2 BaseWindVelocity = new Vector2(0.3f, 0.4f);
 	[Export] public int LayerCount = 8;
+	[Export] public float VenturiStrength = 0.5f;
+	[Export] public float TopographicStrength = 0.6f;
+	[Export] public float MaxWindSpeed = 32.0f;
+	[Export] public float SkyHeightRatio = 0.25f;
 
 	private RenderingDevice _device;
 	private Rid _shaderSurface;
@@ -24,7 +39,8 @@ public partial class WindGenerator : Node
 	private Rid _uniformSetSurface;
     private Rid _uniformSet3D;
 
-    private HeightMap _heightMap;
+    private WindComputeParameters _params;
+	private HeightMap _heightMap;
 	private int _texSize;
 
 
@@ -32,6 +48,7 @@ public partial class WindGenerator : Node
 	{
 		_device = RenderingServer.CreateLocalRenderingDevice();
 		_texSize = texSize;
+		InitParams();
 		InitShaders();
         InitSurfaceBuffer();
         InitWindBuffers();
@@ -60,6 +77,20 @@ public partial class WindGenerator : Node
 		_heightMap = heightMap;
 		DispatchCompute();
 		_device.Sync();
+	}
+
+	private void InitParams()
+	{
+		var tr = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
+		_params = new()
+		{
+			BaseWindVelocity = BaseWindVelocity,
+			VenturiStrength = VenturiStrength,
+			TopographicStrength = TopographicStrength,
+			MaxWindSpeed = MaxWindSpeed,
+			MaxAltitude = tr.MaxAltitude,
+			SkyHeightRatio = SkyHeightRatio
+		};
 	}
 
 	private void InitShaders()
@@ -117,12 +148,15 @@ public partial class WindGenerator : Node
 		
 		_device.ComputeListBindComputePipeline(computeList, _pipelineSurface);
 		_device.ComputeListBindUniformSet(computeList, _uniformSetSurface, 0);
+		byte[] paramData = ParamsToBytes();
+		_device.ComputeListSetPushConstant(computeList, paramData, (uint)paramData.Length);
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 		_device.ComputeListAddBarrier(computeList);
 		
 		yGroups = (uint)LayerCount;
 		_device.ComputeListBindComputePipeline(computeList, _pipeline3D);
         _device.ComputeListBindUniformSet(computeList, _uniformSet3D, 0);
+		_device.ComputeListSetPushConstant(computeList, paramData, (uint)paramData.Length);
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 
         _device.ComputeListEnd();
@@ -174,5 +208,23 @@ public partial class WindGenerator : Node
 		Godot.Collections.Array<RDUniform> uniforms = [heightMapUniform, windSurfUniform, wind3DUniform];
 		if (_uniformSet3D.IsValid && _device.UniformSetIsValid(_uniformSet3D)) _device.FreeRid(_uniformSet3D);
 		_uniformSet3D = _device.UniformSetCreate(uniforms, _shader3D, 0);
+	}
+
+	private byte[] ParamsToBytes()
+	{
+		int size = Marshal.SizeOf(_params);
+		byte[] output = new byte[size];
+		IntPtr ptr = IntPtr.Zero;
+		try
+		{
+			ptr = Marshal.AllocHGlobal(size);
+			Marshal.StructureToPtr(_params, ptr, true);
+			Marshal.Copy(ptr, output, 0, size);
+		}
+		finally
+		{
+			Marshal.FreeHGlobal(ptr);
+		}
+		return output;
 	}
 }

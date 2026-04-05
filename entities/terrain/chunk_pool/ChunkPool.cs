@@ -33,7 +33,6 @@ public partial class ChunkPool : Node
         _device = device;
         _radiusChunks = (int)chunkRange;
         RowChunks = 2 * _radiusChunks + 1;
-        GD.Print(RowChunks);
         NChunks = RowChunks * RowChunks;
         _pool = new DTChunk[NChunks];
         _chunkIdx = (uint)NChunks / 2;

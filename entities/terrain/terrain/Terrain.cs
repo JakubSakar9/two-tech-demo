@@ -121,6 +121,7 @@ public partial class Terrain : StaticBody3D
                 false, initImages);
         }
         _windField.Size = new Vector3(heightmapSize, MaxAltitude * 1.25f, heightmapSize);
+        _windField.Strength = WindGen.MaxWindSpeed;
         UpdateHeightMap();
         SetShaderParam("rock_fade_start", RockGroundHeight);
         SetShaderParam("rock_fade_end", RockGroundHeight + 1.0f);
@@ -310,7 +311,6 @@ public partial class Terrain : StaticBody3D
         _scGen.Postprocess();
         _scGen.UpdateHeightMap(ref _heightmaps[_heightmapIndex]);
 
-        GD.Print("Using uniform hm...");
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
     }

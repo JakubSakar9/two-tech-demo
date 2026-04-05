@@ -1,12 +1,6 @@
 #[compute]
 #version 450
 
-/// Base wind vector at sea level
-const vec2 WIND_VEC = vec2(0.3, 0.4);
-const float MAX_FIELD_STRENGTH = 32.0;
-const float K_VENTURI = 0.5; // TODO: Use push constants to make configurable
-const float MAX_HEIGHT = 48.0; // TODO: Use push constants to make configurable
-
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;
 
 layout(set = 0, binding = 0, r32f) uniform readonly image2D heightmap;
@@ -14,10 +8,18 @@ layout(set = 0, binding = 0, r32f) uniform readonly image2D heightmap;
 layout(std140, set = 0, binding = 1) readonly buffer WindSSBOIn {
     vec4 surf_vec[ ];
 };
-
 layout(std140, set = 0, binding = 2) buffer WindSSBOOut {
     vec4 wind_vec[ ];
 };
+
+layout(push_constant, std430) uniform Params {
+    vec2 w_base;        // Base wind velocity
+    float k_venturi;    // Venturi effect strength
+    float k_topo;       // Topographic effect strength
+    float w_max;        // Max. wind speed
+    float a_max;        // Max. terrain altitude
+    float k_sky;        // Controls how much space is reserved for the velocity field above the maximum altitude
+} params;
 
 void main() {
     uint px = gl_GlobalInvocationID.x;
@@ -30,14 +32,15 @@ void main() {
     uint idx3d = size * y_layers * pz + size * py + px;
 
     // Maximum velocity computation
-    vec2 w_max_venturi = (1.0 + K_VENTURI * MAX_HEIGHT) * WIND_VEC;
-    w_max_venturi = (w_max_venturi / MAX_FIELD_STRENGTH) * 0.5 + 0.5;
-    vec3 w_max = normalize(vec3(w_max_venturi.x, 0.5, w_max_venturi.y));
+    vec2 w_max_venturi = (1.0 + params.k_venturi * params.a_max) * params.w_base;
+    w_max_venturi = w_max_venturi / params.w_max;
+    vec3 w_max = normalize(vec3(w_max_venturi.x, 0.0, w_max_venturi.y));
+    w_max = 0.5 * w_max + vec3(0.5);
 
-    //float y = y_m - 1.0 - float(py);
+    // float y = y_m - 1.0 - float(py);
     float y = float(py);
     float a = imageLoad(heightmap, ivec2(px, pz)).r;
-    float y_l = y_m * a / (1.25 * MAX_HEIGHT);
+    float y_l = y_m * a / ((1.0 + params.k_sky) * params.a_max);
     float y_f = floor(y_l - 0.5);
     vec3 w = vec3(0.5);
     vec3 w_surf = surf_vec[idx2d].xyz;
