@@ -129,6 +129,7 @@ public partial class SnowCoverGenerator : Node
     {
         _swapIdx = 0;
         _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
+        _windGen.LoadWindSurface(_device, _windSurfTex); // TODO: Do this only when needed
         _computeList = _device.ComputeListBegin();
     }
 
@@ -162,7 +163,6 @@ public partial class SnowCoverGenerator : Node
 
     public void Iterate()
     {
-        _windGen.LoadWindSurface(_device, _windSurfTex); // TODO: Do this only when needed
         for (uint i = 0; i < AdvectionIterations; i++)
         {
             ComputeAdvect();
@@ -216,6 +216,7 @@ public partial class SnowCoverGenerator : Node
 
         _aParams = new()
         {
+            MaxWindSpeed = _windGen.MaxWindSpeed,
             WindStrengthStepMultiplier = AdvectionInfluence / AdvectionIterations
         };
 

@@ -30,3 +30,5 @@ strength = 32.0
 
 [node name="SnowCoverGenerator" parent="." unique_id=1921976969 instance=ExtResource("4_k2y3k")]
 unique_name_in_owner = true
+AdvectionIterations = 16
+AdvectionInfluence = 10.0

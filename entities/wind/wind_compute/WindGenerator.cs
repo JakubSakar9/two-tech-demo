@@ -27,6 +27,7 @@ public partial class WindGenerator : Node
 	[Export] public float TopographicStrength = 0.6f;
 	[Export] public float MaxWindSpeed = 32.0f;
 	[Export] public float SkyHeightRatio = 0.25f;
+	[Export] public bool SaveDebugSurfaceTexture = true;
 
 	private RenderingDevice _device;
 	private Rid _shaderSurface;
@@ -83,6 +84,11 @@ public partial class WindGenerator : Node
 	{
 		uint size = 4 * sizeof(float) * (uint)_texSize * (uint)_texSize;
 		byte[] surfaceData = _device.BufferGetData(_surfaceBuffer);
+		if (SaveDebugSurfaceTexture)
+		{
+			Image.CreateFromData(_texSize, _texSize, false, Image.Format.Rgbaf, surfaceData)
+			.SaveExr("res://debug_output/wind_surface.exr");
+		}
 		device.TextureUpdate(targetTex, 0, surfaceData);
 	}
 

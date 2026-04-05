@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Godot;
 
 public struct HeightMap
@@ -297,6 +298,8 @@ public partial class Terrain : StaticBody3D
 
     private void UpdateHeightMap()
     {
+        Stopwatch stw = new();
+        stw.Start();
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
         _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxAltitude);
         WindGen.Generate(ref _heightmaps[_heightmapIndex]);
@@ -308,11 +311,13 @@ public partial class Terrain : StaticBody3D
         _scGen.UseHeightMap(in _heightmaps[_heightmapIndex]);
         _scGen.Preprocess();
         _scGen.Iterate();
-        _scGen.Postprocess();
+        // _scGen.Postprocess();
         _scGen.UpdateHeightMap(ref _heightmaps[_heightmapIndex]);
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
+        stw.Stop();
+        GD.Print("Chunk generated in " + stw.ElapsedMilliseconds + "ms");
     }
 
     private async void AssignTexture()

@@ -7,7 +7,7 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform readonly image2D heightmap_in;
 layout(set = 0, binding = 1, rgba32f) uniform image2D heightmap_out;
-layout(set = 0, binding = 2, rgba32f) uniform image2D wind_surface;
+layout(set = 0, binding = 2, rgba32f) uniform readonly image2D wind_surface;
 
 layout(push_constant, std430) uniform Params {
     float max_wind_speed;   // Determines the multiplier for the wind velocity values sampled from the texture (stored velocities have length of less than one)
@@ -18,7 +18,7 @@ void advect_lossy() {
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
     ivec2 pixel = ivec2(px, py);
-    vec2 w = imageLoad(heightmap_in, pixel).xz * params.max_wind_speed * params.step_multiplier;
+    vec2 w = (imageLoad(wind_surface, pixel).xz - vec2(0.5)) * 2.0 * params.max_wind_speed * params.step_multiplier;
     float w_len = length(w);
     ivec2 pixel_src = ivec2(vec2(pixel) - w);
     vec4 h = imageLoad(heightmap_in, pixel);
@@ -34,11 +34,10 @@ void advect_lossless() {
     uint px = gl_GlobalInvocationID.x;
     uint py = gl_GlobalInvocationID.y;
     ivec2 pixel = ivec2(px, py);
-    vec2 w = imageLoad(heightmap_in, pixel).xz * params.max_wind_speed * params.step_multiplier;
+    vec2 w = (imageLoad(wind_surface, pixel).xz - vec2(0.5)) * 2.0 * params.max_wind_speed * params.step_multiplier;
     float w_len = length(w);
     vec4 h = imageLoad(heightmap_in, pixel);
     float a = h.r;
-
     vec2 src_f = vec2(pixel) - w;
     ivec2 src00 = ivec2(floor(src_f));
     ivec2 src10 = src00 + ivec2(1, 0);
