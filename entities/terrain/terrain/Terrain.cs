@@ -308,11 +308,7 @@ public partial class Terrain : StaticBody3D
         WindGen.CopyWindTexture(ref _heightmaps[_heightmapIndex].windTexture, ref _windImages);
         _windField.Texture = _heightmaps[_heightmapIndex].windTexture;
 
-        _scGen.UseHeightMap(in _heightmaps[_heightmapIndex]);
-        _scGen.Preprocess();
-        _scGen.Iterate();
-        // _scGen.Postprocess();
-        _scGen.UpdateHeightMap(ref _heightmaps[_heightmapIndex]);
+        _scGen.Generate(ref _heightmaps[_heightmapIndex], TerrainUpdatePolicy.PerCycle);
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);

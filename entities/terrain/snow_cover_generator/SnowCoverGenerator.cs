@@ -13,7 +13,14 @@ public enum SCComputePass
     Melting
 }
 
-public struct TemperatureParams
+public enum TerrainUpdatePolicy
+{
+    PerChunk,
+    PerCycle,
+    PerEvent
+}
+
+public struct TemperatureParameters
 {
     public float DirectSunTemperatureIncrease;
     public float SunIntensity;
@@ -21,7 +28,7 @@ public struct TemperatureParams
     public float SeaTemperature;
 }
 
-public struct PrecipitationParams
+public struct PrecipitationParameters
 {
     public float MaxAltitude;
     public float SnowThresholdAltitude;
@@ -29,7 +36,7 @@ public struct PrecipitationParams
     public float PowderyRatio;
 };
 
-public struct AdvectionParams
+public struct AdvectionParameters
 {
     public float MaxWindSpeed;
     public float WindStrengthStepMultiplier;
@@ -37,13 +44,20 @@ public struct AdvectionParams
     uint _padding1;
 }
 
-public struct MeltingParams
+public struct MeltingParameters
 {
     public float MeltingRate;
     public float MeltingPoint;
     uint _padding0;
     uint _padding1;
 
+}
+
+public struct CycleParameters
+{
+    public float SunIntensity;
+    public float PrecipitationDuration;
+    public float WindFactor;
 }
 
 public partial class SnowCoverGenerator : Node
@@ -59,7 +73,7 @@ public partial class SnowCoverGenerator : Node
     [ExportCategory("Precipitation")]
     [Export] public float SnowingAltitude = 8.0f;
     [Export] public float MaxSnowPerHour = 0.1f;
-    [Export] public float MaxSnowingDurationHours = 4.0f;
+    [Export] public float MaxPrecipitationDurationHours = 4.0f;
     /// <summary>
     /// Controls how much snow on steep snows becomes powdery.
     /// If set to zero, steep slopes do not get covered with any snow and wind advection event does nothing.
@@ -73,6 +87,7 @@ public partial class SnowCoverGenerator : Node
     /// The total distance is calculated as a product of the length of the wind vector and this parameter.
     /// </summary>
     [Export] public float AdvectionInfluence = 0.7f;
+    [Export] public double MinWindFactor = 0.3;
     [ExportCategory("Melting")]
     /// <summary>
     /// Snow melting rate given in time units per meter per kelvins above melting point
@@ -101,78 +116,58 @@ public partial class SnowCoverGenerator : Node
     private Rid[] _hmImages;
     private Rid _windSurfTex;
 
-    private TemperatureParams _tParams;
-    private PrecipitationParams _pParams;
-    private AdvectionParams _aParams;
-    private MeltingParams _mParams;
+    private TemperatureParameters _tParams;
+    private PrecipitationParameters _pParams;
+    private AdvectionParameters _aParams;
+    private MeltingParameters _mParams;
 
-    private string[] _eventList;
+    private CycleParameters[] _cycleSequence;
     private long _computeList;
     private uint _texSize;
     private uint _debugTextureStep = 0;
 
     private uint _swapIdx = 0;
+    private uint _cycleIdx = 0;
 
     public void Init(uint texSize, WindGenerator windGen)
     {
         _texSize = texSize;
         _windGen = windGen;
+        _cycleSequence = new CycleParameters[EventCycleCount];
         InitCompute();
         InitParams();
+        GenerateCycleSequence();
     }
-    
-    /// <summary>
-    /// Passes the height map to the compute pipeline and initiates the compute list.
-    /// </summary>
-    /// <param name="heightMap">Height map struct</param>
-    public void UseHeightMap(ref readonly HeightMap heightMap)
+
+    public void Generate(ref HeightMap heightMap, TerrainUpdatePolicy policy)
     {
         _swapIdx = 0;
         _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
         _windGen.LoadWindSurface(_device, _windSurfTex); // TODO: Do this only when needed
         _computeList = _device.ComputeListBegin();
-    }
 
-    /// <summary>
-    /// Updates the height map based on the computation result. Ends the compute list and blocks the current thread until the result is retrieved.s
-    /// </summary>
-    /// <param name="heightMap">Height map struct</param>
-    public void UpdateHeightMap(ref HeightMap heightMap)
-    {
-        _device.ComputeListEnd();
-        _device.Submit();
-        _device.Sync();
-        heightMap.bytes = _device.TextureGetData(_hmImages[_swapIdx], 0);
-        heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, false, Image.Format.Rgbaf, heightMap.bytes);
-
-        if (SaveDebugTexture)
+        for (_cycleIdx = 0; _cycleIdx < EventCycleCount; _cycleIdx++)
         {
-            string suffix = _debugTextureStep++.ToString("D3") + ".exr";
-            heightMap.heightImage.SaveExr("res://debug_output/height_map" + suffix);
+            ComputeTemperature();
+            ComputePrecipitation();
+            if ((int)policy >= (int)TerrainUpdatePolicy.PerEvent)
+            {
+                UpdateHeightMap(ref heightMap);
+                _computeList = _device.ComputeListBegin();
+            }
+            for (uint i = 0; i < AdvectionIterations; i++)
+            {
+                ComputeAdvect();
+            }
+            if ((int)policy >= (int)TerrainUpdatePolicy.PerEvent)
+            {
+                UpdateHeightMap(ref heightMap);
+                _computeList = _device.ComputeListBegin();
+            }
+            ComputeMelting();
+            if ((int)policy >= (int)TerrainUpdatePolicy.PerCycle || _cycleIdx == EventCycleCount - 1) UpdateHeightMap(ref heightMap);
+            if ((int)policy >= (int)TerrainUpdatePolicy.PerCycle && _cycleIdx != EventCycleCount - 1) _computeList = _device.ComputeListBegin();
         }
-
-        heightMap.heightImage.GenerateMipmaps();
-        heightMap.height.SetImage(heightMap.heightImage);
-    }
-
-    public void Preprocess()
-    {
-        ComputeTemperature();
-        ComputePrecipitation();
-    }
-
-    public void Iterate()
-    {
-        for (uint i = 0; i < AdvectionIterations; i++)
-        {
-            ComputeAdvect();
-            // ComputeDiffuse();
-        }
-    }
-
-    public void Postprocess()
-    {
-        ComputeMelting();
     }
 
     private void InitCompute()
@@ -210,7 +205,7 @@ public partial class SnowCoverGenerator : Node
         {
             MaxAltitude = maxAltitude,
             SnowThresholdAltitude = SnowingAltitude,
-            MaxSnowHeight = MaxSnowingDurationHours * MaxSnowPerHour,
+            MaxSnowHeight = MaxPrecipitationDurationHours * MaxSnowPerHour,
             PowderyRatio = PowderySnowRatio
         };
 
@@ -249,14 +244,45 @@ public partial class SnowCoverGenerator : Node
         _windSurfTex = _device.TextureCreate(format, view);
     }
 
+    private void GenerateCycleSequence()
+    {
+        Random rng = new Random(DateTime.Now.Microsecond);
+        for (uint i = 0; i < EventCycleCount; i++)
+        {
+            _cycleSequence[i].PrecipitationDuration = MaxPrecipitationDurationHours * (float)rng.NextDouble();
+            _cycleSequence[i].SunIntensity = (float)rng.NextDouble();
+            _cycleSequence[i].WindFactor = (float)(MinWindFactor + (1.0 - MinWindFactor) * rng.NextDouble());
+        }
+    }
+
+    private void UpdateHeightMap(ref HeightMap heightMap)
+    {
+        _device.ComputeListEnd();
+        _device.Submit();
+        _device.Sync();
+        heightMap.bytes = _device.TextureGetData(_hmImages[_swapIdx], 0);
+        heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, false, Image.Format.Rgbaf, heightMap.bytes);
+
+        if (SaveDebugTexture)
+        {
+            string suffix = _debugTextureStep++.ToString("D3") + ".exr";
+            heightMap.heightImage.SaveExr("res://debug_output/height_map" + suffix);
+        }
+
+        heightMap.heightImage.GenerateMipmaps();
+        heightMap.height.SetImage(heightMap.heightImage);
+    }
+
     private void ComputeTemperature()
     {
+        _tParams.SunIntensity = _cycleSequence[_cycleIdx].SunIntensity;
         BindTemperatureUniforms();
         DispatchCompute(SCComputePass.Temperature);
     }
     
     private void ComputePrecipitation()
     {
+        _pParams.MaxSnowHeight = _cycleSequence[_cycleIdx].PrecipitationDuration * MaxSnowPerHour;
         BindPrecipitationUniforms();
         DispatchCompute(SCComputePass.Precipitation);
     }
@@ -269,6 +295,7 @@ public partial class SnowCoverGenerator : Node
 
     private void ComputeAdvect()
     {
+        _aParams.WindStrengthStepMultiplier = AdvectionInfluence * _cycleSequence[_cycleIdx].WindFactor / AdvectionIterations;
         BindAdvectUniforms();
         DispatchCompute(SCComputePass.Advect);
     }

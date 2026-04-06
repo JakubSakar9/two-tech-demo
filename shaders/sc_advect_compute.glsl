@@ -1,7 +1,7 @@
 #[compute]
 #version 450
 
-const float K_WSLOPE = 0.3; // Highest slope enabling wind advection
+const float K_WSLOPE = 0.5; // Highest slope enabling wind advection
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
