@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://dcnep30ldxtum"]
+
+[ext_resource type="Script" uid="uid://b8vmt3bss5qku" path="res://entities/loading_camera/LoadingCamera.cs" id="1_vwseb"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_vwseb"]
+font_size = 36
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[node name="LoadingCamera" type="Camera3D" unique_id=1737976801]
+script = ExtResource("1_vwseb")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=564462856]
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer" unique_id=931207804]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LoadingLabel" type="Label" parent="CanvasLayer/CenterContainer" unique_id=1321124729]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Loading..."
+label_settings = SubResource("LabelSettings_vwseb")

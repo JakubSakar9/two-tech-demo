@@ -7,6 +7,7 @@
 [ext_resource type="FastNoiseLite" uid="uid://b81fr5ihv7v3j" path="res://entities/terrain/terrain/terrain_noise_function_lf.tres" id="3_wtsjf"]
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain/terrain_deformer/terrain_deformer.tscn" id="4_7ddre"]
 [ext_resource type="PackedScene" uid="uid://byhehfsbnes1h" path="res://entities/wind/wind_compute/wind_generator.tscn" id="5_qjeyg"]
+[ext_resource type="PackedScene" uid="uid://dcnep30ldxtum" path="res://entities/loading_camera/loading_camera.tscn" id="8_rnaij"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
 sky_cover_modulate = Color(1, 1, 1, 0)
@@ -43,10 +44,11 @@ environment = SubResource("Environment_nd71p")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=352656111]
 transform = Transform3D(0.9375372, 0.1361418, -0.32013953, 0.17701465, 0.6055196, 0.77589405, 0.2994824, -0.7840989, 0.5435981, 0, 8.436316, 0)
 
-[node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen") instance=ExtResource("1_j8ivh")]
+[node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen", "LoadCam") instance=ExtResource("1_j8ivh")]
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
+LoadCam = NodePath("../LoadingCamera")
 NoiseFunctionHF = ExtResource("2_3qnke")
 NoiseFunctionLF = ExtResource("3_wtsjf")
 
@@ -61,3 +63,6 @@ Deformer = NodePath("../TerrainDeformer")
 Player = NodePath("../Player")
 
 [node name="WindGenerator" parent="." unique_id=37666401 instance=ExtResource("5_qjeyg")]
+
+[node name="LoadingCamera" parent="." unique_id=1737976801 instance=ExtResource("8_rnaij")]
+transform = Transform3D(1, 0, 0, 0, 0.79039025, 0.61260366, 0, -0.61260366, 0.79039025, 0, 27.633942, 35.649845)

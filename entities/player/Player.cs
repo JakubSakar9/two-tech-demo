@@ -153,6 +153,11 @@ public partial class Player : CharacterBody3D
         }
     }
 
+    public void MakeFirstPerson()
+    {
+        _mainCamera.Current = true;
+    }
+
     private void InitNodes()
     { 
         _animationTree = GetNode<AnimationTree>("%AnimationTree");

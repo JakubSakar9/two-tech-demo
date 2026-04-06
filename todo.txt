@@ -1,8 +1,5 @@
-- Use wind field for advection shader
-- Initialize terrain as a set of random events
-- Optimize terrain shader
-- Create a loading screen
 - Create spectator mode
+- Optimize terrain shader
 - Create a data structure that stores past footprints
 - When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing
@@ -12,6 +9,7 @@
 - Limit a number of chunks with footprints and discard the latest ones (speedup)
 - Update the discard policy to not discard textures which are nearby
 - [Visual Improvements]
+- Create a loading screen
 - [Test with users]
 - [Make everything giant (terrain LODs)]
 - [Vegetation/obstacles]

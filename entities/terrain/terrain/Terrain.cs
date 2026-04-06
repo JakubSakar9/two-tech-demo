@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Godot;
 
 public struct HeightMap
@@ -62,6 +63,7 @@ public partial class Terrain : StaticBody3D
     [Export] public Player Player;
     [Export] public TerrainDeformer Deformer;
     [Export] public WindGenerator WindGen;
+    [Export] public LoadingCamera LoadCam;
 
     [ExportCategory("Generation")]
     [Export] public float MaxAltitude = 32.0f;
@@ -123,9 +125,10 @@ public partial class Terrain : StaticBody3D
         }
         _windField.Size = new Vector3(heightmapSize, MaxAltitude * 1.25f, heightmapSize);
         _windField.Strength = WindGen.MaxWindSpeed;
-        UpdateHeightMap();
         SetShaderParam("rock_fade_start", RockGroundHeight);
         SetShaderParam("rock_fade_end", RockGroundHeight + 1.0f);
+        SetShaderParam("chunk_origin", ChunkOrigin);
+        CallDeferred(MethodName.GenerateInitial);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -238,6 +241,25 @@ public partial class Terrain : StaticBody3D
         float c0 = Mathf.Lerp(c00, c10, fx);
         float c1 = Mathf.Lerp(c01, c11, fx);
         return Mathf.Lerp(c0, c1, fy);
+    }
+
+    private async void GenerateInitial()
+    {
+        Player.SetProcess(false);
+        LoadCam.Current = true;
+        Player.Hide();
+        // var timer = GetTree().CreateTimer(2.0f);
+        // await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
+        UpdateHeightMap();
+        LoadCam.HideText();
+        
+        Vector2 p2d = new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z);
+        p2d += 1.5f * ChunkSizeUnits * Vector2.One;
+        float y = _heightmaps[_heightmapIndex].heightImage.GetPixelv((Vector2I)p2d).R;
+        Player.GlobalPosition = new Vector3(Player.GlobalPosition.X, y, Player.GlobalPosition.Z);
+        Player.Show();
+        Player.MakeFirstPerson();
+        Player.SetProcess(true);
     }
 
     private void CheckChunkChange(ref readonly Vector2 position2D)
