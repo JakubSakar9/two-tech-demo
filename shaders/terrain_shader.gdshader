@@ -1,6 +1,5 @@
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
-//render_mode unshaded;
 
 const int DISP_COUNT = 25;
 const float HEIGHTMAP_RANGE = 768.0;
@@ -30,7 +29,6 @@ varying vec2 disp_uv;
 varying vec3 debug_color;
 varying float disp_flatness;
 varying float displacement;
-varying vec3 normal_height;
 varying float height;
 varying float snowiness;
 
@@ -54,15 +52,6 @@ void vertex() {
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
 	
-	vec2 detail_uv = disp_uv * 10.0;
-	
-	float eps_h = 0.001;
-	vec3 height_px = vec3(VERTEX.x + eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv + vec2(eps_h, 0)).x, VERTEX.z);
-	vec3 height_mx = vec3(VERTEX.x - eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv - vec2(eps_h, 0)).x, VERTEX.z);
-	vec3 height_py = vec3(VERTEX.x, texture(height_map, terrain_uv + vec2(0, eps_h)).x, VERTEX.z + eps_h * HEIGHTMAP_RANGE);
-	vec3 height_my = vec3(VERTEX.x, texture(height_map, terrain_uv - vec2(0, eps_h)).x, VERTEX.z - eps_h * HEIGHTMAP_RANGE);
-	normal_height = -normalize(cross(height_px - height_mx, height_py - height_my));
-	
 	debug_color = vec3(1.0);
 }
 
@@ -76,33 +65,46 @@ void fragment() {
 	int tidx = chunk.y * disp_row + chunk.x;
 	vec4 height_val = texture(height_map, terrain_uv);
 	float snow_height = height_val.g + height_val.b;
-	displacement = texture(displacement_maps[tidx], disp_uv).r;
-	
-	vec2 duvx = vec2(eps_d, 0);
-	vec2 duvy = vec2(0, eps_d);
-	vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
-	vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvx).r - DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
-	vec3 disp_py = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvy).r, VERTEX.z + eps_h * displacement_map_range);
-	vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvy).r - DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
-	vec3 normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
-	
-	disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
-	float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
-	
-	if (dot_diff > 0.05) {
-		NORMAL = normal_height;
-	}
-	else if (dot_diff < -0.1) {
-		NORMAL = normal_disp;
-	}
-	else {
-		float t = (dot_diff + 0.1) / 0.15;
-		NORMAL = mix(normal_disp, normal_height, t);
-	}
 	
 	float v_distance = length(VERTEX);
-	float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
-	NORMAL = mix(NORMAL, normal_height, fade_t);
+	vec2 duvx = vec2(eps_d, 0);
+	vec2 duvy = vec2(0, eps_d);
+	vec3 height_px = vec3(VERTEX.x + eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv + vec2(eps_h, 0)).x, VERTEX.z);
+	vec3 height_mx = vec3(VERTEX.x - eps_h * HEIGHTMAP_RANGE, texture(height_map, terrain_uv - vec2(eps_h, 0)).x, VERTEX.z);
+	vec3 height_py = vec3(VERTEX.x, texture(height_map, terrain_uv + vec2(0, eps_h)).x, VERTEX.z + eps_h * HEIGHTMAP_RANGE);
+	vec3 height_my = vec3(VERTEX.x, texture(height_map, terrain_uv - vec2(0, eps_h)).x, VERTEX.z - eps_h * HEIGHTMAP_RANGE);
+	vec3 normal_height = -normalize(cross(height_px - height_mx, height_py - height_my));
+	
+	displacement = 0.0;
+	disp_flatness = 1.0;
+	if (v_distance <= far_fadeout_distance) {
+		displacement = texture(displacement_maps[tidx], disp_uv).r;
+		vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
+		vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvx).r - DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
+		vec3 disp_py = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvy).r, VERTEX.z + eps_h * displacement_map_range);
+		vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvy).r - DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
+		vec3 normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
+		
+		disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
+		float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
+		
+		if (dot_diff > 0.05) {
+			NORMAL = normal_height;
+		}
+		else if (dot_diff < -0.1) {
+			NORMAL = normal_disp;
+		}
+		else {
+			float t = (dot_diff + 0.1) / 0.15;
+			NORMAL = mix(normal_disp, normal_height, t);
+		}
+		
+		float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
+		NORMAL = mix(NORMAL, normal_height, fade_t);
+	}
+	else {
+		NORMAL = normal_height;	
+	}
 	vec3 v = normalize(-VERTEX);
 	float jitter = texture(glitter_map, detail_uv).r;
 	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * jitter * jitter);

@@ -137,25 +137,25 @@ public partial class Terrain : StaticBody3D
         Vector2 playerPos2D = new(Player.GlobalPosition.X, Player.GlobalPosition.Z);
         Vector2 pos2D = new(_terrainMesh.GlobalPosition.X, _terrainMesh.GlobalPosition.Z);
         Vector2 positionDelta = playerPos2D - pos2D;
-        while (positionDelta.X > 1f)
+        while (positionDelta.X > 2f)
         {
-            positionDelta.X -= 1f;
-            pos2D.X += 1f;
+            positionDelta.X -= 2f;
+            pos2D.X += 2f;
         }
-        while (positionDelta.X < -1f)
+        while (positionDelta.X < -2f)
         {
-            positionDelta.X += 1f;
-            pos2D.X -= 1f;
+            positionDelta.X += 2f;
+            pos2D.X -= 2f;
         }
-        while (positionDelta.Y > 1f)
+        while (positionDelta.Y > 2f)
         {
-            positionDelta.Y -= 1f;
-            pos2D.Y += 1f;
+            positionDelta.Y -= 2f;
+            pos2D.Y += 2f;
         }
-        while (positionDelta.Y < -1f)
+        while (positionDelta.Y < -2f)
         {
-            positionDelta.Y += 1f;
-            pos2D.Y -= 1f;
+            positionDelta.Y += 2f;
+            pos2D.Y -= 2f;
         }
         _terrainMesh.GlobalPosition = new Vector3(pos2D.X, 0, pos2D.Y);
         CheckChunkChange(in pos2D);
@@ -318,7 +318,7 @@ public partial class Terrain : StaticBody3D
         _terrainCollider.GlobalPosition = new Vector3(Player.GlobalPosition.X, 0, Player.GlobalPosition.Z);
     }
 
-    private void UpdateHeightMap()
+    private async void UpdateHeightMap()
     {
         Stopwatch stw = new();
         stw.Start();
@@ -329,13 +329,17 @@ public partial class Terrain : StaticBody3D
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
         WindGen.CopyWindTexture(ref _heightmaps[_heightmapIndex].windTexture, ref _windImages);
         _windField.Texture = _heightmaps[_heightmapIndex].windTexture;
+        stw.Stop();
+        GD.Print("Wind field generated in " + stw.ElapsedMilliseconds + "ms");
+        stw.Reset();
+        stw.Start();
 
-        _scGen.Generate(ref _heightmaps[_heightmapIndex], TerrainUpdatePolicy.PerCycle);
+        _scGen.Generate(ref _heightmaps[_heightmapIndex], TerrainUpdatePolicy.PerChunk);
+        stw.Stop();
+        GD.Print("Snow cover generated in " + stw.ElapsedMilliseconds + "ms");
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
-        stw.Stop();
-        GD.Print("Chunk generated in " + stw.ElapsedMilliseconds + "ms");
     }
 
     private async void AssignTexture()
@@ -358,6 +362,10 @@ public partial class Terrain : StaticBody3D
 
     private static float GetImgSH(Image img, int x, int y)
     {
+        if (x >= img.GetWidth())
+        {
+            return 0.0f;
+        }
         Color c = img.GetPixel(x, y);
         return c.G + c.B;
     }
