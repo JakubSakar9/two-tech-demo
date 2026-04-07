@@ -154,3 +154,6 @@ ipch/
 # Visual Studio Trace Files
 *.e2e
 .vscode/
+
+# Project Specific Files
+debug_output/

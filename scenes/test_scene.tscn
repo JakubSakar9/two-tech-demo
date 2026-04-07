@@ -54,6 +54,7 @@ NoiseFunctionLF = ExtResource("3_wtsjf")
 
 [node name="Player" parent="." unique_id=826621672 instance=ExtResource("2_j8ivh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.23542, 25.579044, -36.768616)
+WalkSpeed = 1.7
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
 visible = false

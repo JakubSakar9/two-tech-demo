@@ -19,6 +19,7 @@ public partial class Player : CharacterBody3D
     [Export] public float WalkSpeed = 40.0f;
     [Export] public float WalkAcceleration = 35.0f;
     [Export] public float WalkDecceleration = 50.0f;
+    [Export] public float SpectatorSpeedMultiplier = 10.0f;
 
     public float LeftFootHitDistance = 0.0f;
     public float RightFootHitDistance = 0.0f;
@@ -38,6 +39,7 @@ public partial class Player : CharacterBody3D
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
     private float _initialAttachmentHeight = 0.0f;
+    private bool _spectatorMode = false;
 
     public override void _Ready()
     {
@@ -53,6 +55,13 @@ public partial class Player : CharacterBody3D
     {
         base._Input(@event);
         if (@event is InputEventMouseMotion motionEvent) HandleMouseMotion(-motionEvent.ScreenRelative);
+        if (@event is InputEventKey keyEvent)
+        {
+            if (keyEvent.Keycode == Key.F1 && keyEvent.IsPressed())
+            {
+                _spectatorMode ^= true;
+            }
+        }
         _gravity = (float) ProjectSettings.GetSetting("physics/3d/default_gravity");
     }
 
@@ -60,40 +69,59 @@ public partial class Player : CharacterBody3D
     {
         base._PhysicsProcess(delta);
         
-        // Handle horizontal movement
-        Vector2 movementInput = new(Input.GetAxis("move_left", "move_right"), Input.GetAxis("move_forward", "move_back"));
-        Vector2 horizontalVelocity;
-        if (movementInput != Vector2.Zero)
+        // Handle movement input
+        Vector3 movementInput = new(Input.GetAxis("move_left", "move_right"), Input.GetAxis("move_down", "move_up"),  Input.GetAxis("move_forward", "move_back"));
+        Vector3 rawVelocity = Velocity;
+        if (!_spectatorMode)
         {
-            horizontalVelocity = new Vector2(Velocity.X, Velocity.Z) + WalkAcceleration * movementInput.Rotated(-Rotation.Y).Normalized() * (float)delta;
-            if (horizontalVelocity.Length() > WalkSpeed)
+            movementInput.Y = 0.0f;
+            rawVelocity.Y = 0.0f;
+        }
+        float multiplier = 1.0f;
+        if (_spectatorMode)
+        {
+            multiplier = SpectatorSpeedMultiplier;
+        }
+        float acceleration = WalkAcceleration * multiplier;
+        float decceleration = WalkDecceleration * multiplier;
+        float speedLimit = WalkSpeed * multiplier;
+        if (movementInput != Vector3.Zero)
+        {
+            Vector2 horizontalVelocity = new Vector2(movementInput.X, movementInput.Z).Rotated(-Rotation.Y).Normalized() * (float)delta * acceleration;
+            rawVelocity += new Vector3(horizontalVelocity.X, movementInput.Y * acceleration * (float)delta, horizontalVelocity.Y);
+            if (rawVelocity.Length() > speedLimit)
             {
-                horizontalVelocity = horizontalVelocity.Normalized() * WalkSpeed;
+                rawVelocity = rawVelocity.Normalized() * speedLimit;
             }
-            Velocity = new Vector3(horizontalVelocity.X, Velocity.Y, horizontalVelocity.Y);
         }
         else
         {
-            horizontalVelocity = new Vector2(Velocity.X, Velocity.Z);
             float horizontalDeltaLen = WalkDecceleration * (float)delta;
-            if (horizontalDeltaLen > horizontalVelocity.Length())
+            if (horizontalDeltaLen > rawVelocity.Length())
             {
-                horizontalVelocity = Vector2.Zero;
+                rawVelocity = Vector3.Zero;
             }
             else
             {
-                horizontalVelocity -= horizontalVelocity.Normalized() * horizontalDeltaLen;
+                rawVelocity -= rawVelocity.Normalized() * horizontalDeltaLen;
             }
-            Velocity = new Vector3(horizontalVelocity.X, Velocity.Y, horizontalVelocity.Y);
         }
-        Velocity += Gravity(delta);
+        if (_spectatorMode)
+        {
+            Velocity = rawVelocity;
+        }
+        else
+        {
+            Velocity = new Vector3(rawVelocity.X, Velocity.Y, rawVelocity.Z);
+        }
+        if (!_spectatorMode) Velocity += Gravity(delta);
         MoveAndSlide();
 
-        float motionParameter = horizontalVelocity.Length() / WalkSpeed;
+        float motionParameter = rawVelocity.Length() / WalkSpeed;
         _animationTree.Set("parameters/BlendSpace1D/blend_position", motionParameter);
 
         _heightRaycast.ForceRaycastUpdate();
-        if (_heightRaycast.IsColliding())
+        if (_heightRaycast.IsColliding() && !_spectatorMode)
         {
             float hitDistance = 0.0f;
             if (!IsOnFloor())
