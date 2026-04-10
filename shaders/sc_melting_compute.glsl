@@ -24,6 +24,6 @@ void main() {
     h_vec.g -= params.k_melt * max(0.0, h_vec.a - params.t0_melt);
     h_vec.g = max(0.0, h_vec.g);
     h_vec.g = min(SNOW_LIMIT, h_vec.g);
-    h_vec.b = min(SNOW_LIMIT - h_vec.g, h_vec.b);
+    // h_vec.b = min(SNOW_LIMIT - h_vec.g, h_vec.b);
     imageStore(heightmap, pixel, h_vec);   
 }

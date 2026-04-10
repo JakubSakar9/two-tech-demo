@@ -24,14 +24,17 @@ public partial class ChunkPool : Node
     private RDTextureFormat _format;
     private RDTextureView _view;
     private DTChunk[] _pool = null;
+    private FootprintStorage _fpStorage;
     private List<uint> _activeChunks;
     private uint _chunkIdx;
+    private Vector2I _chunk;
     private int _radiusChunks;
 
-    public void Initialize(uint chunkRange, uint textureSize, ref readonly RenderingDevice device)
+    public void Initialize(uint chunkRange, uint textureSize, ref readonly RenderingDevice device, ref FootprintStorage fpStorage)
     {
         _device = device;
         _radiusChunks = (int)chunkRange;
+        _fpStorage = fpStorage;
         RowChunks = 2 * _radiusChunks + 1;
         NChunks = RowChunks * RowChunks;
         _pool = new DTChunk[NChunks];
@@ -65,20 +68,29 @@ public partial class ChunkPool : Node
     {
         Vector2 rawCoords = (playerPosition + Vector2.One * 0.5f * DisplacementMapRange) / DisplacementMapRange;
         if (float.IsNaN(rawCoords.X)) return;
-        Vector2I chunkCoords = Vector2I.Zero;
-        chunkCoords.X = (((int)Mathf.Floor(rawCoords.X)) % RowChunks) + RowChunks;
-        chunkCoords.Y = (((int)Mathf.Floor(rawCoords.Y)) % RowChunks) + RowChunks;
-        int xCoord = (chunkCoords.X + _radiusChunks) % RowChunks;
-        int yCoord = (chunkCoords.Y + _radiusChunks) % RowChunks;
+        rawCoords = rawCoords.Floor();
+
+        Vector2I prevChunk = _chunk;
+        _chunk = new Vector2I((int)rawCoords.X, (int)rawCoords.Y);
+        int xCoord = (_chunk.X % RowChunks) + RowChunks;
+        int yCoord = (_chunk.Y % RowChunks) + RowChunks;
+        xCoord = (xCoord + _radiusChunks) % RowChunks;
+        yCoord = (yCoord + _radiusChunks) % RowChunks;
         
-        uint prevChunk = _chunkIdx;
+        uint prevIdx = _chunkIdx;
         _chunkIdx = (uint)(yCoord * RowChunks + xCoord);
-        if (_chunkIdx != prevChunk)
+        if (_chunkIdx != prevIdx)
         {
-            GD.Print("Changing from chunk " + prevChunk + " to chunk " + _chunkIdx);
-            HandleChunkTransition((int)prevChunk);
+            // GD.Print("Changing from chunk " + prevChunk + " to chunk " + _chunkIdx);
+            HandleChunkTransition((int)prevIdx);
+
+            _fpStorage.ExitLeft(prevChunk);
+            _fpStorage.ExitRight(prevChunk);
+            _fpStorage.EnterLeft(_chunk);
+            _fpStorage.EnterRight(_chunk);
         }
 
+        // Enter chunks
         _activeChunks.Clear();
         _activeChunks.Add(_chunkIdx);
     }

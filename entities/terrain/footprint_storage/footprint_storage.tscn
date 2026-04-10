@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d124v5n4w4rn2"]
+
+[ext_resource type="Script" uid="uid://cm1yvhm40vwa0" path="res://entities/terrain/footprint_storage/FootprintStorage.cs" id="1_e5bhv"]
+
+[node name="FootprintStorage" type="Node" unique_id=904910215]
+script = ExtResource("1_e5bhv")

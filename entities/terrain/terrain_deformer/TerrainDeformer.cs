@@ -6,6 +6,7 @@ public partial class TerrainDeformer : Node3D
     const float VELOCITY_THRESHOLD = 2.0f;
 
     [Export] public Player Player;
+    [Export] public FootprintStorage FpStorage;
     [Export] public uint RadiusChunks = 2;
     [Export] public float DisplacementMapRange = 64.0f;
     [Export] public float MinSoundHeight = 0.05f;
@@ -22,7 +23,7 @@ public partial class TerrainDeformer : Node3D
         InitNodes();
 
         _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
-        _painter.InitPool(RadiusChunks);
+        _painter.InitPool(RadiusChunks, ref FpStorage);
         _painter.Pool.DisplacementMapRange = DisplacementMapRange;
 
         _terrain = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
@@ -53,6 +54,10 @@ public partial class TerrainDeformer : Node3D
             carveDepth = (snowHeight - Player.LeftFootHitDistance) / snowHeight;
             carveDepth = Mathf.Clamp(carveDepth, 0.0f, 1.0f);
         }
+        if (carveDepth != 0)
+        {
+            FpStorage.SaveEntryLeft(_painter.Params.CenterLeft, carveDepth, -Player.GlobalRotation.Y);
+        }
         _painter.Params.DepthLeft = carveDepth;
 
         deformationCenter = Player.RightFootPosition / DisplacementMapRange;
@@ -71,13 +76,13 @@ public partial class TerrainDeformer : Node3D
             carveDepth = (snowHeight - Player.RightFootHitDistance) / snowHeight;
             carveDepth = Mathf.Clamp(carveDepth, 0.0f, 1.0f);
         }
+        if (carveDepth != 0)
+        {
+            FpStorage.SaveEntryRight(_painter.Params.CenterRight, carveDepth, -Player.GlobalRotation.Y);
+        }
         _painter.Params.DepthRight = carveDepth;
+        
         _painter.SetAngle(-Player.GlobalRotation.Y);
-    }
-
-    public override void _Process(double delta)
-    {
-        base._Process(delta);
     }
 
     public ref readonly Texture2Drd GetDisplacement()
