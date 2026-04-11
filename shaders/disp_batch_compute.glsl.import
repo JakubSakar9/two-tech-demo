@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://ctf2874bcgmvo"
+path="res://.godot/imported/disp_batch_compute.glsl-a7adb3f2a3c9c2c5791583b9c2545d22.res"
+
+[deps]
+
+source_file="res://shaders/disp_batch_compute.glsl"
+dest_files=["res://.godot/imported/disp_batch_compute.glsl-a7adb3f2a3c9c2c5791583b9c2545d22.res"]
+
+[params]
+

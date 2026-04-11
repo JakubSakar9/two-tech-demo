@@ -15,6 +15,17 @@ public struct TexturePainterParams
 	public float DownscaleFactor;
 }
 
+public struct TexturePainterBatchParams
+{
+    public Vector2I ChunkCoord;
+    public uint TextureSize;
+    public int FootprintCount;
+    public float DownscaleFactor;
+    uint _padding0;
+    uint _padding1;
+    uint _padding2;
+}
+
 public partial class TexturePainter : Node
 {
     [Export] public Texture2D FootprintTexture;
@@ -22,21 +33,34 @@ public partial class TexturePainter : Node
 	[Export] public ChunkPool Pool;
 
     const string SHADER_PATH = "res://shaders/disp_compute.glsl";
+    const string SHADER_BATCH_PATH = "res://shaders/disp_batch_compute.glsl";
 
     // public Texture2Drd DisplacementTexture;
     public TexturePainterParams Params;
+    public TexturePainterBatchParams BatchParams;
+    public Vector2I ReconstructedChunk;
 
     private RenderingDevice _device;
     private Rid _shader;
+    private Rid _shaderBatch;
     private Rid _pipeline;
-    private Rid _computeTex;
+    private Rid _pipelineBatch;
+    private Rid _displacementTex;
+    private Rid _displacementTexBatch;
+    private Rid _fpBuffer;
     private Rid _footprintTex;
     private Rid _footprintSampler;
     private Rid _uniformSet;
+    private Rid _uniformSetBatch;
 
     private Array<RDUniform> _uniforms;
+    private Array<RDUniform> _uniformsBatch;
     private RDTextureFormat _format;
     private RDTextureView _view;
+    private FootprintStorage _fpStorage;
+
+    private int _reconstructionPhase = 0;
+    private bool _reconstructionInProgress;
 
 
     public override void _Ready()
@@ -49,6 +73,11 @@ public partial class TexturePainter : Node
             CenterRight = new Vector2(0.5f, 0.5f),
             DepthLeft = 0.0f,
             DepthRight = 0.0f
+        };
+        BatchParams = new()
+        {
+            TextureSize = TextureSize,
+            FootprintCount = 0
         };
 
         SetAngle(0.0f);
@@ -66,7 +95,7 @@ public partial class TexturePainter : Node
         base._ExitTree();
         _device.FreeRid(_shader);
         _device.FreeRid(_pipeline);
-        _device.FreeRid(_computeTex);
+        _device.FreeRid(_displacementTex);
         _device.FreeRid(_footprintTex);
         _device.FreeRid(_footprintSampler);
         _device.FreeRid(_uniformSet);
@@ -92,7 +121,9 @@ public partial class TexturePainter : Node
 	{
 		InitShader();
 		InitFootprintTexture();
+        InitFootprintBuffer();
 		_pipeline = _device.ComputePipelineCreate(_shader);
+        _pipeline = _device.ComputePipelineCreate(_shaderBatch);
 	}
 
 	private void InitShader()
@@ -100,6 +131,9 @@ public partial class TexturePainter : Node
 		var shaderFile = GD.Load<RDShaderFile>(SHADER_PATH);
 		var shaderBytecode = shaderFile.GetSpirV();
 		_shader = _device.ShaderCreateFromSpirV(shaderBytecode);
+        shaderFile = GD.Load<RDShaderFile>(SHADER_BATCH_PATH);
+        shaderBytecode = shaderFile.GetSpirV();
+		_shaderBatch = _device.ShaderCreateFromSpirV(shaderBytecode);
 	}
 
 	private void InitFootprintTexture()
@@ -127,6 +161,72 @@ public partial class TexturePainter : Node
         _footprintSampler = _device.SamplerCreate(samplerState);
 	}
 
+    private void InitFootprintBuffer()
+    {
+        _device.StorageBufferCreate((uint)(_fpStorage.RenderBatchSize * 4 * sizeof(float)));
+    }
+
+    private void DrawBatch()
+    {
+        if (_reconstructionPhase == 0)
+        {
+            if (!_fpStorage.HasChunkLeft(ReconstructedChunk))
+            {
+                _reconstructionPhase++;
+                return;
+            }
+            bool res = _fpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
+            if (res)
+            {
+                _reconstructionPhase++;
+            }
+        }
+        else
+        {
+            if (!_fpStorage.HasChunkLeft(ReconstructedChunk))
+            {
+                _reconstructionPhase = 0;
+                _reconstructionInProgress = false;
+                return;
+            }
+            bool res = _fpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
+            if (res)
+            {
+                _reconstructionPhase = 0;
+                _reconstructionInProgress = false;
+            }
+        }
+
+        var displacementTexUniform = new RDUniform
+        {
+            UniformType = RenderingDevice.UniformType.Image,
+            Binding = 0
+        };
+        displacementTexUniform.AddId(Pool.GetReconstructedTexture());
+
+        var footprintTexUniform = new RDUniform
+		{
+			UniformType = RenderingDevice.UniformType.SamplerWithTexture,
+			Binding = 1
+		};
+        footprintTexUniform.AddId(_footprintSampler);
+		footprintTexUniform.AddId(_footprintTex);
+
+        var fpBufferUniform = new RDUniform
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 2
+		};
+		fpBufferUniform.AddId(_fpBuffer);
+
+        _uniformsBatch = [displacementTexUniform, footprintTexUniform, fpBufferUniform];
+        _uniformSetBatch = _device.UniformSetCreate(_uniformsBatch, _shaderBatch, 0);
+
+        DispatchBatchCompute();
+
+        _device.FreeRid(_uniformSetBatch);
+    }
+
     private void DrawTextures()
     {
 		var footprintTexUniform = new RDUniform
@@ -145,14 +245,14 @@ public partial class TexturePainter : Node
         {
             _uniforms = [];
 
-			var computeTexUniform = new RDUniform
+			var displacementTexUniform = new RDUniform
 			{
 				UniformType = RenderingDevice.UniformType.Image,
 				Binding = 0
 			};
-			computeTexUniform.AddId(chunk.TexRid);
+			displacementTexUniform.AddId(chunk.TexRid);
 			
-			_uniforms.Add(computeTexUniform);
+			_uniforms.Add(displacementTexUniform);
             _uniforms.Add(footprintTexUniform);
             _uniformSet = _device.UniformSetCreate(_uniforms, _shader, 0);
 
@@ -185,6 +285,23 @@ public partial class TexturePainter : Node
 		_device.ComputeListEnd();
 	}
 
+    private void DispatchBatchCompute()
+    {
+        uint xGroups = TextureSize / 16;
+		uint yGroups = TextureSize / 16;
+		uint zGroups = 1;
+
+		var computeList = _device.ComputeListBegin();
+		_device.ComputeListBindComputePipeline(computeList, _pipelineBatch);
+		_device.ComputeListBindUniformSet(computeList, _uniformSetBatch, 0);
+		
+		byte[] paramsData = BatchParamsToBytes();
+		_device.ComputeListSetPushConstant(computeList, paramsData, (uint)paramsData.Length);
+
+		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
+		_device.ComputeListEnd();
+    }
+
 	private byte[] ParamsToBytes()
 	{
 		int size = Marshal.SizeOf(Params);
@@ -194,6 +311,24 @@ public partial class TexturePainter : Node
 		{
 			ptr = Marshal.AllocHGlobal(size);
 			Marshal.StructureToPtr(Params, ptr, true);
+			Marshal.Copy(ptr, output, 0, size);
+		}
+		finally
+		{
+			Marshal.FreeHGlobal(ptr);
+		}
+		return output;
+	}
+
+    private byte[] BatchParamsToBytes()
+	{
+		int size = Marshal.SizeOf(BatchParams);
+		byte[] output = new byte[size];
+		IntPtr ptr = IntPtr.Zero;
+		try
+		{
+			ptr = Marshal.AllocHGlobal(size);
+			Marshal.StructureToPtr(BatchParams, ptr, true);
 			Marshal.Copy(ptr, output, 0, size);
 		}
 		finally

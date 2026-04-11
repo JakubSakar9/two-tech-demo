@@ -6,11 +6,14 @@ using System.Runtime.CompilerServices;
 public partial class FootprintStorage : Node
 {
     [Export] public int StepLimit = 65536;
+    [Export] public int RenderBatchSize = 64;
 
     float[] _lData;
     float[] _rData;
     private int _lIdx = -1;
     private int _rIdx = -1;
+    private int _blockIdx = 0;
+    private int _blockOffset = 0;
     private List<Vector2I> _lChunks = [];
     private List<Vector2I> _rChunks = [];
     
@@ -140,7 +143,7 @@ public partial class FootprintStorage : Node
             
             if (!_lEndIds.ContainsKey(curChunk)) _lEndIds[curChunk] = [];
 
-            if (!_lEndChunks.ContainsKey(prevIdx) || !_lEndChunks[prevIdx].Contains(curChunk))
+            if (!_lEndChunks.ContainsKey(prevIdx) || !_lEndChunks[prevIdx].Contains(curChunk) || _lIdx == 0)
             {
                 // This is the first index with this chunk, add start
                 if (!_lStartIds.ContainsKey(curChunk)) _lStartIds[curChunk] = [];
@@ -199,7 +202,7 @@ public partial class FootprintStorage : Node
             
             if (!_rEndIds.ContainsKey(curChunk)) _rEndIds[curChunk] = [];
 
-            if (!_rEndChunks.ContainsKey(prevIdx) || !_rEndChunks[prevIdx].Contains(curChunk))
+            if (!_rEndChunks.ContainsKey(prevIdx) || !_rEndChunks[prevIdx].Contains(curChunk) || _rIdx == 0)
             {
                 // This is the first index with this chunk, add start
                 if (!_rStartIds.ContainsKey(curChunk)) _rStartIds[curChunk] = [];
@@ -216,6 +219,81 @@ public partial class FootprintStorage : Node
             AddRightEnd(curChunk, _rIdx);
         }
         if (_rStartChunks[_rIdx].Count == 0) _rStartChunks.Remove(_rIdx);
+    }
+
+    public bool HasChunkLeft(Vector2I chunk)
+    {
+        return _lEndIds.ContainsKey(chunk) && _lEndIds[chunk].Count > 0;
+    }
+
+    public bool HasChunkRight(Vector2I chunk)
+    {
+        return _rEndIds.ContainsKey(chunk) && _rEndIds[chunk].Count > 0;
+    }
+
+
+    /// <summary>
+    /// Populates SSBO given by RID with portion of left footprint data for the given chunk
+    /// </summary>
+    /// <param name="device">Local rendering device used for batched footprint rendering</param>
+    /// <param name="buffer">RID of the SSBO to populate</param>
+    /// <param name="chunk">Integer coordinates of the reconstructed chunk</param>
+    /// <returns>False if given batch of footprints is not the last one, true otherwise.</returns>
+    public bool PopulateBufferChunkLeft(ref readonly RenderingDevice device, ref Rid buffer, ref int fpCount, Vector2I chunk)
+    {
+        byte[] bufferData = new byte[RenderBatchSize * 4 * sizeof(float)];
+        int startIdx = _lStartIds[chunk][_blockIdx];
+        int startIdxO = startIdx + _blockOffset;
+        int endIdx = _lEndIds[chunk][_blockIdx];
+        fpCount = Math.Min(RenderBatchSize, endIdx - startIdxO + 1);
+
+        Buffer.BlockCopy(_lData, 4 * startIdxO, bufferData, 0, 4 * fpCount);
+        device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
+
+        if (startIdxO + fpCount <= endIdx)
+        {
+            _blockOffset += RenderBatchSize;
+            return false;
+        }
+        _blockOffset = 0;
+        if (++_blockIdx == _lEndIds[chunk].Count)
+        {
+            _blockIdx = 0;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Populates SSBO given by RID with portion of right footprint data for the given chunk
+    /// </summary>
+    /// <param name="device">Local rendering device used for batched footprint rendering</param>
+    /// <param name="buffer">RID of the SSBO to populate</param>
+    /// <param name="chunk">Integer coordinates of the reconstructed chunk</param>
+    /// <returns>False if given batch of footprints is not the last one, true otherwise.</returns>
+    public bool PopulateBufferChunkRight(ref readonly RenderingDevice device, ref Rid buffer, ref int fpCount, Vector2I chunk)
+    {
+        byte[] bufferData = new byte[RenderBatchSize * 4 * sizeof(float)];
+        int startIdx = _rStartIds[chunk][_blockIdx];
+        int startIdxO = startIdx + _blockOffset;
+        int endIdx = _rEndIds[chunk][_blockIdx];
+        fpCount = Math.Min(RenderBatchSize, endIdx - startIdxO + 1);
+
+        Buffer.BlockCopy(_rData, 4 * startIdxO, bufferData, 0, 4 * fpCount);
+        device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
+
+        if (startIdxO + fpCount <= endIdx)
+        {
+            _blockOffset += RenderBatchSize;
+            return false;
+        }
+        _blockOffset = 0;
+        if (++_blockIdx == _rEndIds[chunk].Count)
+        {
+            _blockIdx = 0;
+            return true;
+        }
+        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -3,13 +3,17 @@
 - Optimize footprints render distance by only using textures for the chunks where footprints are rendered
 - Use smoother chunk fp chunk transitions
 - Change parameters to improve visual results (for example less intense steps with more cycles)
+- Fix footstep audio in deep snow
 - Configurable precipitation intensity
+- Test with users and collect feedback
+- Optimize batched footprint rendering
 - Sample only a 2D texture to get wind velocity on CPU
 - Limit a number of chunks with footprints and discard the latest ones (speedup)
-- Update the discard policy to not discard textures which are nearby
 - [Visual Improvements]
+- [Adjustments based on 1st feedback]
 - Create a loading screen
-- [Test with users]
+- Test with users again and collect feedback again
+- [Adjustments based on 2nd feedback]
 - [Make everything giant (terrain LODs)]
 - [Vegetation/obstacles]
 - [Experiment with hardware tesselation to improve performance]

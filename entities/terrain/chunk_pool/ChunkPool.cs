@@ -115,6 +115,11 @@ public partial class ChunkPool : Node
         return ref _pool[idx].Displacement;
     }
 
+    public Rid GetReconstructedTexture()
+    {
+        return _pool[0].TexRid; // TODO: Change this into something that is not a placeholder
+    }
+
     private void CreateSharedResources(uint textureSize)
     {
         _format = new()
