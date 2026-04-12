@@ -14,4 +14,3 @@ TextureSize = 2048
 FpStorage = NodePath("../FootprintStorage")
 
 [node name="FootprintStorage" parent="." unique_id=904910215 instance=ExtResource("3_e3asa")]
-RenderBatchSize = 16

@@ -117,10 +117,8 @@ public partial class ChunkPool : Node
 
     public Rid GetReconstructedTexture()
     {
-        // int idx = _reconstructionQueue.Peek();
-        // return _pool[idx].TexRid;
-        // Debug code:
-        return _pool[0].TexRid;
+        int idx = _reconstructionQueue.Peek();
+        return _pool[idx].TexRid;
     }
 
     public Vector2I GetReconstructedChunk()
@@ -133,17 +131,12 @@ public partial class ChunkPool : Node
     {
         GD.Print("Reconstruction finished");
         int idx = _reconstructionQueue.Peek();
-        Rid reconstructed = _pool[idx].TexRid;
+        GD.Print("Chunk " + _pool[idx].ChunkCoord + " reconstruction finished.");
         _reconstructionQueue.Dequeue();
         if (_reconstructionQueue.Count > 0)
         {
             EmitSignal(SignalName.ChunkInQueue);
         }
-
-        byte[] textureData = RenderingServer.GetRenderingDevice().TextureGetData(_pool[0].TexRid, 0);
-        Image.CreateFromData((int)_format.Width, (int)_format.Height, false, Image.Format.R8, textureData).SavePng("res://debug_output/reconstructed.png");
-        textureData = RenderingServer.GetRenderingDevice().TextureGetData(reconstructed, 0);
-        Image.CreateFromData((int)_format.Width, (int)_format.Height, false, Image.Format.R8, textureData).SavePng("res://debug_output/reconstructed_reference.png");
     }
 
     private void CreateSharedResources(uint textureSize)
@@ -195,10 +188,12 @@ public partial class ChunkPool : Node
             int clearX = (RowChunks + curX + RowChunks / 2 * xDiff) % RowChunks;
             uint texSize = (uint)_pool[0].Displacement.GetSize().X;
             byte[] clearData = new byte[texSize * texSize];
-            for (uint i = 0; i < RowChunks; i++)
+            for (int i = 0; i < RowChunks; i++)
             {
-                _device.TextureUpdate(_pool[i * RowChunks + clearX].TexRid, 0, clearData);
-                _pool[i * RowChunks + clearX].ChunkCoord += new Vector2I(RowChunks * xDiff, 0);
+                int clearIdx = i * RowChunks + clearX;
+                _device.TextureUpdate(_pool[clearIdx].TexRid, 0, clearData);
+                _pool[clearIdx].ChunkCoord += new Vector2I(RowChunks * xDiff, 0);
+                _reconstructionQueue.Enqueue(clearIdx);
             }
         }
         if (prevY != curY)
@@ -209,10 +204,12 @@ public partial class ChunkPool : Node
             int clearY = (RowChunks + curY + RowChunks / 2 * yDiff) % RowChunks;
             uint texSize = (uint)_pool[0].Displacement.GetSize().X;
             byte[] clearData = new byte[texSize * texSize];
-            for (uint i = 0; i < RowChunks; i++)
+            for (int i = 0; i < RowChunks; i++)
             {
-                _device.TextureUpdate(_pool[clearY * RowChunks + i].TexRid, 0, clearData);
-                _pool[clearY * RowChunks + i].ChunkCoord += new Vector2I(0, RowChunks * yDiff);
+                int clearIdx = clearY * RowChunks + i;
+                _device.TextureUpdate(_pool[clearIdx].TexRid, 0, clearData);
+                _pool[clearIdx].ChunkCoord += new Vector2I(0, RowChunks * yDiff);
+                _reconstructionQueue.Enqueue(clearIdx);
             }
         }
 
