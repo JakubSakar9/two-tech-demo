@@ -8,7 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain/terrain_deformer/terrain_deformer.tscn" id="4_7ddre"]
 [ext_resource type="PackedScene" uid="uid://byhehfsbnes1h" path="res://entities/wind/wind_compute/wind_generator.tscn" id="5_qjeyg"]
 [ext_resource type="PackedScene" uid="uid://dcnep30ldxtum" path="res://entities/loading_camera/loading_camera.tscn" id="8_rnaij"]
-[ext_resource type="PackedScene" uid="uid://d124v5n4w4rn2" path="res://entities/terrain/footprint_storage/footprint_storage.tscn" id="9_h3xc6"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
 sky_cover_modulate = Color(1, 1, 1, 0)
@@ -60,13 +59,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.23542, 25.579044, -36.7686
 visible = false
 Deformer = NodePath("../TerrainDeformer")
 
-[node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player", "FpStorage") instance=ExtResource("4_7ddre")]
+[node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
 Player = NodePath("../Player")
-FpStorage = NodePath("../FootprintStorage")
 
 [node name="WindGenerator" parent="." unique_id=37666401 instance=ExtResource("5_qjeyg")]
 
 [node name="LoadingCamera" parent="." unique_id=1737976801 instance=ExtResource("8_rnaij")]
 transform = Transform3D(1, 0, 0, 0, 0.79039025, 0.61260366, 0, -0.61260366, 0.79039025, 0, 27.633942, 35.649845)
-
-[node name="FootprintStorage" parent="." unique_id=904910215 instance=ExtResource("9_h3xc6")]

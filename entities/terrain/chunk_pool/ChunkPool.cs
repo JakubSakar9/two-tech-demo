@@ -131,6 +131,7 @@ public partial class ChunkPool : Node
 
     public void FinishReconstruction()
     {
+        GD.Print("Reconstruction finished");
         int idx = _reconstructionQueue.Peek();
         Rid reconstructed = _pool[idx].TexRid;
         _reconstructionQueue.Dequeue();
@@ -139,8 +140,10 @@ public partial class ChunkPool : Node
             EmitSignal(SignalName.ChunkInQueue);
         }
 
-        byte[] textureData = RenderingServer.GetRenderingDevice().TextureGetData(reconstructed, 0);
+        byte[] textureData = RenderingServer.GetRenderingDevice().TextureGetData(_pool[0].TexRid, 0);
         Image.CreateFromData((int)_format.Width, (int)_format.Height, false, Image.Format.R8, textureData).SavePng("res://debug_output/reconstructed.png");
+        textureData = RenderingServer.GetRenderingDevice().TextureGetData(reconstructed, 0);
+        Image.CreateFromData((int)_format.Width, (int)_format.Height, false, Image.Format.R8, textureData).SavePng("res://debug_output/reconstructed_reference.png");
     }
 
     private void CreateSharedResources(uint textureSize)

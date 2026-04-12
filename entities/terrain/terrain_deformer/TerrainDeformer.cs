@@ -23,6 +23,7 @@ public partial class TerrainDeformer : Node3D
         InitNodes();
 
         _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
+        _painter.BatchParams.DownscaleFactor = 1.6f * DisplacementMapRange;
         _painter.InitPool(RadiusChunks, ref FpStorage);
         _painter.Pool.DisplacementMapRange = DisplacementMapRange;
 

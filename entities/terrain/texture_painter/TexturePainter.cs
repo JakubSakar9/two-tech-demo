@@ -39,7 +39,6 @@ public partial class TexturePainter : Node
     // public Texture2Drd DisplacementTexture;
     public TexturePainterParams Params;
     public TexturePainterBatchParams BatchParams;
-    public Vector2I ReconstructedChunk;
 
     private RenderingDevice _device;
     private Rid _shader;
@@ -89,6 +88,10 @@ public partial class TexturePainter : Node
     public override void _Process(double delta)
     {
         RenderingServer.CallOnRenderThread(Callable.From(DrawTextures));
+        if (_reconstructionInProgress)
+        {
+            RenderingServer.CallOnRenderThread(Callable.From(DrawBatch));
+        }
     }
 
     public override void _ExitTree()
@@ -164,11 +167,12 @@ public partial class TexturePainter : Node
 
     private void InitFootprintBuffer()
     {
-        _device.StorageBufferCreate((uint)(FpStorage.RenderBatchSize * 4 * sizeof(float)));
+        _fpBuffer = _device.StorageBufferCreate((uint)(FpStorage.RenderBatchSize * 4 * sizeof(float)));
     }
 
     private void StartReconstruction()
     {
+        GD.Print("Reconstruction started");
         if (_reconstructionInProgress) return;
         _reconstructionInProgress = true;
         _reconstructionPhase = 0;
@@ -176,32 +180,39 @@ public partial class TexturePainter : Node
 
     private void DrawBatch()
     {
+        var reconstructedChunk = Pool.GetReconstructedChunk();
+        BatchParams.ChunkCoord = reconstructedChunk;
+        if (_reconstructionPhase == 2)
+        {
+            _reconstructionPhase = 0;
+            _reconstructionInProgress = false;
+            Pool.FinishReconstruction();
+            return;
+        }
         if (_reconstructionPhase == 0)
         {
-            if (!FpStorage.HasChunkLeft(ReconstructedChunk))
+            if (!FpStorage.HasChunkLeft(reconstructedChunk))
             {
                 _reconstructionPhase++;
                 return;
             }
-            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
+            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, reconstructedChunk);
             if (res)
             {
                 _reconstructionPhase++;
             }
         }
-        else
+        else if (_reconstructionPhase == 1)
         {
-            if (!FpStorage.HasChunkLeft(ReconstructedChunk))
+            if (!FpStorage.HasChunkLeft(reconstructedChunk))
             {
-                _reconstructionPhase = 0;
-                _reconstructionInProgress = false;
+                _reconstructionPhase++;
                 return;
             }
-            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
+            bool res = FpStorage.PopulateBufferChunkRight(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, reconstructedChunk);
             if (res)
             {
-                _reconstructionPhase = 0;
-                _reconstructionInProgress = false;
+                _reconstructionPhase++;
             }
         }
 

@@ -241,14 +241,16 @@ public partial class FootprintStorage : Node
     /// <returns>False if given batch of footprints is not the last one, true otherwise.</returns>
     public bool PopulateBufferChunkLeft(ref readonly RenderingDevice device, ref Rid buffer, ref int fpCount, Vector2I chunk)
     {
-        byte[] bufferData = new byte[RenderBatchSize * 4 * sizeof(float)];
         int startIdx = _lStartIds[chunk][_blockIdx];
         int startIdxO = startIdx + _blockOffset;
         int endIdx = _lEndIds[chunk][_blockIdx];
         fpCount = Math.Min(RenderBatchSize, endIdx - startIdxO + 1);
+        byte[] bufferData = new byte[fpCount * 4 * sizeof(float)];
 
-        Buffer.BlockCopy(_lData, 4 * startIdxO, bufferData, 0, 4 * fpCount);
+        Buffer.BlockCopy(_lData, 4 * sizeof(float) * startIdxO, bufferData, 0, 4 * sizeof(float) * fpCount);
         device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
+
+        GD.Print("Returning range from " + startIdxO + " to " + endIdx);
 
         if (startIdxO + fpCount <= endIdx)
         {
@@ -279,7 +281,7 @@ public partial class FootprintStorage : Node
         int endIdx = _rEndIds[chunk][_blockIdx];
         fpCount = Math.Min(RenderBatchSize, endIdx - startIdxO + 1);
 
-        Buffer.BlockCopy(_rData, 4 * startIdxO, bufferData, 0, 4 * fpCount);
+        Buffer.BlockCopy(_rData, 4 * sizeof(float) * startIdxO, bufferData, 0, 4 * sizeof(float) * fpCount);
         device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
 
         if (startIdxO + fpCount <= endIdx)
