@@ -1,10 +1,6 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-
-// TODO:
-// - Clear some textures and update their chunk indices as player goes further
 
 public struct DTChunk
 {
@@ -16,6 +12,9 @@ public struct DTChunk
 
 public partial class ChunkPool : Node
 {
+    [Signal]
+    public delegate void ChunkInQueueEventHandler();
+
     public float DisplacementMapRange;
     public int RowChunks;
     public int NChunks;
@@ -30,6 +29,8 @@ public partial class ChunkPool : Node
     private Vector2I _chunk;
     private int _radiusChunks;
 
+    private Queue<int> _reconstructionQueue;
+
     public void Initialize(uint chunkRange, uint textureSize, ref readonly RenderingDevice device, ref FootprintStorage fpStorage)
     {
         _device = device;
@@ -39,6 +40,7 @@ public partial class ChunkPool : Node
         NChunks = RowChunks * RowChunks;
         _pool = new DTChunk[NChunks];
         _chunkIdx = (uint)NChunks / 2;
+        _reconstructionQueue = new();
 
         CreateSharedResources(textureSize);
         for (uint i = 0; i < RowChunks; i++)
@@ -66,12 +68,10 @@ public partial class ChunkPool : Node
 
     public void UpdateActiveChunks(Vector2 playerPosition)
     {
-        Vector2 rawCoords = (playerPosition + Vector2.One * 0.5f * DisplacementMapRange) / DisplacementMapRange;
-        if (float.IsNaN(rawCoords.X)) return;
-        rawCoords = rawCoords.Floor();
-
         Vector2I prevChunk = _chunk;
-        _chunk = new Vector2I((int)rawCoords.X, (int)rawCoords.Y);
+
+        RecomputeChunk(playerPosition);
+
         int xCoord = (_chunk.X % RowChunks) + RowChunks;
         int yCoord = (_chunk.Y % RowChunks) + RowChunks;
         xCoord = (xCoord + _radiusChunks) % RowChunks;
@@ -81,7 +81,7 @@ public partial class ChunkPool : Node
         _chunkIdx = (uint)(yCoord * RowChunks + xCoord);
         if (_chunkIdx != prevIdx)
         {
-            // GD.Print("Changing from chunk " + prevChunk + " to chunk " + _chunkIdx);
+            GD.Print("Changing from chunk " + prevChunk + " to chunk " + _chunk);
             HandleChunkTransition((int)prevIdx);
 
             _fpStorage.ExitLeft(prevChunk);
@@ -117,7 +117,30 @@ public partial class ChunkPool : Node
 
     public Rid GetReconstructedTexture()
     {
-        return _pool[0].TexRid; // TODO: Change this into something that is not a placeholder
+        // int idx = _reconstructionQueue.Peek();
+        // return _pool[idx].TexRid;
+        // Debug code:
+        return _pool[0].TexRid;
+    }
+
+    public Vector2I GetReconstructedChunk()
+    {
+        int idx = _reconstructionQueue.Peek();
+        return _pool[idx].ChunkCoord;
+    }
+
+    public void FinishReconstruction()
+    {
+        int idx = _reconstructionQueue.Peek();
+        Rid reconstructed = _pool[idx].TexRid;
+        _reconstructionQueue.Dequeue();
+        if (_reconstructionQueue.Count > 0)
+        {
+            EmitSignal(SignalName.ChunkInQueue);
+        }
+
+        byte[] textureData = RenderingServer.GetRenderingDevice().TextureGetData(reconstructed, 0);
+        Image.CreateFromData((int)_format.Width, (int)_format.Height, false, Image.Format.R8, textureData).SavePng("res://debug_output/reconstructed.png");
     }
 
     private void CreateSharedResources(uint textureSize)
@@ -141,8 +164,18 @@ public partial class ChunkPool : Node
         // var im = Image.CreateEmpty(textureSize, textureSize, false, Image.Format.Rf);
         byte[] clearData = new byte[textureSize * textureSize];
         targetChunk.TexRid = _device.TextureCreate(_format, _view, [clearData]);
-        targetChunk.Displacement = new();
-        targetChunk.Displacement.TextureRdRid = targetChunk.TexRid;
+        targetChunk.Displacement = new()
+        {
+            TextureRdRid = targetChunk.TexRid
+        };
+    }
+
+    private void RecomputeChunk(Vector2 playerPosition)
+    {
+        Vector2 rawCoords = (playerPosition + Vector2.One * 0.5f * DisplacementMapRange) / DisplacementMapRange;
+        if (float.IsNaN(rawCoords.X)) return;
+        rawCoords = rawCoords.Floor();
+        _chunk = new Vector2I((int)rawCoords.X, (int)rawCoords.Y);
     }
 
     private void HandleChunkTransition(int prevChunk)
@@ -179,5 +212,8 @@ public partial class ChunkPool : Node
                 _pool[clearY * RowChunks + i].ChunkCoord += new Vector2I(0, RowChunks * yDiff);
             }
         }
+
+        _reconstructionQueue.Enqueue(prevChunk);
+        EmitSignal(SignalName.ChunkInQueue);
     }
 }

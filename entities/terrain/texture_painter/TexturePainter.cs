@@ -31,6 +31,7 @@ public partial class TexturePainter : Node
     [Export] public Texture2D FootprintTexture;
     [Export] public uint TextureSize = 1024;
 	[Export] public ChunkPool Pool;
+    [Export] public FootprintStorage FpStorage;
 
     const string SHADER_PATH = "res://shaders/disp_compute.glsl";
     const string SHADER_BATCH_PATH = "res://shaders/disp_batch_compute.glsl";
@@ -57,7 +58,6 @@ public partial class TexturePainter : Node
     private Array<RDUniform> _uniformsBatch;
     private RDTextureFormat _format;
     private RDTextureView _view;
-    private FootprintStorage _fpStorage;
 
     private int _reconstructionPhase = 0;
     private bool _reconstructionInProgress;
@@ -81,6 +81,7 @@ public partial class TexturePainter : Node
         };
 
         SetAngle(0.0f);
+        Pool.ChunkInQueue += StartReconstruction;
 
         RenderingServer.CallOnRenderThread(Callable.From(InitCompute));
     }
@@ -123,17 +124,17 @@ public partial class TexturePainter : Node
 		InitFootprintTexture();
         InitFootprintBuffer();
 		_pipeline = _device.ComputePipelineCreate(_shader);
-        _pipeline = _device.ComputePipelineCreate(_shaderBatch);
+        _pipelineBatch = _device.ComputePipelineCreate(_shaderBatch);
 	}
 
 	private void InitShader()
 	{
-		var shaderFile = GD.Load<RDShaderFile>(SHADER_PATH);
-		var shaderBytecode = shaderFile.GetSpirV();
-		_shader = _device.ShaderCreateFromSpirV(shaderBytecode);
-        shaderFile = GD.Load<RDShaderFile>(SHADER_BATCH_PATH);
-        shaderBytecode = shaderFile.GetSpirV();
-		_shaderBatch = _device.ShaderCreateFromSpirV(shaderBytecode);
+		var shaderFile1 = GD.Load<RDShaderFile>(SHADER_PATH);
+		var shaderBytecode1 = shaderFile1.GetSpirV();
+		_shader = _device.ShaderCreateFromSpirV(shaderBytecode1);
+        var shaderFile2 = GD.Load<RDShaderFile>(SHADER_BATCH_PATH);
+        var shaderBytecode2 = shaderFile2.GetSpirV();
+		_shaderBatch = _device.ShaderCreateFromSpirV(shaderBytecode2);
 	}
 
 	private void InitFootprintTexture()
@@ -163,19 +164,26 @@ public partial class TexturePainter : Node
 
     private void InitFootprintBuffer()
     {
-        _device.StorageBufferCreate((uint)(_fpStorage.RenderBatchSize * 4 * sizeof(float)));
+        _device.StorageBufferCreate((uint)(FpStorage.RenderBatchSize * 4 * sizeof(float)));
+    }
+
+    private void StartReconstruction()
+    {
+        if (_reconstructionInProgress) return;
+        _reconstructionInProgress = true;
+        _reconstructionPhase = 0;
     }
 
     private void DrawBatch()
     {
         if (_reconstructionPhase == 0)
         {
-            if (!_fpStorage.HasChunkLeft(ReconstructedChunk))
+            if (!FpStorage.HasChunkLeft(ReconstructedChunk))
             {
                 _reconstructionPhase++;
                 return;
             }
-            bool res = _fpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
+            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
             if (res)
             {
                 _reconstructionPhase++;
@@ -183,13 +191,13 @@ public partial class TexturePainter : Node
         }
         else
         {
-            if (!_fpStorage.HasChunkLeft(ReconstructedChunk))
+            if (!FpStorage.HasChunkLeft(ReconstructedChunk))
             {
                 _reconstructionPhase = 0;
                 _reconstructionInProgress = false;
                 return;
             }
-            bool res = _fpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
+            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, ReconstructedChunk);
             if (res)
             {
                 _reconstructionPhase = 0;

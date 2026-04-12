@@ -2,10 +2,15 @@
 
 [ext_resource type="Script" uid="uid://tuap147a6h7f" path="res://entities/terrain/terrain_deformer/TerrainDeformer.cs" id="1_sw4i0"]
 [ext_resource type="PackedScene" uid="uid://5a8v1bmtx7n7" path="res://entities/terrain/texture_painter/texture_painter.tscn" id="2_3q8wy"]
+[ext_resource type="PackedScene" uid="uid://d124v5n4w4rn2" path="res://entities/terrain/footprint_storage/footprint_storage.tscn" id="3_e3asa"]
 
-[node name="TerrainDeformer" type="Node3D" unique_id=554553257]
+[node name="TerrainDeformer" type="Node3D" unique_id=554553257 node_paths=PackedStringArray("FpStorage")]
 script = ExtResource("1_sw4i0")
+FpStorage = NodePath("FootprintStorage")
 
-[node name="TexturePainter" parent="." unique_id=74182145 instance=ExtResource("2_3q8wy")]
+[node name="TexturePainter" parent="." unique_id=74182145 node_paths=PackedStringArray("FpStorage") instance=ExtResource("2_3q8wy")]
 unique_name_in_owner = true
 TextureSize = 2048
+FpStorage = NodePath("../FootprintStorage")
+
+[node name="FootprintStorage" parent="." unique_id=904910215 instance=ExtResource("3_e3asa")]
