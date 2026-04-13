@@ -129,9 +129,7 @@ public partial class ChunkPool : Node
 
     public void FinishReconstruction()
     {
-        GD.Print("Reconstruction finished");
         int idx = _reconstructionQueue.Peek();
-        GD.Print("Chunk " + _pool[idx].ChunkCoord + " reconstruction finished.");
         _reconstructionQueue.Dequeue();
         if (_reconstructionQueue.Count > 0)
         {
@@ -195,6 +193,7 @@ public partial class ChunkPool : Node
                 _pool[clearIdx].ChunkCoord += new Vector2I(RowChunks * xDiff, 0);
                 _reconstructionQueue.Enqueue(clearIdx);
             }
+            EmitSignal(SignalName.ChunkInQueue);
         }
         if (prevY != curY)
         {
@@ -211,9 +210,7 @@ public partial class ChunkPool : Node
                 _pool[clearIdx].ChunkCoord += new Vector2I(0, RowChunks * yDiff);
                 _reconstructionQueue.Enqueue(clearIdx);
             }
+            EmitSignal(SignalName.ChunkInQueue);
         }
-
-        _reconstructionQueue.Enqueue(prevChunk);
-        EmitSignal(SignalName.ChunkInQueue);
     }
 }

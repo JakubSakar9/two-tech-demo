@@ -51,47 +51,21 @@ public partial class FootprintStorage : Node
     public void EnterLeft(Vector2I chunkCoord)
     {
         _lChunks.Add(chunkCoord);
-        _lStartIds[chunkCoord] = [];
-        _lEndIds[chunkCoord] = [];
-        GD.Print("Stored enter indices and chunks:");
-        foreach (int idx in _lStartChunks.Keys)
+        if (!_lStartIds.ContainsKey(chunkCoord))
         {
-            GD.Print(idx + ": " + _lStartChunks[idx][0]);
-        }
-        foreach(Vector2I ch in _lStartIds.Keys)
-        {
-            if (_lStartIds[ch].Count > 0)
-            {
-                GD.Print(ch + ": " + _lStartIds[ch][0]);
-            }
-            else
-            {
-                GD.Print(ch + ": ");
-            }
-        }
-        GD.Print("Stored end indices and chunks:");
-        foreach (int idx in _lEndChunks.Keys)
-        {
-            GD.Print(idx + ": " + _lEndChunks[idx][0]);
-        }
-        foreach(Vector2I ch in _lEndIds.Keys)
-        {
-            if (_lEndIds[ch].Count > 0)
-            {
-                GD.Print(ch + ": " + _lEndIds[ch][0]);
-            }
-            else
-            {
-                GD.Print(ch + ": ");
-            }
+            _lStartIds[chunkCoord] = [];
+            _lEndIds[chunkCoord] = [];
         }
     }
 
     public void EnterRight(Vector2I chunkCoord)
     {
         _rChunks.Add(chunkCoord);
-        _rStartIds[chunkCoord] = [];
-        _rEndIds[chunkCoord] = [];
+        if (!_rStartIds.ContainsKey(chunkCoord))
+        {
+            _rStartIds[chunkCoord] = [];
+            _rEndIds[chunkCoord] = [];
+        }
     }
 
     public void ExitLeft(Vector2I chunkCoord)
@@ -146,7 +120,11 @@ public partial class FootprintStorage : Node
             if (!_lEndChunks.ContainsKey(prevIdx) || !_lEndChunks[prevIdx].Contains(curChunk) || _lIdx == 0)
             {
                 // This is the first index with this chunk, add start
-                if (!_lStartIds.ContainsKey(curChunk)) _lStartIds[curChunk] = [];
+                if (!_lStartIds.ContainsKey(curChunk))
+                {
+                    GD.Print("Reset for chunk " + curChunk);
+                    _lStartIds[curChunk] = [];
+                }
                 AddLeftStart(curChunk, _lIdx);
             }
             else
@@ -250,8 +228,6 @@ public partial class FootprintStorage : Node
         Buffer.BlockCopy(_lData, 4 * sizeof(float) * startIdxO, bufferData, 0, 4 * sizeof(float) * fpCount);
         device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
 
-        GD.Print("Returning range from " + startIdxO + " to " + endIdx);
-
         if (startIdxO + fpCount <= endIdx)
         {
             _blockOffset += RenderBatchSize;
@@ -329,6 +305,7 @@ public partial class FootprintStorage : Node
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RemLeftStart(Vector2I chunk, int idx)
     {
+        GD.Print("removed an entry");
         _lStartIds[chunk].Remove(idx);
         _lStartChunks[idx].Remove(chunk);
     }

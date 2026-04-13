@@ -172,7 +172,6 @@ public partial class TexturePainter : Node
 
     private void StartReconstruction()
     {
-        GD.Print("Reconstruction started");
         if (_reconstructionInProgress) return;
         _reconstructionInProgress = true;
         _reconstructionPhase = 0;

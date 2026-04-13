@@ -1,4 +1,3 @@
-- When encoutering a past chunk reconstruct footprints using a compute shader (naive a solution for now)
 - Decrease footprint depth when changing a chunk if it is snowing
 - Optimize footprints render distance by only using textures for the chunks where footprints are rendered
 - Use smoother chunk fp chunk transitions
@@ -6,7 +5,7 @@
 - Fix footstep audio in deep snow
 - Configurable precipitation intensity
 - Test with users and collect feedback
-- Optimize batched footprint rendering
+- Fix repeating footprints bug
 - Sample only a 2D texture to get wind velocity on CPU
 - Limit a number of chunks with footprints and discard the latest ones (speedup)
 - [Visual Improvements]
