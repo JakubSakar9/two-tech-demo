@@ -1,13 +1,12 @@
-- Optimize terrain rendering by only using textures for the chunks where footprints are rendered
-- Decrease footprint depth when changing a chunk if it is snowing
-- Change parameters to improve visual results (for example less intense steps with more cycles)
 - Fix footstep audio in deep snow
 - Reduce lag between chunk transitions
 - Fix repeating footprints bug
+- Decrease footprint depth when changing a chunk if it is snowing
 
 - 1st playtesting
 
 - Fix snow cover inconsistencies, or reduce them as much as possible
+- Improve snow cover visual results
 - Configurable precipitation intensity
 - Sample only a 2D texture to get wind velocity on CPU
 - [1st playtesting feedback fixes]

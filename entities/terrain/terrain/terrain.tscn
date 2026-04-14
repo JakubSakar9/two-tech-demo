@@ -30,8 +30,10 @@ strength = 32.0
 
 [node name="SnowCoverGenerator" parent="." unique_id=1921976969 instance=ExtResource("4_k2y3k")]
 unique_name_in_owner = true
-EventCycleCount = 4
-DirectSunlightHeat = 10.0
-MaxPrecipitationDurationHours = 2.0
-AdvectionIterations = 16
-AdvectionInfluence = 15.0
+EventCycleCount = 16
+TopTemperature = 263.0
+DirectSunlightHeat = 15.0
+MaxPrecipitationDurationHours = 0.2
+AdvectionIterations = 8
+AdvectionInfluence = 3.0
+MeltingRate = 0.01
