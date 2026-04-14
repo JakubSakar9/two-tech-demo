@@ -101,6 +101,11 @@ public partial class TerrainDeformer : Node3D
         return textures;
     }
 
+    public ref Godot.Collections.Array<bool> GetUsedChunks()
+    {
+        return ref _painter.Pool.UsedChunks;
+    }
+
     private void InitNodes()
     {
         _painter = GetNode<TexturePainter>("%TexturePainter");

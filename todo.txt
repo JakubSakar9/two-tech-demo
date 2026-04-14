@@ -1,20 +1,32 @@
+- Optimize terrain rendering by only using textures for the chunks where footprints are rendered
 - Decrease footprint depth when changing a chunk if it is snowing
-- Optimize footprints render distance by only using textures for the chunks where footprints are rendered
-- Use smoother chunk fp chunk transitions
 - Change parameters to improve visual results (for example less intense steps with more cycles)
 - Fix footstep audio in deep snow
-- Configurable precipitation intensity
-- Test with users and collect feedback
+- Reduce lag between chunk transitions
 - Fix repeating footprints bug
+
+- 1st playtesting
+
+- Fix snow cover inconsistencies, or reduce them as much as possible
+- Configurable precipitation intensity
 - Sample only a 2D texture to get wind velocity on CPU
+- [1st playtesting feedback fixes]
+
+- 2nd playtesting
+
 - Limit a number of chunks with footprints and discard the latest ones (speedup)
 - [Visual Improvements]
-- [Adjustments based on 1st feedback]
 - Create a loading screen
-- Test with users again and collect feedback again
-- [Adjustments based on 2nd feedback]
-- [Make everything giant (terrain LODs)]
+- [2nd playtesing feedback fixes]
 - [Vegetation/obstacles]
-- [Experiment with hardware tesselation to improve performance]
 - [UI/Gamey stuff]
+
+- 3rd playtesing
+
+- [3rd playtesing feedback fixes]
+- [Make everything giant (terrain LODs)]
+- [Experiment with hardware tesselation to improve performance]
 - [Add procedural animation]
+
+Otázky
+- Jakým způsobem simulovat zasněžení stop když stopy ve sněhu jsou v [0, 1] rozsahu nezávisle na lokální výšce sněhu (leda že by to bylo jedno a všechny stopy se poměrově budou erodovat stejně rychle)

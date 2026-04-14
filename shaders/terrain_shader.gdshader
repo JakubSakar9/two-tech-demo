@@ -15,6 +15,7 @@ uniform sampler2D grass_texture: filter_linear_mipmap_anisotropic;
 uniform sampler2D rock_texture: filter_linear_mipmap_anisotropic;
 uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap;
 
+uniform bool[DISP_COUNT] used_maps;
 uniform vec2 chunk_origin = vec2(0.0);
 uniform float displacement_map_range = 64.0;
 uniform float near_fadeout_distance = 128.0;
@@ -76,35 +77,41 @@ void fragment() {
 	vec3 normal_height = -normalize(cross(height_px - height_mx, height_py - height_my));
 	
 	displacement = 0.0;
-	disp_flatness = 1.0;
-	if (v_distance <= far_fadeout_distance) {
+	vec3 normal_disp = vec3(0.0);
+	//used_maps[tidx] &&
+	if (used_maps[tidx] && v_distance <= far_fadeout_distance) {
 		displacement = texture(displacement_maps[tidx], disp_uv).r;
 		vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
-		vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvx).r - DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
+		vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
 		vec3 disp_py = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvy).r, VERTEX.z + eps_h * displacement_map_range);
-		vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvy).r - DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
-		vec3 normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
-		
-		disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
-		float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
-		
-		if (dot_diff > 0.05) {
-			NORMAL = normal_height;
-		}
-		else if (dot_diff < -0.1) {
-			NORMAL = normal_disp;
-		}
-		else {
-			float t = (dot_diff + 0.1) / 0.15;
-			NORMAL = mix(normal_disp, normal_height, t);
-		}
-		
-		float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
-		NORMAL = mix(NORMAL, normal_height, fade_t);
+		vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
+		normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
 	}
 	else {
-		NORMAL = normal_height;	
+		vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
+		vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y + DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
+		vec3 disp_py = vec3(VERTEX.x, VERTEX.y + DETAIL_SIZE * texture(glitter_map, detail_uv + duvy).r, VERTEX.z + eps_h * displacement_map_range);
+		vec3 disp_my = vec3(VERTEX.x, VERTEX.y + DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
+		normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
 	}
+	
+	disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
+	float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
+	
+	if (dot_diff > 0.05) {
+		NORMAL = normal_height;
+	}
+	else if (dot_diff < -0.1) {
+		NORMAL = normal_disp;
+	}
+	else {
+		float t = (dot_diff + 0.1) / 0.15;
+		NORMAL = mix(normal_disp, normal_height, t);
+	}
+	
+	float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);
+	NORMAL = mix(NORMAL, normal_height, fade_t);
+	
 	vec3 v = normalize(-VERTEX);
 	float jitter = texture(glitter_map, detail_uv).r;
 	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * jitter * jitter);
@@ -118,7 +125,6 @@ void fragment() {
 	vec3 rock_color = texture(rock_texture, detail_uv).rgb;
 	vec3 ground_color = mix(grass_color, rock_color, rockiness);
 	ALBEDO = mix(ground_color, vec3(0.95), snowiness);
-	//ALBEDO = debug_color;
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
 	float roughness_snow = 1.0 - (dot(texture(texture_roughness, disp_uv), roughness_texture_channel) + 3.0) / 4.0;

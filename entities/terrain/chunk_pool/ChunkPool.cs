@@ -18,6 +18,7 @@ public partial class ChunkPool : Node
     public float DisplacementMapRange;
     public int RowChunks;
     public int NChunks;
+    public Godot.Collections.Array<bool> UsedChunks;
 
     private RenderingDevice _device;
     private RDTextureFormat _format;
@@ -41,6 +42,8 @@ public partial class ChunkPool : Node
         _pool = new DTChunk[NChunks];
         _chunkIdx = (uint)NChunks / 2;
         _reconstructionQueue = new();
+        UsedChunks = new();
+        UsedChunks.Resize(NChunks);
 
         CreateSharedResources(textureSize);
         for (uint i = 0; i < RowChunks; i++)
@@ -93,6 +96,7 @@ public partial class ChunkPool : Node
         // Enter chunks
         _activeChunks.Clear();
         _activeChunks.Add(_chunkIdx);
+        UsedChunks[(int)_chunkIdx] = true;
     }
 
     public List<DTChunk> GetTargetChunks()
@@ -127,7 +131,7 @@ public partial class ChunkPool : Node
         return _pool[idx].ChunkCoord;
     }
 
-    public void FinishReconstruction()
+    public void FinishReconstruction(bool populated = false)
     {
         int idx = _reconstructionQueue.Peek();
         _reconstructionQueue.Dequeue();
@@ -135,6 +139,8 @@ public partial class ChunkPool : Node
         {
             EmitSignal(SignalName.ChunkInQueue);
         }
+        UsedChunks[idx] = populated;
+
     }
 
     private void CreateSharedResources(uint textureSize)

@@ -23,12 +23,16 @@ config/icon="res://icon.svg"
 
 buses/default_bus_layout="uid://cxlfn1wulql3b"
 
+[debug]
+
+settings/stdout/print_fps=true
+
 [display]
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/size/mode=4
-window/vsync/vsync_mode=3
+window/vsync/vsync_mode=0
 
 [dotnet]
 

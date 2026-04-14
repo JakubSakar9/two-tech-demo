@@ -60,6 +60,7 @@ public partial class TexturePainter : Node
 
     private int _reconstructionPhase = 0;
     private bool _reconstructionInProgress;
+    private bool _reconstructionDrawn = false;
 
 
     public override void _Ready()
@@ -185,7 +186,8 @@ public partial class TexturePainter : Node
         {
             _reconstructionPhase = 0;
             _reconstructionInProgress = false;
-            Pool.FinishReconstruction();
+            Pool.FinishReconstruction(_reconstructionDrawn);
+            _reconstructionDrawn = false;
             return;
         }
         if (_reconstructionPhase == 0)
@@ -196,6 +198,7 @@ public partial class TexturePainter : Node
                 return;
             }
             bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, reconstructedChunk);
+            _reconstructionDrawn = true;
             if (res)
             {
                 _reconstructionPhase++;
@@ -209,6 +212,7 @@ public partial class TexturePainter : Node
                 return;
             }
             bool res = FpStorage.PopulateBufferChunkRight(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, reconstructedChunk);
+            _reconstructionDrawn = true;
             if (res)
             {
                 _reconstructionPhase++;

@@ -161,6 +161,8 @@ public partial class Terrain : StaticBody3D
         CheckChunkChange(in pos2D);
 
         CallDeferred(MethodName.AssignTexture);
+        SetShaderParam("used_maps", Deformer.GetUsedChunks());
+        // GD.Print(Deformer.GetUsedChunks().ToString());
     }
 
     public ImageTexture GetHeightMap()

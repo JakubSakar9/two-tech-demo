@@ -29,6 +29,7 @@ shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
 shader_parameter/grass_texture = ExtResource("2_jkxpb")
 shader_parameter/rock_texture = ExtResource("3_7orrk")
 shader_parameter/displacement_maps = null
+shader_parameter/used_maps = PackedInt32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/chunk_origin = Vector2(0, 0)
 shader_parameter/displacement_map_range = 64.0
 shader_parameter/near_fadeout_distance = 128.0
