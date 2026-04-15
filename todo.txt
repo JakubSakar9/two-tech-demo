@@ -1,6 +1,4 @@
-- Fix footstep audio in deep snow
 - Reduce lag between chunk transitions
-- Fix repeating footprints bug
 - Decrease footprint depth when changing a chunk if it is snowing
 
 - 1st playtesting
@@ -26,6 +24,3 @@
 - [Make everything giant (terrain LODs)]
 - [Experiment with hardware tesselation to improve performance]
 - [Add procedural animation]
-
-Otázky
-- Jakým způsobem simulovat zasněžení stop když stopy ve sněhu jsou v [0, 1] rozsahu nezávisle na lokální výšce sněhu (leda že by to bylo jedno a všechny stopy se poměrově budou erodovat stejně rychle)

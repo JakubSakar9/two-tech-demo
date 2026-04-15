@@ -120,10 +120,12 @@ void fragment() {
 	float snow_var = -0.6 * texture(glitter_map, detail_uv).r;
 	snow_height -= 0.8 * displacement * snow_height;
 	snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
-	float rockiness = clamp((height - rock_fade_start) / (rock_fade_end - rock_fade_start), 0.0, 1.0);
+	float grassiness = 1.0 - clamp((height - rock_fade_start) / (rock_fade_end - rock_fade_start), 0.0, 1.0);
+	grassiness *= min(1.0, 1.2 * pow(dot(vec3(0.0, 1.0, 0.0), normal_height), 16.0));
+	//grassiness = dot(vec3(0.0, 1.0, 0.0), normal_height);
 	vec3 grass_color = texture(grass_texture, detail_uv).rgb;
 	vec3 rock_color = texture(rock_texture, detail_uv).rgb;
-	vec3 ground_color = mix(grass_color, rock_color, rockiness);
+	vec3 ground_color = mix(rock_color, grass_color, grassiness);
 	ALBEDO = mix(ground_color, vec3(0.95), snowiness);
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);

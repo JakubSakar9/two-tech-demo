@@ -126,7 +126,7 @@ public partial class Terrain : StaticBody3D
         _windField.Size = new Vector3(heightmapSize, MaxAltitude * 1.25f, heightmapSize);
         _windField.Strength = WindGen.MaxWindSpeed;
         SetShaderParam("rock_fade_start", RockGroundHeight);
-        SetShaderParam("rock_fade_end", RockGroundHeight + 1.0f);
+        SetShaderParam("rock_fade_end", RockGroundHeight + 0.3f);
         SetShaderParam("chunk_origin", ChunkOrigin);
         CallDeferred(MethodName.GenerateInitial);
     }

@@ -10,6 +10,7 @@ public partial class TerrainDeformer : Node3D
     [Export] public uint RadiusChunks = 2;
     [Export] public float DisplacementMapRange = 64.0f;
     [Export] public float MinSoundHeight = 0.05f;
+    [Export] public float MaxSoundHeight = 0.1f;
     [Export] public float GrassThreshold = 0.02f;
 
     private Terrain _terrain;
@@ -37,7 +38,7 @@ public partial class TerrainDeformer : Node3D
         var deformationCenter = Player.LeftFootPosition / DisplacementMapRange;
         _painter.Params.CenterLeft = new Vector2(0.5f, 0.5f) + deformationCenter;
         float snowHeight = _terrain.GetSnowHeight();
-        float snowHeightCl = Mathf.Max(MinSoundHeight, snowHeight);
+        float snowHeightCl = Mathf.Clamp(snowHeight, MinSoundHeight, MaxSoundHeight);
         
 
         float carveDepth = 0.0f;
