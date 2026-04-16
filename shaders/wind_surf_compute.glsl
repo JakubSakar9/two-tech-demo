@@ -6,7 +6,7 @@ const float V_FALLOFF_OFFSET = 0.2;
 // Multiplier that increases the upwards motion of the wind along slopes
 const float VERTICAL_BOOST = 2.0;
 
-layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;
+layout(local_size_x = 8, local_size_y = 1, local_size_z = 8) in;
 
 layout(set = 0, binding = 0, rg32f) uniform readonly image2D heightmap;
 layout(std140, binding = 1) buffer WindSSBOOut {

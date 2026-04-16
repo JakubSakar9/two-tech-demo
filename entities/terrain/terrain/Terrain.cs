@@ -336,9 +336,24 @@ public partial class Terrain : StaticBody3D
         stw.Reset();
         stw.Start();
 
-        _scGen.Generate(ref _heightmaps[_heightmapIndex], TerrainUpdatePolicy.PerChunk);
+        _scGen.Generate(ref _heightmaps[_heightmapIndex]);
         stw.Stop();
         GD.Print("Snow cover generated in " + stw.ElapsedMilliseconds + "ms");
+    }
+    
+    private async void SyncHeightmap(byte[] data)
+    {
+        _heightmaps[_heightmapIndex].bytes = data;
+        _heightmaps[_heightmapIndex].heightImage = Image.CreateFromData(3 * ChunkSizeUnits, 3 * ChunkSizeUnits, false, Image.Format.Rgbaf, _heightmaps[_heightmapIndex].bytes);
+
+        if (_scGen.SaveDebugTexture)
+        {
+            string suffix = _scGen.DebugTextureStep++.ToString("D3") + ".exr";
+            _heightmaps[_heightmapIndex].heightImage.SaveExr("res://debug_output/height_map" + suffix);
+        }
+
+        _heightmaps[_heightmapIndex].heightImage.GenerateMipmaps();
+        _heightmaps[_heightmapIndex].height.SetImage(_heightmaps[_heightmapIndex].heightImage);
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);

@@ -1,16 +1,17 @@
 #[compute]
 #version 450
 
-layout(local_size_x = 16, local_size_y = 1, local_size_z = 16) in;
+layout(local_size_x = 8, local_size_y = 1, local_size_z = 8) in;
 
 layout(set = 0, binding = 0, r32f) uniform readonly image2D heightmap;
 
 layout(std140, set = 0, binding = 1) readonly buffer WindSSBOIn {
     vec4 surf_vec[ ];
 };
-layout(std140, set = 0, binding = 2) buffer WindSSBOOut {
-    vec4 wind_vec[ ];
-};
+// layout(std140, set = 0, binding = 2) buffer WindSSBOOut {
+//     vec4 wind_vec[ ];   
+// };
+layout(set = 0, binding = 2, rgba8) uniform image2DArray wind_out;
 
 layout(push_constant, std430) uniform Params {
     vec2 w_base;        // Base wind velocity
@@ -29,7 +30,7 @@ void main() {
     uint y_layers = gl_NumWorkGroups.y * gl_WorkGroupSize.y;
     float y_m = float(y_layers);
     uint idx2d = size * pz + px;
-    uint idx3d = size * y_layers * pz + size * py + px;
+    // uint idx3d = size * y_layers * pz + size * py + px;
 
     // Maximum velocity computation
     vec2 w_max_venturi = (1.0 + params.k_venturi * params.a_max) * params.w_base;
@@ -47,5 +48,5 @@ void main() {
     if (y >= y_f) {
         w = mix(w_max, w_surf, (y_m - y - 0.5) / (y_m - y_l));
     }
-    wind_vec[idx3d] = vec4(w, 1.0);
+    imageStore(wind_out, ivec3(px, py, pz), vec4(w, 1.0));
 }

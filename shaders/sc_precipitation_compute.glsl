@@ -6,7 +6,7 @@ const float K_SC = 0.05;        // Temperature influence on the critical slope
 const float T0_POW = 263.0;     // Lowest temperature influencing the critical slope
 const float K_SLOPE = 3.0;      // Multiplier affecting strength of slope influence
 
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform image2D heightmap;
 

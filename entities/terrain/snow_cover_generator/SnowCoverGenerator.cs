@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -11,13 +12,6 @@ public enum SCComputePass
     Diffuse, // Currently not in use
     Advect,
     Melting
-}
-
-public enum TerrainUpdatePolicy
-{
-    PerChunk,
-    PerCycle,
-    PerEvent
 }
 
 public struct TemperatureParameters
@@ -62,6 +56,8 @@ public struct CycleParameters
 
 public partial class SnowCoverGenerator : Node
 {
+    public uint DebugTextureStep = 0;
+
     [ExportCategory("General")]
     [Export] public int EventCycleCount = 3;
     [Export] public bool SaveDebugTexture = true;
@@ -121,10 +117,10 @@ public partial class SnowCoverGenerator : Node
     private AdvectionParameters _aParams;
     private MeltingParameters _mParams;
 
+    private Terrain _terrain;
     private CycleParameters[] _cycleSequence;
     private long _computeList;
     private uint _texSize;
-    private uint _debugTextureStep = 0;
 
     private uint _swapIdx = 0;
     private uint _cycleIdx = 0;
@@ -134,12 +130,13 @@ public partial class SnowCoverGenerator : Node
         _texSize = texSize;
         _windGen = windGen;
         _cycleSequence = new CycleParameters[EventCycleCount];
+        _terrain = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
         InitCompute();
         InitParams();
         GenerateCycleSequence();
     }
 
-    public void Generate(ref HeightMap heightMap, TerrainUpdatePolicy policy)
+    public void Generate(ref HeightMap heightMap)
     {
         _swapIdx = 0;
         _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
@@ -150,29 +147,19 @@ public partial class SnowCoverGenerator : Node
         {
             ComputeTemperature();
             ComputePrecipitation();
-            if ((int)policy >= (int)TerrainUpdatePolicy.PerEvent)
-            {
-                UpdateHeightMap(ref heightMap);
-                _computeList = _device.ComputeListBegin();
-            }
             for (uint i = 0; i < AdvectionIterations; i++)
             {
                 ComputeAdvect();
             }
-            if ((int)policy >= (int)TerrainUpdatePolicy.PerEvent)
-            {
-                UpdateHeightMap(ref heightMap);
-                _computeList = _device.ComputeListBegin();
-            }
             ComputeMelting();
-            if ((int)policy >= (int)TerrainUpdatePolicy.PerCycle || _cycleIdx == EventCycleCount - 1) UpdateHeightMap(ref heightMap);
-            if ((int)policy >= (int)TerrainUpdatePolicy.PerCycle && _cycleIdx != EventCycleCount - 1) _computeList = _device.ComputeListBegin();
         }
+        _device.ComputeListEnd();
+        UpdateHeightMap();
     }
 
     private void InitCompute()
     {
-        _device = RenderingServer.CreateLocalRenderingDevice();
+        _device = RenderingServer.GetRenderingDevice();
         
         _shaders = [];
         _pipelines = [];
@@ -255,22 +242,14 @@ public partial class SnowCoverGenerator : Node
         }
     }
 
-    private void UpdateHeightMap(ref HeightMap heightMap)
+    private void UpdateHeightMap()
     {
-        _device.ComputeListEnd();
-        _device.Submit();
-        _device.Sync();
-        heightMap.bytes = _device.TextureGetData(_hmImages[_swapIdx], 0);
-        heightMap.heightImage = Image.CreateFromData((int)_texSize, (int)_texSize, false, Image.Format.Rgbaf, heightMap.bytes);
-
-        if (SaveDebugTexture)
+        var lambda = (byte[] data) =>
         {
-            string suffix = _debugTextureStep++.ToString("D3") + ".exr";
-            heightMap.heightImage.SaveExr("res://debug_output/height_map" + suffix);
-        }
+            _terrain.CallDeferred(Terrain.MethodName.SyncHeightmap, data);
+        };
 
-        heightMap.heightImage.GenerateMipmaps();
-        heightMap.height.SetImage(heightMap.heightImage);
+        _device.TextureGetDataAsync(_hmImages[_swapIdx], 0, Callable.From(lambda));
     }
 
     private void ComputeTemperature()
@@ -308,8 +287,8 @@ public partial class SnowCoverGenerator : Node
 
     private void DispatchCompute(SCComputePass pass)
     {
-        uint xGroups = _texSize / 16;
-		uint yGroups = _texSize / 16;
+        uint xGroups = _texSize / 8;
+		uint yGroups = _texSize / 8;
         uint zGroups = 1;
 
         _device.ComputeListBindComputePipeline(_computeList, _pipelines[pass]);
