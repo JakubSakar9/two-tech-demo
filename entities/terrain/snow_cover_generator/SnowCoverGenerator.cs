@@ -110,7 +110,6 @@ public partial class SnowCoverGenerator : Node
     private Dictionary<SCComputePass, Rid> _pipelines;
     private Dictionary<SCComputePass, Rid> _uniformSets;
     private Rid[] _hmImages;
-    private Rid _windSurfTex;
 
     private TemperatureParameters _tParams;
     private PrecipitationParameters _pParams;
@@ -136,13 +135,15 @@ public partial class SnowCoverGenerator : Node
         GenerateCycleSequence();
     }
 
-    public void Generate(ref HeightMap heightMap)
+    public void UseHeightmap(ref HeightMap heightMap)
+    {
+        _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
+    }
+
+    public void Generate(long computeList)
     {
         _swapIdx = 0;
-        _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
-        _windGen.LoadWindSurface(_device, _windSurfTex); // TODO: Do this only when needed
-        _computeList = _device.ComputeListBegin();
-
+        _computeList = computeList;
         for (_cycleIdx = 0; _cycleIdx < EventCycleCount; _cycleIdx++)
         {
             ComputeTemperature();
@@ -153,7 +154,6 @@ public partial class SnowCoverGenerator : Node
             }
             ComputeMelting();
         }
-        _device.ComputeListEnd();
         UpdateHeightMap();
     }
 
@@ -228,7 +228,6 @@ public partial class SnowCoverGenerator : Node
         {
             _hmImages[i] = _device.TextureCreate(format, view);
         }
-        _windSurfTex = _device.TextureCreate(format, view);
     }
 
     private void GenerateCycleSequence()
@@ -242,7 +241,7 @@ public partial class SnowCoverGenerator : Node
         }
     }
 
-    private void UpdateHeightMap()
+    public void UpdateHeightMap()
     {
         var lambda = (byte[] data) =>
         {
@@ -376,7 +375,7 @@ public partial class SnowCoverGenerator : Node
         };
         heightMapInUniform.AddId(_hmImages[_swapIdx]);
         heightMapOutUniform.AddId(_hmImages[1 - _swapIdx]);
-        windSurfaceUniform.AddId(_windSurfTex);
+        windSurfaceUniform.AddId(_windGen.GetSurfaceTextureRid());
 
         Godot.Collections.Array<RDUniform> uniforms = [heightMapInUniform, heightMapOutUniform, windSurfaceUniform];
         if (_uniformSets[SCComputePass.Advect].IsValid && _device.UniformSetIsValid(_uniformSets[SCComputePass.Advect]))
