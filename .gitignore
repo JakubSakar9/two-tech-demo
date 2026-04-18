@@ -155,5 +155,12 @@ ipch/
 *.e2e
 .vscode/
 
+# Old C# Project Files
+*.csproj.old*
+
 # Project Specific Files
 debug_output/
+
+# Rider
+.idea/
+addons/rider-plugin/

@@ -137,7 +137,7 @@ public partial class SnowCoverGenerator : Node
 
     public void UseHeightmap(ref HeightMap heightMap)
     {
-        _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
+        _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.Bytes);
     }
 
     public void Generate(long computeList)

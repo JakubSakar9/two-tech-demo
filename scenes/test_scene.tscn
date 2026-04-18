@@ -64,7 +64,6 @@ Deformer = NodePath("../TerrainDeformer")
 Player = NodePath("../Player")
 
 [node name="WindGenerator" parent="." unique_id=37666401 instance=ExtResource("5_qjeyg")]
-SaveDebugSurfaceTexture = false
 
 [node name="LoadingCamera" parent="." unique_id=1737976801 instance=ExtResource("8_rnaij")]
 transform = Transform3D(1, 0, 0, 0, 0.79039025, 0.61260366, 0, -0.61260366, 0.79039025, 0, 27.633942, 35.649845)

@@ -5,28 +5,28 @@ using Godot;
 
 public partial class HeightMap : GodotObject
 {
-    public byte[] bytes;
-    public Image heightImage;
-    public ImageTexture height; // R = terrain height, G = snow height, B = powdered snow height
-    public ImageTexture3D windTexture;
-    public FastNoiseLite noiseFnHF;
-    public FastNoiseLite noiseFnLF;
+    public byte[] Bytes;
+    public Image HeightImage;
+    public ImageTexture Height; // R = terrain height, G = snow height, B = powdered snow height
+    public ImageTexture3D WindTexture;
+    public FastNoiseLite NoiseFnHf;
+    public FastNoiseLite NoiseFnLf;
     private readonly int _size;
     private float _maxHeight;
     private Terrain _terrain;
 
-    public HeightMap(FastNoiseLite pNoiseFnHF, FastNoiseLite pNoiseFnLF, int size, Terrain terrain)
+    public HeightMap(FastNoiseLite noiseFnHf, FastNoiseLite noiseFnLf, int size, Terrain terrain)
     {
-        bytes = new byte[4 * size * size * sizeof(float)];
-        noiseFnHF = pNoiseFnHF.DuplicateDeep() as FastNoiseLite;
-        noiseFnLF = pNoiseFnLF.DuplicateDeep() as FastNoiseLite;
-        heightImage = new();
-        height = new();
-        windTexture = new();
+        Bytes = new byte[4 * size * size * sizeof(float)];
+        NoiseFnHf = noiseFnHf.DuplicateDeep() as FastNoiseLite;
+        NoiseFnLf = noiseFnLf.DuplicateDeep() as FastNoiseLite;
+        HeightImage = new();
+        Height = new();
+        WindTexture = new();
         _size = size;
         _terrain = terrain;
-        noiseFnHF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
-        noiseFnLF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
+        NoiseFnHf.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
+        NoiseFnLf.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
     }
 
     public void Generate(float maxHeight)
@@ -37,15 +37,15 @@ public partial class HeightMap : GodotObject
 
     private unsafe void GenerateHeightmapData(object stateInfo)
     {
-        fixed(byte* bytePointer = bytes)
+        fixed(byte* bytePointer = Bytes)
         {
             float* floatPointer = (float*)bytePointer;
             for (int i = 0; i < _size; i++)
             {
                 for (int j = 0; j < _size; j++)
                 {
-                    float noiseValueHF = (noiseFnHF.GetNoise2D(j, i) + 1.0f) / 2.0f;
-                    float noiseValueLF = (noiseFnLF.GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    float noiseValueHF = (NoiseFnHf.GetNoise2D(j, i) + 1.0f) / 2.0f;
+                    float noiseValueLF = (NoiseFnLf.GetNoise2D(j, i) + 1.0f) / 2.0f;
                     float combined = noiseValueHF * noiseValueLF;
                     float height = _maxHeight * combined;
                     floatPointer[4 * (i * _size + j)] = height;
@@ -57,17 +57,21 @@ public partial class HeightMap : GodotObject
 
     private void PopulateHeightImage()
     {
-        heightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgbaf, bytes);
-        heightImage.GenerateMipmaps();
-        height.SetImage(heightImage);
+        Stopwatch stw = new();
+        stw.Start();
+        HeightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgbaf, Bytes);
+        HeightImage.GenerateMipmaps();
+        Height.SetImage(HeightImage);
         _terrain.EmitSignal(Terrain.SignalName.FinishedGenerating);
         RenderingServer.CallOnRenderThread(Callable.From(_terrain.UpdateHeightMap));
+        stw.Stop();
+        GD.Print("Populate height image: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
 
     public void MoveOrigin(Vector2 origin, float maxHeight)
     {
-        noiseFnHF.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
-        noiseFnLF.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
+        NoiseFnHf.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
+        NoiseFnLf.Offset = new Vector3(origin.X - _size/2, origin.Y - _size/2, 0.0f);
         Generate(maxHeight);
     }
 }
@@ -132,14 +136,14 @@ public partial class Terrain : StaticBody3D
         {
             _heightmaps[i] = new(NoiseFunctionHF, NoiseFunctionLF, heightmapSize, this)
             {
-                windTexture = new ImageTexture3D(),
+                WindTexture = new ImageTexture3D(),
             };
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
             {
                 initImages.Add(Image.CreateEmpty(heightmapSize, WindGen.LayerCount, false, Image.Format.Rgba8));
             }
-            _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindGen.LayerCount, heightmapSize,
+            _heightmaps[i].WindTexture.Create(Image.Format.Rgba8, heightmapSize, WindGen.LayerCount, heightmapSize,
                 false, initImages);
         }
         _windField.Size = new Vector3(heightmapSize, MaxAltitude * 1.25f, heightmapSize);
@@ -186,11 +190,16 @@ public partial class Terrain : StaticBody3D
 
     public ImageTexture GetHeightMap()
     {
-        return _heightmaps[_heightmapIndex].height;
+        return _heightmaps[_heightmapIndex].Height;
     }
 
     public Vector3 GetWindAtPoint(Vector3 point)
     {
+        if (_windImages == null)
+        {
+            return Vector3.Zero;
+        }
+
         Aabb windAabb = _windField.GetAabb();
         Vector3 b = windAabb.Position + _windField.GlobalPosition;
         Vector3 e = windAabb.End + _windField.GlobalPosition;
@@ -254,10 +263,10 @@ public partial class Terrain : StaticBody3D
         float fx = tx - (int)tx;
         float fy = ty - (int)ty;
 
-        float c00 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x0, y0);
-        float c01 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x0, y1);
-        float c10 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x1, y0);
-        float c11 = GetImgSH(_heightmaps[_heightmapIndex].heightImage, x1, y1);
+        float c00 = GetImgSH(_heightmaps[_heightmapIndex].HeightImage, x0, y0);
+        float c01 = GetImgSH(_heightmaps[_heightmapIndex].HeightImage, x0, y1);
+        float c10 = GetImgSH(_heightmaps[_heightmapIndex].HeightImage, x1, y0);
+        float c11 = GetImgSH(_heightmaps[_heightmapIndex].HeightImage, x1, y1);
 
         float c0 = Mathf.Lerp(c00, c10, fx);
         float c1 = Mathf.Lerp(c01, c11, fx);
@@ -277,7 +286,7 @@ public partial class Terrain : StaticBody3D
         LoadCam.HideText();
         Vector2 p2d = new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z);
         p2d += 1.5f * ChunkSizeUnits * Vector2.One;
-        float y = _heightmaps[_heightmapIndex].heightImage.GetPixelv((Vector2I)p2d).R;
+        float y = _heightmaps[_heightmapIndex].HeightImage.GetPixelv((Vector2I)p2d).R;
         Player.GlobalPosition = new Vector3(Player.GlobalPosition.X, y, Player.GlobalPosition.Z);
         Player.Show();
         Player.MakeFirstPerson();
@@ -310,13 +319,18 @@ public partial class Terrain : StaticBody3D
             updateChunk = true;
         }
 
+        Stopwatch stw = new();
         if (updateChunk)
         {
-            GD.Print("Moved chunk origin to " + ChunkOrigin);
-            // CallDeferred(MethodName.UpdateHeightMap);
+            stw.Start();
             PreprocessHeightMap();
         }
         UpdateCollisionHeightMap();
+        if(updateChunk)
+        {
+            stw.Stop();
+            GD.Print("Chunk update setup: " + stw.Elapsed.TotalMilliseconds + "ms");
+        }
     }
 
     private void UpdateCollisionHeightMap()
@@ -349,37 +363,49 @@ public partial class Terrain : StaticBody3D
     
     public void UpdateHeightMap()
     {
+        Stopwatch stw = new();
+        stw.Start();
         _scGen.UseHeightmap(ref _heightmaps[_heightmapIndex]);
         long computeList = RenderingServer.GetRenderingDevice().ComputeListBegin();
         WindGen.Generate(computeList);
-        _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
-        _windField.Texture = _heightmaps[_heightmapIndex].windTexture;
         _scGen.Generate(computeList);
         RenderingServer.GetRenderingDevice().ComputeListEnd();
+        stw.Stop();
+        GD.Print("Heightmap update: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
     
     private async void SyncHeightmap(byte[] data)
     {
-        _heightmaps[_heightmapIndex].bytes = data;
-        _heightmaps[_heightmapIndex].heightImage = Image.CreateFromData(3 * ChunkSizeUnits, 3 * ChunkSizeUnits, false, Image.Format.Rgbaf, _heightmaps[_heightmapIndex].bytes);
+        Stopwatch stw = new();
+        stw.Start();
+        _heightmaps[_heightmapIndex].Bytes = data;
+        _heightmaps[_heightmapIndex].HeightImage = Image.CreateFromData(3 * ChunkSizeUnits, 3 * ChunkSizeUnits, false, Image.Format.Rgbaf, _heightmaps[_heightmapIndex].Bytes);
 
         if (_scGen.SaveDebugTexture)
         {
             string suffix = _scGen.DebugTextureStep++.ToString("D3") + ".exr";
-            _heightmaps[_heightmapIndex].heightImage.SaveExr("res://debug_output/height_map" + suffix);
+            _heightmaps[_heightmapIndex].HeightImage.SaveExr("res://debug_output/height_map" + suffix);
         }
 
-        _heightmaps[_heightmapIndex].heightImage.GenerateMipmaps();
-        _heightmaps[_heightmapIndex].height.SetImage(_heightmaps[_heightmapIndex].heightImage);
+        _heightmaps[_heightmapIndex].HeightImage.GenerateMipmaps();
+        _heightmaps[_heightmapIndex].Height.SetImage(_heightmaps[_heightmapIndex].HeightImage);
 
-        SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
+        SetShaderParam("height_map", _heightmaps[_heightmapIndex].Height);
         SetShaderParam("chunk_origin", ChunkOrigin);
+        stw.Stop();
+        GD.Print("Heightmap sync: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
 
     private async void SyncWindField(Godot.Collections.Array<Image> images)
     {
+        Stopwatch stw = new();
+        stw.Start();
         _windImages = images;
-        _heightmaps[_heightmapIndex].windTexture.Update(images);
+        _heightmaps[_heightmapIndex].WindTexture.Update(images);
+        _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
+        _windField.Texture = _heightmaps[_heightmapIndex].WindTexture;
+        stw.Stop();
+        GD.Print("Wind field sync: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
 
     private async void AssignTexture()

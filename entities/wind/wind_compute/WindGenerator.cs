@@ -62,7 +62,7 @@ public partial class WindGenerator : Node
 
 	public void UpdateHeightmap(ref HeightMap heightMap)
 	{
-		_device.TextureUpdate(_heightTexture, 0, heightMap.bytes);
+		_device.TextureUpdate(_heightTexture, 0, heightMap.Bytes);
 	}
 
 	public void Generate(long computeList)
