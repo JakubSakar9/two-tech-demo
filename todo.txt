@@ -1,22 +1,22 @@
 - Allow the fly camera close access to the terrain surface
 - Fix snow cover inconsistencies, or reduce them as much as possible
-- Improve snow cover visual results
 - Sample only a 2D texture to get wind velocity on CPU
+- Fix discontinuities and artifacts at displacement chunk borders
 - Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
 
 - 2nd playtesting
 
-- Limit a number of chunks with footprints and discard the latest ones (speedup)
+- Improve snow cover visual results
 - [Visual Improvements]
-- Create a loading screen
 - [2nd playtesing feedback fixes]
-- [Vegetation/obstacles]
-- [UI/Gamey stuff]
+- Create a menu with simple settings and controls
+- Add trees and rocks
+- Make more versions of trees (varying snow coverages) and rocks with varying snow coverage based on surrounding snow height
+- [Game elements]
 
 - 3rd playtesing
 
+- Visualize how snow cover is getting generated cycle by cycle
 - Configurable precipitation intensity
 - [3rd playtesing feedback fixes]
 - [Make everything giant (terrain LODs)]
-- [Experiment with hardware tesselation to improve performance]
-- [Add procedural animation]
