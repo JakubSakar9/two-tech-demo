@@ -341,7 +341,7 @@ public partial class Terrain : StaticBody3D
         GD.Print("Snow cover generated in " + stw.ElapsedMilliseconds + "ms");
     }
     
-    private async void SyncHeightmap(byte[] data)
+    private void SyncHeightmap(byte[] data)
     {
         _heightmaps[_heightmapIndex].bytes = data;
         _heightmaps[_heightmapIndex].heightImage = Image.CreateFromData(3 * ChunkSizeUnits, 3 * ChunkSizeUnits, false, Image.Format.Rgbaf, _heightmaps[_heightmapIndex].bytes);

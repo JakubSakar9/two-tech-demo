@@ -1,11 +1,10 @@
-- 1st playtesting
-
+- Remove Rid free errors and memory leaks
+- Fix footstep audio missing from the export
+- Allow the fly camera close access to the terrain surface
 - Fix snow cover inconsistencies, or reduce them as much as possible
 - Improve snow cover visual results
-- Configurable precipitation intensity
 - Sample only a 2D texture to get wind velocity on CPU
 - Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
-- [1st playtesting feedback fixes]
 
 - 2nd playtesting
 
@@ -18,6 +17,7 @@
 
 - 3rd playtesing
 
+- Configurable precipitation intensity
 - [3rd playtesing feedback fixes]
 - [Make everything giant (terrain LODs)]
 - [Experiment with hardware tesselation to improve performance]
