@@ -58,8 +58,6 @@ public partial class TexturePainter : Node
     private Rid _pipeline;
     private Rid _pipelineDecay;
     private Rid _pipelineBatch;
-    private Rid _displacementTex;
-    private Rid _displacementTexBatch;
     private Rid _footprintBuffer;
     private Rid _decayBuffer;
     private Rid _footprintTex;
@@ -126,12 +124,21 @@ public partial class TexturePainter : Node
     public override void _ExitTree()
     {
         base._ExitTree();
-        _device.FreeRid(_shader);
-        _device.FreeRid(_pipeline);
-        _device.FreeRid(_displacementTex);
+        _device.FreeRid(_footprintBuffer);
+        _device.FreeRid(_decayBuffer);
+
         _device.FreeRid(_footprintTex);
         _device.FreeRid(_footprintSampler);
-        _device.FreeRid(_uniformSet);
+
+        _device.FreeRid(_pipeline);
+        _device.FreeRid(_pipelineDecay);
+        _device.FreeRid(_pipelineBatch);
+        
+        _device.FreeRid(_shader);
+        _device.FreeRid(_shaderDecay);
+        _device.FreeRid(_shaderBatch);
+
+        Pool.Cleanup(in _device);
     }
 
     public void SetAngle(float angleRadians)
@@ -236,6 +243,7 @@ public partial class TexturePainter : Node
 				UniformType = RenderingDevice.UniformType.Image,
 				Binding = 0
 			};
+            if (!_device.TextureIsValid(chunk.TexRid)) return;
 			displacementTexUniform.AddId(chunk.TexRid);
 			
 			_uniforms.Add(displacementTexUniform);
@@ -264,7 +272,9 @@ public partial class TexturePainter : Node
                 UniformType = RenderingDevice.UniformType.Image,
                 Binding = 0
             };
-            displacementTexUniform.AddId(Pool.GetTextureRidAtIdx((uint)i));
+            Rid dtRid = Pool.GetTextureRidAtIdx((uint)i);
+            if (!_device.TextureIsValid(dtRid)) return;
+            displacementTexUniform.AddId(dtRid);
             _uniformsDecay = [displacementTexUniform];
             _uniformSetDecay = _device.UniformSetCreate(_uniformsDecay, _shaderDecay, 0);
 
@@ -321,6 +331,7 @@ public partial class TexturePainter : Node
             UniformType = RenderingDevice.UniformType.Image,
             Binding = 0
         };
+        if (!_device.TextureIsValid(Pool.GetReconstructedTexture())) return;
         displacementTexUniform.AddId(Pool.GetReconstructedTexture());
 
         var footprintTexUniform = new RDUniform

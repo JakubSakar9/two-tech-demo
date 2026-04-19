@@ -125,6 +125,23 @@ public partial class SnowCoverGenerator : Node
     private uint _swapIdx = 0;
     private uint _cycleIdx = 0;
 
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+        
+        foreach (var hmRid in _hmImages)
+        {
+            _device.FreeRid(hmRid);
+        }
+        _device.FreeRid(_windSurfTex);
+
+        foreach (var pass in Enum.GetValues(typeof(SCComputePass)))
+        {
+            _device.FreeRid(_pipelines[(SCComputePass)pass]);
+            _device.FreeRid(_shaders[(SCComputePass)pass]);
+        }
+    }
+
     public void Init(uint texSize, WindGenerator windGen)
     {
         _texSize = texSize;

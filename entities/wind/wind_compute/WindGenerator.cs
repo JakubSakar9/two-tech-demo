@@ -36,7 +36,6 @@ public partial class WindGenerator : Node
     private Rid _pipelineSurface;
 	private Rid _pipeline3D;
     private Rid _surfaceBuffer;
-    // private Rid _windBuffer;
 	private Rid _windTexture;
 	private Rid _heightTexture;
 	private Rid _uniformSetSurface;
@@ -47,6 +46,25 @@ public partial class WindGenerator : Node
 	private Terrain _terrain;
 	private int _texSize;
 
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+
+		_device.FreeRid(_uniformSet3D);
+		_device.FreeRid(_uniformSetSurface);
+
+		_device.FreeRid(_surfaceBuffer);
+		_device.FreeRid(_windTexture);
+		_device.FreeRid(_heightTexture);
+
+		_device.FreeRid(_pipelineSurface);
+		_device.FreeRid(_pipeline3D);
+
+		_device.FreeRid(_shaderSurface);
+		_device.FreeRid(_shader3D);
+
+		_device.Free();
+    }
 
 	public void Init(int texSize)
 	{
