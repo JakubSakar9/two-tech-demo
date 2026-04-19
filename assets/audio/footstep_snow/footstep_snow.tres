@@ -1,0 +1,17 @@
+[gd_resource type="AudioStreamRandomizer" format=3 uid="uid://4onpgynnfxcn"]
+
+[ext_resource type="AudioStream" uid="uid://bj5166a7iu8tk" path="res://assets/audio/footstep_snow/footstep_snow_1.ogg" id="1_u3cd6"]
+[ext_resource type="AudioStream" uid="uid://dni3fksjlgncn" path="res://assets/audio/footstep_snow/footstep_snow_2.ogg" id="2_85thd"]
+[ext_resource type="AudioStream" uid="uid://cd0jrrdw7f6s6" path="res://assets/audio/footstep_snow/footstep_snow_3.ogg" id="3_i37as"]
+[ext_resource type="AudioStream" uid="uid://epjgwiip4o02" path="res://assets/audio/footstep_snow/footstep_snow_4.ogg" id="4_7qe6r"]
+[ext_resource type="AudioStream" uid="uid://cpm6jdu1peb5b" path="res://assets/audio/footstep_snow/footstep_snow_5.ogg" id="5_30fiw"]
+[ext_resource type="AudioStream" uid="uid://b3ke5pl3anc20" path="res://assets/audio/footstep_snow/footstep_snow_6.ogg" id="6_kum4g"]
+
+[resource]
+streams_count = 6
+stream_0/stream = ExtResource("1_u3cd6")
+stream_1/stream = ExtResource("2_85thd")
+stream_2/stream = ExtResource("3_i37as")
+stream_3/stream = ExtResource("4_7qe6r")
+stream_4/stream = ExtResource("5_30fiw")
+stream_5/stream = ExtResource("6_kum4g")

@@ -11,15 +11,15 @@ public partial class Player : CharacterBody3D
     }
 
     const float MAX_PITCH = 2.0f * Mathf.Pi / 5.0f;
-    const string AUDIO_DIR_FOOTSTEP_SNOW = "res://assets/audio/footstep_snow/";
-    const string AUDIO_DIR_FOOTSTEP_GRASS = "res://assets/audio/footstep_grass/";
-    const string AUDIO_DIR_FOOTSTEP_ROCK = "res://assets/audio/footstep_rock/";
 
     [Export] public Vector2 MouseSensitivity = new(0.01f, 0.005f);
     [Export] public float WalkSpeed = 40.0f;
     [Export] public float WalkAcceleration = 35.0f;
     [Export] public float WalkDecceleration = 50.0f;
     [Export] public float SpectatorSpeedMultiplier = 10.0f;
+    [Export] public AudioStream SnowFtStream;
+    [Export] public AudioStream GrassFtStream;
+    [Export] public AudioStream RockFtStream;
 
     public float LeftFootHitDistance = 0.0f;
     public float RightFootHitDistance = 0.0f;
@@ -32,9 +32,6 @@ public partial class Player : CharacterBody3D
     private BoneAttachment3D _rightFootAttachment;
     private AudioStreamPlayer3D _leftFootAudio;
     private AudioStreamPlayer3D _rightFootAudio;
-    private AudioStreamRandomizer _snowFtStream;
-    private AudioStreamRandomizer _grassFtStream;
-    private AudioStreamRandomizer _rockFtStream;
     private RayCast3D _heightRaycast;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
@@ -45,7 +42,6 @@ public partial class Player : CharacterBody3D
     {
         base._Ready();
         InitNodes();
-        InitPlayerAudio();
 
         Input.MouseMode = Input.MouseModeEnum.Captured;
         _initialAttachmentHeight = _leftFootAttachment.Position.Y;
@@ -151,15 +147,15 @@ public partial class Player : CharacterBody3D
         {
             if (!playGrass)
             {
-                _leftFootAudio.Stream = _snowFtStream;
+                _leftFootAudio.Stream = SnowFtStream;
             } 
             else if (GlobalPosition.Y < tr.RockGroundHeight)
             {
-                _leftFootAudio.Stream = _grassFtStream;
+                _leftFootAudio.Stream = GrassFtStream;
             }
             else
             {
-                _leftFootAudio.Stream = _rockFtStream;
+                _leftFootAudio.Stream = RockFtStream;
             }
             _leftFootAudio.Play();
         }
@@ -167,15 +163,15 @@ public partial class Player : CharacterBody3D
         {
             if (!playGrass)
             {
-                _rightFootAudio.Stream = _snowFtStream;
+                _rightFootAudio.Stream = SnowFtStream;
             } 
             else if (GlobalPosition.Y < tr.RockGroundHeight)
             {
-                _rightFootAudio.Stream = _grassFtStream;
+                _rightFootAudio.Stream = GrassFtStream;
             }
             else
             {
-                _rightFootAudio.Stream = _rockFtStream;
+                _rightFootAudio.Stream = RockFtStream;
             }
             _rightFootAudio.Play();
         }
@@ -217,68 +213,5 @@ public partial class Player : CharacterBody3D
             return Vector3.Zero;
         }
         return _gravityVelocity.MoveToward(new Vector3(0, Velocity.Y - _gravity, 0), _gravity * (float) delta);
-    }
-
-    private void InitPlayerAudio()
-    {
-        InitFootstepAudio();
-    }
-
-    private void InitFootstepAudio()
-    {
-        _snowFtStream = new AudioStreamRandomizer();
-        _grassFtStream = new AudioStreamRandomizer();
-        _rockFtStream = new AudioStreamRandomizer();
-
-        using var snowFootstepDir = DirAccess.Open(AUDIO_DIR_FOOTSTEP_SNOW);
-        if (snowFootstepDir == null)
-        {
-            GD.PrintErr("Failed to locate audio folder at " + AUDIO_DIR_FOOTSTEP_SNOW);
-            return;
-        }
-        snowFootstepDir.ListDirBegin();
-        string fileName = snowFootstepDir.GetNext();
-        while (fileName != "")
-        {
-            if (fileName.EndsWith(".ogg"))
-            {
-                _snowFtStream.AddStream(-1, ResourceLoader.Load<AudioStreamOggVorbis>(AUDIO_DIR_FOOTSTEP_SNOW + fileName));
-            }
-            fileName = snowFootstepDir.GetNext();
-        }
-
-        using var grassFootstepDir = DirAccess.Open(AUDIO_DIR_FOOTSTEP_GRASS);
-        if (grassFootstepDir == null)
-        {
-            GD.PrintErr("Failed to locate audio folder at " + AUDIO_DIR_FOOTSTEP_GRASS);
-            return;
-        }
-        grassFootstepDir.ListDirBegin();
-        fileName = grassFootstepDir.GetNext();
-        while (fileName != "")
-        {
-            if (fileName.EndsWith(".ogg"))
-            {
-                _grassFtStream.AddStream(-1, ResourceLoader.Load<AudioStreamOggVorbis>(AUDIO_DIR_FOOTSTEP_GRASS + fileName));
-            }
-            fileName = grassFootstepDir.GetNext();
-        }
-
-        using var rockFootstepDir = DirAccess.Open(AUDIO_DIR_FOOTSTEP_ROCK);
-        if (rockFootstepDir == null)
-        {
-            GD.PrintErr("Failed to locate audio folder at " + AUDIO_DIR_FOOTSTEP_ROCK);
-            return;
-        }
-        rockFootstepDir.ListDirBegin();
-        fileName = rockFootstepDir.GetNext();
-        while (fileName != "")
-        {
-            if (fileName.EndsWith(".ogg"))
-            {
-                _rockFtStream.AddStream(-1, ResourceLoader.Load<AudioStreamOggVorbis>(AUDIO_DIR_FOOTSTEP_ROCK + fileName));
-            }
-            fileName = rockFootstepDir.GetNext();
-        }
     }
 }

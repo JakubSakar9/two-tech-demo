@@ -1,5 +1,3 @@
-- Remove Rid free errors and memory leaks
-- Fix footstep audio missing from the export
 - Allow the fly camera close access to the terrain surface
 - Fix snow cover inconsistencies, or reduce them as much as possible
 - Improve snow cover visual results

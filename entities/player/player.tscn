@@ -1,20 +1,17 @@
 [gd_scene format=3 uid="uid://d10bpbm16fk1e"]
 
 [ext_resource type="Script" uid="uid://c7xb0jrjk7xof" path="res://entities/player/Player.cs" id="1_merdl"]
+[ext_resource type="AudioStream" uid="uid://4onpgynnfxcn" path="res://assets/audio/footstep_snow/footstep_snow.tres" id="2_26q78"]
 [ext_resource type="PackedScene" uid="uid://b6at368peknpr" path="res://assets/models/player/player.glb" id="2_abrql"]
 [ext_resource type="PackedScene" uid="uid://c0wofd32gc28f" path="res://entities/wind/wind_audio/wind_audio.tscn" id="2_fkugw"]
 [ext_resource type="PackedScene" uid="uid://d0i7eg82dkyi3" path="res://entities/wind/snow_particles/snow_particles.tscn" id="3_sglur"]
+[ext_resource type="AudioStream" uid="uid://cnbcyqgaqgka0" path="res://assets/audio/footstep_rock/footstep_rock.tres" id="4_bectd"]
 [ext_resource type="Material" uid="uid://co53i58g7yqbm" path="res://assets/textures/snowflake_material.tres" id="5_8fjmc"]
+[ext_resource type="AudioStream" uid="uid://dwjn504l8p4y" path="res://assets/audio/footstep_grass/footstep_grass.tres" id="5_qiwj3"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_u3f3p"]
 radius = 0.4
 height = 1.8
-
-[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_fkugw"]
-streams_count = 1
-
-[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_8fjmc"]
-streams_count = 1
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_abrql"]
 animation = &"idle"
@@ -34,7 +31,7 @@ nodes/BlendSpace1D/node = SubResource("AnimationNodeBlendSpace1D_bls4j")
 nodes/BlendSpace1D/position = Vector2(-140, 120)
 node_connections = [&"output", 0, &"BlendSpace1D"]
 
-[sub_resource type="QuadMesh" id="QuadMesh_8fjmc"]
+[sub_resource type="QuadMesh" id="QuadMesh_fkugw"]
 resource_local_to_scene = true
 material = ExtResource("5_8fjmc")
 size = Vector2(0.1, 0.1)
@@ -42,6 +39,9 @@ size = Vector2(0.1, 0.1)
 [node name="Player" type="CharacterBody3D" unique_id=1431341784]
 script = ExtResource("1_merdl")
 WalkSpeed = 5.0
+SnowFtStream = ExtResource("2_26q78")
+GrassFtStream = ExtResource("5_qiwj3")
+RockFtStream = ExtResource("4_bectd")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=393030964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -57,22 +57,22 @@ cull_mask = 1048573
 [node name="PlayerSkin" parent="." unique_id=160291661 instance=ExtResource("2_abrql")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
-[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 1170584340) index="0" unique_id=1907178092]
-bones/0/position = Vector3(-1.06550956e-10, 0.8431664, 0.017193032)
+[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 104445345) index="0" unique_id=628352536]
+bones/0/position = Vector3(-1.3495577e-11, 0.84849167, 0.017193032)
 bones/0/rotation = Quaternion(-0.03667094, 1.1912911e-07, -4.371518e-09, 0.9993274)
-bones/2/rotation = Quaternion(-0.013769403, -0.11687163, 0.9810702, -0.15379494)
+bones/2/rotation = Quaternion(-0.0155493785, -0.11698339, 0.98476404, -0.12772194)
 bones/3/rotation = Quaternion(0.120499216, 0.0051755216, -0.09108298, 0.9885126)
-bones/4/rotation = Quaternion(-0.1445403, -0.023046862, 0.98789436, -0.051399115)
+bones/4/rotation = Quaternion(-0.14273925, -0.054366603, 0.9875259, -0.038241744)
 bones/4/scale = Vector3(0.9999639, 1, 0.99999154)
-bones/5/rotation = Quaternion(-0.119871415, 0.003210701, -0.07102175, 0.99024063)
-bones/6/rotation = Quaternion(0.59498596, 0.03439883, 0.26787597, 0.7570013)
+bones/5/rotation = Quaternion(-0.06466829, 0.0032331182, -0.038315058, 0.9971658)
+bones/6/rotation = Quaternion(0.57520944, 0.03209858, 0.2553538, 0.7764653)
 bones/6/scale = Vector3(0.9999807, 1.0000161, 0.9999879)
-bones/7/rotation = Quaternion(0.007686454, -0.10104771, 0.98006606, 0.1708827)
+bones/7/rotation = Quaternion(0.008563416, -0.10080647, 0.9822182, 0.15815236)
 bones/8/rotation = Quaternion(0.12049925, -0.005175505, 0.091082975, 0.9885126)
-bones/9/rotation = Quaternion(0.1465677, -0.023037102, 0.987613, 0.051067807)
+bones/9/rotation = Quaternion(0.14477256, -0.054383595, 0.98723924, 0.03797649)
 bones/9/scale = Vector3(0.9999629, 1.0000001, 0.9999911)
-bones/10/rotation = Quaternion(-0.11987088, -0.0032106612, 0.07102144, 0.9902407)
-bones/11/rotation = Quaternion(0.5945469, -0.032666717, -0.2689272, 0.7570503)
+bones/10/rotation = Quaternion(-0.06466728, -0.0032331338, 0.03831443, 0.99716586)
+bones/11/rotation = Quaternion(0.57474256, -0.030403301, -0.25644633, 0.7765191)
 bones/11/scale = Vector3(0.9999801, 1.0000168, 0.9999877)
 bones/12/position = Vector3(0.051505342, 0.51271045, 0.22282161)
 bones/12/rotation = Quaternion(-0.04340317, 0.7057735, 0.7057735, -0.04340317)
@@ -84,29 +84,27 @@ bones/15/rotation = Quaternion(0.009165643, 0.7070474, -0.7070474, -0.009165643)
 
 [node name="LeftFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="1" unique_id=307436259]
 unique_name_in_owner = true
-transform = Transform3D(-0.87675345, 0.10651775, -0.46888742, -0.47323048, -0.36394864, 0.80223006, -0.08518508, 0.92531484, 0.36951107, 0.16216746, 0.09389031, -0.09540211)
+transform = Transform3D(-0.8767541, 0.10651679, -0.46888632, -0.47323126, -0.3639474, 0.8022305, -0.08518544, 0.9253149, 0.36951113, 0.16216706, 0.0936673, -0.09540207)
 bone_name = "foot.l"
 bone_idx = 6
 
 [node name="LeftFootAudio" type="AudioStreamPlayer3D" parent="PlayerSkin/Armature/Skeleton3D/LeftFootAttachment" unique_id=1472622970]
 unique_name_in_owner = true
-stream = SubResource("AudioStreamRandomizer_fkugw")
+stream = ExtResource("5_qiwj3")
 unit_size = 4.0
 max_polyphony = 4
-bus = &"PlayerAudio"
 
 [node name="RightFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="2" unique_id=1956819650]
 unique_name_in_owner = true
-transform = Transform3D(-0.8767522, -0.10651764, 0.46888703, 0.47323012, -0.363949, 0.80222994, 0.085184634, 0.9253151, 0.36951095, -0.16216744, 0.09389025, -0.09540205)
+transform = Transform3D(-0.87675273, -0.10651672, 0.46888596, 0.473231, -0.36394736, 0.8022303, 0.08518493, 0.9253151, 0.3695108, -0.16216704, 0.09366739, -0.09540203)
 bone_name = "foot.r"
 bone_idx = 11
 
 [node name="RightFootAudio" type="AudioStreamPlayer3D" parent="PlayerSkin/Armature/Skeleton3D/RightFootAttachment" unique_id=624507762]
 unique_name_in_owner = true
-stream = SubResource("AudioStreamRandomizer_8fjmc")
+stream = ExtResource("5_qiwj3")
 unit_size = 4.0
 max_polyphony = 4
-bus = &"PlayerAudio"
 
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=1883167356]
 unique_name_in_owner = true
@@ -121,6 +119,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
 
 [node name="SnowParticles" parent="." unique_id=121143072 instance=ExtResource("3_sglur")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6819016, 0)
-DefaultParticlePass = SubResource("QuadMesh_8fjmc")
+DefaultParticlePass = SubResource("QuadMesh_fkugw")
 
 [editable path="PlayerSkin"]

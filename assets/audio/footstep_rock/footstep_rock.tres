@@ -1,0 +1,17 @@
+[gd_resource type="AudioStreamRandomizer" format=3 uid="uid://cnbcyqgaqgka0"]
+
+[ext_resource type="AudioStream" uid="uid://c5krxq42eng07" path="res://assets/audio/footstep_rock/footstep_rock-01.ogg" id="1_nbt8f"]
+[ext_resource type="AudioStream" uid="uid://ck2n21nu2ywt1" path="res://assets/audio/footstep_rock/footstep_rock-02.ogg" id="2_toaud"]
+[ext_resource type="AudioStream" uid="uid://bquws65rsv4nv" path="res://assets/audio/footstep_rock/footstep_rock-03.ogg" id="3_t1k5h"]
+[ext_resource type="AudioStream" uid="uid://dhso3h4diwaf" path="res://assets/audio/footstep_rock/footstep_rock-04.ogg" id="4_ge2sa"]
+[ext_resource type="AudioStream" uid="uid://kebu32tfdyxl" path="res://assets/audio/footstep_rock/footstep_rock-06.ogg" id="5_a647a"]
+[ext_resource type="AudioStream" uid="uid://0hu4xrejncej" path="res://assets/audio/footstep_rock/footstep_rock-05.ogg" id="6_p8b70"]
+
+[resource]
+streams_count = 6
+stream_0/stream = ExtResource("1_nbt8f")
+stream_1/stream = ExtResource("2_toaud")
+stream_2/stream = ExtResource("3_t1k5h")
+stream_3/stream = ExtResource("4_ge2sa")
+stream_4/stream = ExtResource("5_a647a")
+stream_5/stream = ExtResource("6_p8b70")
