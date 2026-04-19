@@ -14,6 +14,8 @@ public partial class ChunkPool : Node
 {
     [Signal]
     public delegate void ChunkInQueueEventHandler();
+    
+    [Export] public bool HighPrecisionTextures = true;
 
     public float DisplacementMapRange;
     public int RowChunks;
@@ -119,6 +121,11 @@ public partial class ChunkPool : Node
         return ref _pool[idx].Displacement;
     }
 
+    public ref readonly Rid GetTextureRidAtIdx(uint idx)
+    {
+        return ref _pool[idx].TexRid;
+    }
+
     public Rid GetReconstructedTexture()
     {
         int idx = _reconstructionQueue.Peek();
@@ -149,7 +156,7 @@ public partial class ChunkPool : Node
         {
             Width = textureSize,
             Height = textureSize,
-            Format = RenderingDevice.DataFormat.R8Unorm,
+            Format = HighPrecisionTextures ? RenderingDevice.DataFormat.R32Sfloat : RenderingDevice.DataFormat.R16Sfloat,
             UsageBits = RenderingDevice.TextureUsageBits.CanUpdateBit
                 | RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CpuReadBit
@@ -159,10 +166,11 @@ public partial class ChunkPool : Node
         _view = new();
     }
 
-    private void CreateTexture(int textureSize, ref DTChunk targetChunk)
+    private void CreateTexture(int texSize, ref DTChunk targetChunk)
     {
-        // var im = Image.CreateEmpty(textureSize, textureSize, false, Image.Format.Rf);
-        byte[] clearData = new byte[textureSize * textureSize];
+        int dataSize = 2 * texSize * texSize;
+        if (HighPrecisionTextures) dataSize *= 2;
+        byte[] clearData = new byte[dataSize];
         targetChunk.TexRid = _device.TextureCreate(_format, _view, [clearData]);
         targetChunk.Displacement = new()
         {
@@ -190,8 +198,10 @@ public partial class ChunkPool : Node
             if (xDiff < -1) xDiff = 1;
             if (xDiff > 1) xDiff = -1;
             int clearX = (RowChunks + curX + RowChunks / 2 * xDiff) % RowChunks;
-            uint texSize = (uint)_pool[0].Displacement.GetSize().X;
-            byte[] clearData = new byte[texSize * texSize];
+            int texSize = (int)_pool[0].Displacement.GetSize().X;
+            int dataSize = 2 * texSize * texSize;
+            if (HighPrecisionTextures) dataSize *= 2;
+            byte[] clearData = new byte[dataSize];
             for (int i = 0; i < RowChunks; i++)
             {
                 int clearIdx = i * RowChunks + clearX;
@@ -207,8 +217,10 @@ public partial class ChunkPool : Node
             if (yDiff < -1) yDiff = 1;
             if (yDiff > 1) yDiff = -1;
             int clearY = (RowChunks + curY + RowChunks / 2 * yDiff) % RowChunks;
-            uint texSize = (uint)_pool[0].Displacement.GetSize().X;
-            byte[] clearData = new byte[texSize * texSize];
+            int texSize = (int)_pool[0].Displacement.GetSize().X;
+            int dataSize = 2 * texSize * texSize;
+            if (HighPrecisionTextures) dataSize *= 2;
+            byte[] clearData = new byte[dataSize];
             for (int i = 0; i < RowChunks; i++)
             {
                 int clearIdx = clearY * RowChunks + i;

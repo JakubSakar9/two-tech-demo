@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bj4pp6hkuksff"
+path="res://.godot/imported/disp_decay_compute.glsl-58d26bd38069f418d0a4a68ca692d904.res"
+
+[deps]
+
+source_file="res://shaders/disp_decay_compute.glsl"
+dest_files=["res://.godot/imported/disp_decay_compute.glsl-58d26bd38069f418d0a4a68ca692d904.res"]
+
+[params]
+

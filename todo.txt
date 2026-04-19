@@ -1,5 +1,5 @@
-- Reduce lag between chunk transitions
-- Decrease footprint depth when changing a chunk if it is snowing
+- Keep track of footprint ages and compute f32 multipliers for each according interval
+- Make reconstruction shader apply decay
 
 - 1st playtesting
 
@@ -11,7 +11,6 @@
 
 - 2nd playtesting
 
-- Limit a number of chunks with footprints and discard the latest ones (speedup)
 - [Visual Improvements]
 - Create a loading screen
 - [2nd playtesing feedback fixes]
