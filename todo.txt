@@ -1,12 +1,10 @@
-- Reduce lag between chunk transitions
-- Decrease footprint depth when changing a chunk if it is snowing
-
 - 1st playtesting
 
 - Fix snow cover inconsistencies, or reduce them as much as possible
 - Improve snow cover visual results
 - Configurable precipitation intensity
 - Sample only a 2D texture to get wind velocity on CPU
+- Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
 - [1st playtesting feedback fixes]
 
 - 2nd playtesting

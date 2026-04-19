@@ -60,7 +60,8 @@ public partial class TexturePainter : Node
     private Rid _pipelineBatch;
     private Rid _displacementTex;
     private Rid _displacementTexBatch;
-    private Rid _fpBuffer;
+    private Rid _footprintBuffer;
+    private Rid _decayBuffer;
     private Rid _footprintTex;
     private Rid _footprintSampler;
     private Rid _uniformSet;
@@ -113,6 +114,7 @@ public partial class TexturePainter : Node
         if (_decayClock < 0.0f)
         {
             _decayClock++;
+            FpStorage.Tick();
             RenderingServer.CallOnRenderThread(Callable.From(DecayTextures));
         }
         if (_reconstructionInProgress)
@@ -152,7 +154,7 @@ public partial class TexturePainter : Node
 	{
 		InitPipelines();
 		InitFootprintTexture();
-        InitFootprintBuffer();
+        InitBuffers();
 	}
 
 	private void InitPipelines()
@@ -198,9 +200,10 @@ public partial class TexturePainter : Node
         _footprintSampler = _device.SamplerCreate(samplerState);
 	}
 
-    private void InitFootprintBuffer()
+    private void InitBuffers()
     {
-        _fpBuffer = _device.StorageBufferCreate((uint)(FpStorage.RenderBatchSize * 4 * sizeof(float)));
+        _footprintBuffer = _device.StorageBufferCreate((uint)(FpStorage.RenderBatchSize * 4 * sizeof(float)));
+        _decayBuffer = _device.StorageBufferCreate((uint)(FpStorage.RenderBatchSize * sizeof(float)));
     }
 
     private void StartReconstruction()
@@ -289,7 +292,8 @@ public partial class TexturePainter : Node
                 _reconstructionPhase++;
                 return;
             }
-            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, reconstructedChunk);
+            bool res = FpStorage.PopulateBufferChunkLeft(in _device, ref _footprintBuffer, ref _decayBuffer,
+                ref BatchParams.FootprintCount, reconstructedChunk, DecayPerSecond);
             _reconstructionDrawn = true;
             if (res)
             {
@@ -303,7 +307,8 @@ public partial class TexturePainter : Node
                 _reconstructionPhase++;
                 return;
             }
-            bool res = FpStorage.PopulateBufferChunkRight(in _device, ref _fpBuffer, ref BatchParams.FootprintCount, reconstructedChunk);
+            bool res = FpStorage.PopulateBufferChunkRight(in _device, ref _footprintBuffer, ref _decayBuffer,
+                ref BatchParams.FootprintCount, reconstructedChunk, DecayPerSecond);
             _reconstructionDrawn = true;
             if (res)
             {
@@ -331,9 +336,16 @@ public partial class TexturePainter : Node
 			UniformType = RenderingDevice.UniformType.StorageBuffer,
 			Binding = 2
 		};
-		fpBufferUniform.AddId(_fpBuffer);
+		fpBufferUniform.AddId(_footprintBuffer);
+        
+        var dcBufferUniform = new RDUniform
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 3
+		};
+		dcBufferUniform.AddId(_decayBuffer);
 
-        _uniformsBatch = [displacementTexUniform, footprintTexUniform, fpBufferUniform];
+        _uniformsBatch = [displacementTexUniform, footprintTexUniform, fpBufferUniform, dcBufferUniform];
         _uniformSetBatch = _device.UniformSetCreate(_uniformsBatch, _shaderBatch, 0);
 
         DispatchBatchCompute();

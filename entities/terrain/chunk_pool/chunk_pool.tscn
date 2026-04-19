@@ -4,3 +4,4 @@
 
 [node name="ChunkPool" type="Node" unique_id=1759920285]
 script = ExtResource("1_e4qfi")
+HighPrecisionTextures = false

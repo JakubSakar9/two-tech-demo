@@ -86,7 +86,6 @@ public partial class ChunkPool : Node
         _chunkIdx = (uint)(yCoord * RowChunks + xCoord);
         if (_chunkIdx != prevIdx)
         {
-            GD.Print("Changing from chunk " + prevChunk + " to chunk " + _chunk);
             HandleChunkTransition((int)prevIdx);
 
             _fpStorage.ExitLeft(prevChunk);

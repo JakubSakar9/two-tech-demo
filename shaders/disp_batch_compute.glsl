@@ -8,6 +8,9 @@ layout(set = 0, binding = 1) uniform sampler2D fp_tex;
 layout(std140, binding = 2) buffer FootprintData {
     vec4 fp_data[ ];
 };
+layout(std140, binding = 3) buffer DecayData {
+    float dc_data[ ];
+};
 
 layout(push_constant, std430) uniform Params {
     ivec2 chunk;
@@ -30,7 +33,7 @@ void main() {
         mat2 rotmat = mat2(cos(a), -sin(a), sin(a), cos(a));
         vec2 center = fp_data[i].rg - vec2(params.chunk);
         vec2 uv2 = rotmat * (params.downscale_factor * (uv1 - center)) + 0.5;
-        intensity = max(intensity, texture(fp_tex, uv2).r * fp_data[i].b);
+        intensity = max(intensity, texture(fp_tex, uv2).r * fp_data[i].b * dc_data[i]);
     }
     vec4 out_color = vec4(intensity, 0.0, 0.0, 1.0);
     imageStore(disp_tex, pixel, out_color);

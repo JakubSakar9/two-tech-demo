@@ -16,15 +16,18 @@ public partial class FootprintStorage : Node
     private int _blockOffset = 0;
     private List<Vector2I> _lChunks = [];
     private List<Vector2I> _rChunks = [];
+    private int[] _lTimes;
+    private int[] _rTimes;
+    private int _currentTime = 0;
     
-    private Dictionary<Vector2I, List<int>> _lStartIds;
-    private Dictionary<Vector2I, List<int>> _rStartIds;
-    private Dictionary<Vector2I, List<int>> _lEndIds;
-    private Dictionary<Vector2I, List<int>> _rEndIds;
-    private Dictionary<int, List<Vector2I>> _lStartChunks;
-    private Dictionary<int, List<Vector2I>> _rStartChunks;
-    private Dictionary<int, List<Vector2I>> _lEndChunks;
-    private Dictionary<int, List<Vector2I>> _rEndChunks;
+    private Dictionary<Vector2I, List<int>> _lStartIds = [];
+    private Dictionary<Vector2I, List<int>> _rStartIds = [];
+    private Dictionary<Vector2I, List<int>> _lEndIds = [];
+    private Dictionary<Vector2I, List<int>> _rEndIds = [];
+    private Dictionary<int, List<Vector2I>> _lStartChunks = [];
+    private Dictionary<int, List<Vector2I>> _rStartChunks = [];
+    private Dictionary<int, List<Vector2I>> _lEndChunks = [];
+    private Dictionary<int, List<Vector2I>> _rEndChunks = [];
 
     public override void _Ready()
     {
@@ -32,20 +35,10 @@ public partial class FootprintStorage : Node
 
         _lData = new float[4 * StepLimit];
         _rData = new float[4 * StepLimit];
-        _lChunks = [];
-        _rChunks = [];
+        _lTimes = new int[StepLimit];
+        _rTimes = new int[StepLimit];
         _lIdx = StepLimit - 1;
         _rIdx = StepLimit - 1;
-
-        _lStartIds = new();
-        _rStartIds = new();
-        _lEndIds = new();
-        _rEndIds = new();
-
-        _lStartChunks = new();
-        _rStartChunks = new();
-        _lEndChunks = new();
-        _rEndChunks = new();
     }
 
     public void EnterLeft(Vector2I chunkCoord)
@@ -86,6 +79,7 @@ public partial class FootprintStorage : Node
         _lData[4 * _lIdx + 1] = position.Y;
         _lData[4 * _lIdx + 2] = carveDepth;
         _lData[4 * _lIdx + 3] = angle;
+        _lTimes[_lIdx] = _currentTime;
 
         // Data block overwrite handling
         if (_lEndChunks.ContainsKey(_lIdx))
@@ -149,6 +143,7 @@ public partial class FootprintStorage : Node
         _rData[4 * _rIdx + 1] = position.Y;
         _rData[4 * _rIdx + 2] = carveDepth;
         _rData[4 * _rIdx + 3] = angle;
+        _rTimes[_rIdx] = _currentTime;
 
         // Data block overwrite handling
         if (_rEndChunks.ContainsKey(_rIdx))
@@ -217,16 +212,37 @@ public partial class FootprintStorage : Node
     /// <param name="buffer">RID of the SSBO to populate</param>
     /// <param name="chunk">Integer coordinates of the reconstructed chunk</param>
     /// <returns>False if given batch of footprints is not the last one, true otherwise.</returns>
-    public bool PopulateBufferChunkLeft(ref readonly RenderingDevice device, ref Rid buffer, ref int fpCount, Vector2I chunk)
+    public bool PopulateBufferChunkLeft(ref readonly RenderingDevice device, ref Rid buffer, ref Rid dcBuffer,
+        ref int fpCount, Vector2I chunk, float baseDecay)
     {
+        byte[] bufferData = new byte[RenderBatchSize * 4 * sizeof(float)];
+        byte[] dcBufferData = new byte[RenderBatchSize * sizeof(float)];
+
         int startIdx = _lStartIds[chunk][_blockIdx];
         int startIdxO = startIdx + _blockOffset;
         int endIdx = _lEndIds[chunk][_blockIdx];
         fpCount = Math.Min(RenderBatchSize, endIdx - startIdxO + 1);
-        byte[] bufferData = new byte[fpCount * 4 * sizeof(float)];
+
+        float[] decays = new float[fpCount];
+        int idx = startIdxO + fpCount - 1;
+        int time = _lTimes[idx];
+        float decay = Mathf.Pow(baseDecay, _currentTime - time);
+        for (int i = fpCount - 1; i >= 0; i--)
+        {
+            int nextTime = _lTimes[idx];
+            if (nextTime < time)
+            {
+                decay *= Mathf.Pow(baseDecay, time - nextTime);
+                time = nextTime;
+            }
+            decays[i] = decay;
+            idx--;
+        }
 
         Buffer.BlockCopy(_lData, 4 * sizeof(float) * startIdxO, bufferData, 0, 4 * sizeof(float) * fpCount);
         device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
+        Buffer.BlockCopy(decays, 0, dcBufferData, 0, sizeof(float) * fpCount);
+        device.BufferUpdate(dcBuffer, 0, (uint)dcBufferData.Length, dcBufferData);
 
         if (startIdxO + fpCount <= endIdx)
         {
@@ -249,16 +265,37 @@ public partial class FootprintStorage : Node
     /// <param name="buffer">RID of the SSBO to populate</param>
     /// <param name="chunk">Integer coordinates of the reconstructed chunk</param>
     /// <returns>False if given batch of footprints is not the last one, true otherwise.</returns>
-    public bool PopulateBufferChunkRight(ref readonly RenderingDevice device, ref Rid buffer, ref int fpCount, Vector2I chunk)
+    public bool PopulateBufferChunkRight(ref readonly RenderingDevice device, ref Rid buffer, ref Rid dcBuffer,
+        ref int fpCount, Vector2I chunk, float baseDecay)
     {
         byte[] bufferData = new byte[RenderBatchSize * 4 * sizeof(float)];
+        byte[] dcBufferData = new byte[RenderBatchSize * sizeof(float)];
+
         int startIdx = _rStartIds[chunk][_blockIdx];
         int startIdxO = startIdx + _blockOffset;
         int endIdx = _rEndIds[chunk][_blockIdx];
         fpCount = Math.Min(RenderBatchSize, endIdx - startIdxO + 1);
 
+        float[] decays = new float[fpCount];
+        int idx = startIdxO + fpCount - 1;
+        int time = _rTimes[idx];
+        float decay = Mathf.Pow(baseDecay, _currentTime - time);
+        for (int i = fpCount - 1; i >= 0; i--)
+        {
+            int nextTime = _rTimes[idx];
+            if (nextTime < time)
+            {
+                decay *= Mathf.Pow(baseDecay, time - nextTime);
+                time = nextTime;
+            }
+            decays[i] = decay;
+            idx--;
+        }
+
         Buffer.BlockCopy(_rData, 4 * sizeof(float) * startIdxO, bufferData, 0, 4 * sizeof(float) * fpCount);
         device.BufferUpdate(buffer, 0, (uint)bufferData.Length, bufferData);
+        Buffer.BlockCopy(decays, 0, dcBufferData, 0, sizeof(float) * fpCount);
+        device.BufferUpdate(dcBuffer, 0, (uint)dcBufferData.Length, dcBufferData);
 
         if (startIdxO + fpCount <= endIdx)
         {
@@ -272,6 +309,11 @@ public partial class FootprintStorage : Node
             return true;
         }
         return false;
+    }
+
+    public void Tick()
+    {
+        _currentTime++;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
