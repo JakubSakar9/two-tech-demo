@@ -8,10 +8,7 @@ layout(set = 0, binding = 0, r32f) uniform readonly image2D heightmap;
 layout(std140, set = 0, binding = 1) readonly buffer WindSSBOIn {
     vec4 surf_vec[ ];
 };
-// layout(std140, set = 0, binding = 2) buffer WindSSBOOut {
-//     vec4 wind_vec[ ];   
-// };
-layout(set = 0, binding = 2, rgba8) uniform image2DArray wind_out;
+layout(set = 0, binding = 2, rgba8) uniform image3D wind_out;
 
 layout(push_constant, std430) uniform Params {
     vec2 w_base;        // Base wind velocity

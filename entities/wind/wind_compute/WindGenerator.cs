@@ -86,9 +86,13 @@ public partial class WindGenerator : Node
 
 		Stopwatch stw = new();
 		stw.Start();
+		byte[] texData = _device.TextureGetData(_windTexture, 0);
+		int strideBytes = 4 * _texSize * LayerCount;
+		
 		for (int i = 0; i < _texSize; i++)
 		{
-			byte[] layerData = _device.TextureGetData(_windTexture, (uint)i);
+			byte[] layerData = new byte[strideBytes];
+			Buffer.BlockCopy(texData, i * strideBytes, layerData, 0, strideBytes);
 			Image layerImage = Image.CreateFromData(_texSize, LayerCount, false, Image.Format.Rgba8, layerData);
 			images.Add(layerImage);
 		}
@@ -155,12 +159,12 @@ public partial class WindGenerator : Node
 		{
 			Width = (uint)_texSize,
 			Height = (uint)LayerCount,
+			Depth = (uint)_texSize,
 			Format = RenderingDevice.DataFormat.R8G8B8A8Unorm,
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
 				| RenderingDevice.TextureUsageBits.CanCopyFromBit,
 			Mipmaps = 1,
-			TextureType = RenderingDevice.TextureType.Type2DArray,
-			ArrayLayers = (uint)_texSize
+			TextureType = RenderingDevice.TextureType.Type3D,
 		};
 		var view = new RDTextureView();
 		_windTexture = _device.TextureCreate(format, view);
