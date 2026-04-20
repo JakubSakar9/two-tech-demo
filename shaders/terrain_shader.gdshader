@@ -48,7 +48,6 @@ void vertex() {
 	vec4 height_val = texture(height_map, terrain_uv);
 	height = height_val.r;
 	float snow_height = height_val.g + height_val.b;
-	snow_height = max(0.0, snow_height - 1.0);
 	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;

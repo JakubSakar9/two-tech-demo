@@ -16,10 +16,11 @@ public partial class Player : CharacterBody3D
     [Export] public float WalkSpeed = 40.0f;
     [Export] public float WalkAcceleration = 35.0f;
     [Export] public float WalkDecceleration = 50.0f;
-    [Export] public float SpectatorSpeedMultiplier = 10.0f;
+    [Export] public float SpectatorMultiplier = 10.0f;
     [Export] public AudioStream SnowFtStream;
     [Export] public AudioStream GrassFtStream;
     [Export] public AudioStream RockFtStream;
+    [Export] public Terrain TerrainRef;
 
     public float LeftFootHitDistance = 0.0f;
     public float RightFootHitDistance = 0.0f;
@@ -33,6 +34,7 @@ public partial class Player : CharacterBody3D
     private AudioStreamPlayer3D _leftFootAudio;
     private AudioStreamPlayer3D _rightFootAudio;
     private RayCast3D _heightRaycast;
+    private CollisionShape3D _mainCollider;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
     private float _initialAttachmentHeight = 0.0f;
@@ -55,7 +57,10 @@ public partial class Player : CharacterBody3D
         {
             if (keyEvent.Keycode == Key.F1 && keyEvent.IsPressed())
             {
+                if (_spectatorMode) TerrainRef.AlignPlayer(true);
                 _spectatorMode ^= true;
+                Visible ^= true;
+                _mainCollider.Disabled ^= true;
             }
         }
         _gravity = (float) ProjectSettings.GetSetting("physics/3d/default_gravity");
@@ -76,7 +81,7 @@ public partial class Player : CharacterBody3D
         float multiplier = 1.0f;
         if (_spectatorMode)
         {
-            multiplier = SpectatorSpeedMultiplier;
+            multiplier = SpectatorMultiplier;
         }
         float acceleration = WalkAcceleration * multiplier;
         float decceleration = WalkDecceleration * multiplier;
@@ -92,7 +97,7 @@ public partial class Player : CharacterBody3D
         }
         else
         {
-            float horizontalDeltaLen = WalkDecceleration * (float)delta;
+            float horizontalDeltaLen = decceleration * (float)delta;
             if (horizontalDeltaLen > rawVelocity.Length())
             {
                 rawVelocity = Vector3.Zero;
@@ -191,6 +196,7 @@ public partial class Player : CharacterBody3D
         _leftFootAudio = GetNode<AudioStreamPlayer3D>("%LeftFootAudio");
         _rightFootAudio = GetNode<AudioStreamPlayer3D>("%RightFootAudio");
         _heightRaycast = GetNode<RayCast3D>("%HeightRaycast");
+        _mainCollider = GetNode<CollisionShape3D>("%MainCollider");
     }
 
     private void HandleMouseMotion(Vector2 delta)

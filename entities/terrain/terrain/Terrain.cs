@@ -73,6 +73,7 @@ public partial class Terrain : StaticBody3D
     [Export] public int ChunkSizeUnits = 256;
 
     [ExportCategory("Misc")]
+    [Export] public bool RenderWireframe = false;
     [Export] public int CollisionSizeUnits = 8;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
     
@@ -129,6 +130,11 @@ public partial class Terrain : StaticBody3D
         SetShaderParam("rock_fade_end", RockGroundHeight + 0.3f);
         SetShaderParam("chunk_origin", ChunkOrigin);
         CallDeferred(MethodName.GenerateInitial);
+
+        if (RenderWireframe)
+        {
+            GetViewport().DebugDraw = Viewport.DebugDrawEnum.Wireframe;
+        }
     }
 
     public override void _PhysicsProcess(double delta)
@@ -245,20 +251,23 @@ public partial class Terrain : StaticBody3D
         return Mathf.Lerp(c0, c1, fy);
     }
 
-    private async void GenerateInitial()
+    public void AlignPlayer(bool ignoreAboveGround = false)
+    {
+        Vector2 p2d = new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z);
+        p2d += 1.5f * ChunkSizeUnits * Vector2.One;
+        float y = _heightmaps[_heightmapIndex].heightImage.GetPixelv((Vector2I)p2d).R;
+        if (ignoreAboveGround && Player.GlobalPosition.Y > y) return;
+        Player.GlobalPosition = new Vector3(Player.GlobalPosition.X, y, Player.GlobalPosition.Z);
+    }
+
+    private void GenerateInitial()
     {
         Player.SetProcess(false);
         LoadCam.Current = true;
         Player.Hide();
-        // var timer = GetTree().CreateTimer(2.0f);
-        // await ToSignal(timer, SceneTreeTimer.SignalName.Timeout);
         UpdateHeightMap();
         LoadCam.HideText();
-        
-        Vector2 p2d = new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z);
-        p2d += 1.5f * ChunkSizeUnits * Vector2.One;
-        float y = _heightmaps[_heightmapIndex].heightImage.GetPixelv((Vector2I)p2d).R;
-        Player.GlobalPosition = new Vector3(Player.GlobalPosition.X, y, Player.GlobalPosition.Z);
+        AlignPlayer();
         Player.Show();
         Player.MakeFirstPerson();
         Player.SetProcess(true);

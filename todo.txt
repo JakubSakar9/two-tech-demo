@@ -1,12 +1,12 @@
-- Allow the fly camera close access to the terrain surface
-- Fix snow cover inconsistencies, or reduce them as much as possible
 - Sample only a 2D texture to get wind velocity on CPU
 - Fix discontinuities and artifacts at displacement chunk borders
+- Fix snow cover inconsistencies, or reduce them as much as possible
 - Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
 
 - 2nd playtesting
 
-- Improve snow cover visual results
+- Make the terrain 2 or 4 times larger
+- Improve snow cover visual results (have the snow texture be more visible)
 - [Visual Improvements]
 - [2nd playtesing feedback fixes]
 - Create a menu with simple settings and controls
