@@ -9,9 +9,7 @@ const float VERTICAL_BOOST = 2.0;
 layout(local_size_x = 8, local_size_y = 1, local_size_z = 8) in;
 
 layout(set = 0, binding = 0, rg32f) uniform readonly image2D heightmap;
-layout(std140, binding = 1) buffer WindSSBOOut {
-    vec4 wind_vec[ ];
-};
+layout(set = 0, binding = 1, rgba32f) uniform image2D wind_surface;
 
 layout(push_constant, std430) uniform Params {
     vec2 w_base;        // Base wind velocity
@@ -81,6 +79,5 @@ void main() {
     float mult = min(1.0, strength / params.w_max);
     vec3 w = (w_dir * mult + 1.0) / 2.0;
     
-    uint idx = pz * size + px;
-    wind_vec[idx] = vec4(w, 1.0);
+    imageStore(wind_surface, ivec2(px, pz), vec4(w, 1.0));
 }

@@ -35,7 +35,7 @@ public partial class WindGenerator : Node
     private Rid _shader3D;
     private Rid _pipelineSurface;
 	private Rid _pipeline3D;
-    private Rid _surfaceBuffer;
+    private Rid _surfaceTexture;
 	private Rid _windTexture;
 	private Rid _heightTexture;
 	private Rid _uniformSetSurface;
@@ -53,7 +53,7 @@ public partial class WindGenerator : Node
 		_device.FreeRid(_uniformSet3D);
 		_device.FreeRid(_uniformSetSurface);
 
-		_device.FreeRid(_surfaceBuffer);
+		_device.FreeRid(_surfaceTexture);
 		_device.FreeRid(_windTexture);
 		_device.FreeRid(_heightTexture);
 
@@ -73,7 +73,7 @@ public partial class WindGenerator : Node
 		_terrain = GetTree().GetFirstNodeInGroup("terain") as Terrain;
 		InitParams();
 		InitShaders();
-        InitSurfaceBuffer();
+        InitSurfaceTexture();
         InitWindTexture();
 		InitHeightTexture();
 		_pipelineSurface = _device.ComputePipelineCreate(_shaderSurface);
@@ -111,7 +111,7 @@ public partial class WindGenerator : Node
 
 	public void LoadWindSurface(RenderingDevice device, Rid targetTex)
 	{
-		byte[] surfaceData = _device.BufferGetData(_surfaceBuffer);
+		byte[] surfaceData = _device.TextureGetData(_surfaceTexture, 0);
 		if (SaveDebugSurfaceTexture)
 		{
 			Image.CreateFromData(_texSize, _texSize, false, Image.Format.Rgbaf, surfaceData)
@@ -146,11 +146,19 @@ public partial class WindGenerator : Node
 
     }
 
-    private void InitSurfaceBuffer()
+    private void InitSurfaceTexture()
     {
-        int dataSize = 4 * sizeof(float) * _texSize * _texSize;
-		byte[] initData = new byte[dataSize];
-		_surfaceBuffer = _device.StorageBufferCreate((uint)dataSize, initData);
+		var format = new RDTextureFormat
+		{
+			Width = (uint)_texSize,
+			Height = (uint)_texSize,
+			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
+			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
+				| RenderingDevice.TextureUsageBits.CanCopyFromBit,
+			Mipmaps = 1,
+		};
+		var view = new RDTextureView();
+		_surfaceTexture = _device.TextureCreate(format, view);
     }
 
     private void InitWindTexture()
@@ -223,10 +231,10 @@ public partial class WindGenerator : Node
 		};
 		var windSurfUniform = new RDUniform
 		{
-			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			UniformType = RenderingDevice.UniformType.Image,
 			Binding = 1
 		};
-		windSurfUniform.AddId(_surfaceBuffer);
+		windSurfUniform.AddId(_surfaceTexture);
 		heightmapUniform.AddId(_heightTexture);
 
 		Godot.Collections.Array<RDUniform> uniforms = [heightmapUniform, windSurfUniform];
@@ -243,7 +251,7 @@ public partial class WindGenerator : Node
 		};
 		var windSurfUniform = new RDUniform
 		{
-			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			UniformType = RenderingDevice.UniformType.Image,
 			Binding = 1
 		};
         var wind3DUniform = new RDUniform
@@ -253,7 +261,7 @@ public partial class WindGenerator : Node
         };
 
 		heightMapUniform.AddId(_heightTexture);
-		windSurfUniform.AddId(_surfaceBuffer);
+		windSurfUniform.AddId(_surfaceTexture);
         wind3DUniform.AddId(_windTexture);
 
 		var windFormat = _device.TextureGetFormat(_windTexture);
