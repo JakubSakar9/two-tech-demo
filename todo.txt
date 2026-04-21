@@ -1,15 +1,17 @@
 - Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
 - Fix snow cover inconsistencies, or reduce them as much as possible
+- Make footstep audio more accurate (use terrain slope)
+- Improve snow cover visual results (have the snow texture be more visible)
 
 - 2nd playtesting
 
-- Make the terrain 2 or 4 times larger
-- Improve snow cover visual results (have the snow texture be more visible)
+- Attempt percentage closer filtering for snow height
 - [Visual Improvements]
 - [2nd playtesing feedback fixes]
 - Create a menu with simple settings and controls
 - Add trees and rocks
 - Make more versions of trees (varying snow coverages) and rocks with varying snow coverage based on surrounding snow height
+- Make the terrain slightly larger (2 and 4 times)
 - [Game elements]
 
 - 3rd playtesing

@@ -192,7 +192,7 @@ public partial class WindGenerator : Node
 
 	private void DispatchCompute()
 	{
-		_device.TextureUpdate(_heightTexture, 0, _heightMap.bytes);
+		_device.TextureUpdate(_heightTexture, 0, _heightMap.Bytes);
 		BindSurfaceUniforms();
         Bind3DUniforms();
         uint xGroups = (uint)_texSize / 8;

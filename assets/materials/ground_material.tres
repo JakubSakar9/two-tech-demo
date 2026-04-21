@@ -3,6 +3,7 @@
 [ext_resource type="Shader" uid="uid://tnrtre0lfm56" path="res://shaders/terrain_shader.gdshader" id="1_bu8bs"]
 [ext_resource type="Texture2D" uid="uid://b7prd7svtil5q" path="res://entities/terrain/terrain/grass_texture.tres" id="2_7orrk"]
 [ext_resource type="Texture2D" uid="uid://csxpg1plcalqb" path="res://assets/textures/seaside_rock_diff_2k.jpg" id="3_7orrk"]
+[ext_resource type="Texture2D" uid="uid://cv18g2e6cbffa" path="res://assets/textures/placeholder_height.exr" id="3_tmqy1"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_bu8bs"]
 noise_type = 5
@@ -26,6 +27,7 @@ render_priority = 0
 shader = ExtResource("1_bu8bs")
 shader_parameter/roughness = 0.0
 shader_parameter/texture_roughness = SubResource("NoiseTexture2D_7orrk")
+shader_parameter/height_map = ExtResource("3_tmqy1")
 shader_parameter/glitter_map = SubResource("NoiseTexture2D_jkxpb")
 shader_parameter/grass_texture = ExtResource("2_7orrk")
 shader_parameter/rock_texture = ExtResource("3_7orrk")
