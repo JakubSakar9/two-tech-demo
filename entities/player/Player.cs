@@ -147,14 +147,15 @@ public partial class Player : CharacterBody3D
     public void PlayFootstep(FootSide side, bool playGrass)
     {
         Terrain tr = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
-
+        Vector3 normal = _heightRaycast.GetCollisionNormal();
+        float grassinessMult = Mathf.Min(1.2f * Mathf.Pow(normal.Dot(Vector3.Up), 16.0f), 1.0f);
         if (side == FootSide.Left)
         {
             if (!playGrass)
             {
                 _leftFootAudio.Stream = SnowFtStream;
-            } 
-            else if (GlobalPosition.Y < tr.RockGroundHeight)
+            }
+            else if (GlobalPosition.Y < tr.RockGroundHeight && grassinessMult > 0.4f)
             {
                 _leftFootAudio.Stream = GrassFtStream;
             }
@@ -170,7 +171,7 @@ public partial class Player : CharacterBody3D
             {
                 _rightFootAudio.Stream = SnowFtStream;
             } 
-            else if (GlobalPosition.Y < tr.RockGroundHeight)
+            else if (GlobalPosition.Y < tr.RockGroundHeight && grassinessMult > 0.4f)
             {
                 _rightFootAudio.Stream = GrassFtStream;
             }

@@ -63,15 +63,15 @@ public partial class HeightMap : GodotObject
 
      private void PopulateHeightImage()
     {
-        Stopwatch stw = new();
-        stw.Start();
         HeightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgbaf, Bytes);
         HeightImage.GenerateMipmaps();
         Height.SetImage(HeightImage);
         _terrain.EmitSignal(Terrain.SignalName.FinishedGenerating);
+        Stopwatch stw = new();
+        stw.Start();
         RenderingServer.CallOnRenderThread(Callable.From(_terrain.ComputeTextures));
-        // _terrain.ComputeTextures();
         stw.Stop();
+        // _terrain.ComputeTextures();
         GD.Print("Populate height image: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
 }
@@ -279,14 +279,9 @@ public partial class Terrain : StaticBody3D
         _surfaceImage = null;
         WindGen.Generate(ref _heightmaps[_heightmapIndex]);
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
-        stw.Stop();
-        GD.Print("Wind field generated in " + stw.ElapsedMilliseconds + "ms");
-        stw.Reset();
-        stw.Start();
-
         _scGen.Generate(ref _heightmaps[_heightmapIndex]);
         stw.Stop();
-        GD.Print("Snow cover generated in " + stw.ElapsedMilliseconds + "ms");
+        GD.Print("Texture compute in " + stw.ElapsedMilliseconds + "ms");
     }
 
     private async void GenerateInitial()

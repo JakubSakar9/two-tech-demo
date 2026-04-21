@@ -1,6 +1,4 @@
-- Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
 - Fix snow cover inconsistencies, or reduce them as much as possible
-- Make footstep audio more accurate (use terrain slope)
 - Improve snow cover visual results (have the snow texture be more visible)
 
 - 2nd playtesting
