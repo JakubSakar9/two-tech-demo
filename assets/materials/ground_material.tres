@@ -10,6 +10,7 @@ frequency = 0.2279
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_jkxpb"]
 noise = SubResource("FastNoiseLite_bu8bs")
+seamless = true
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_jkxpb"]
 noise_type = 2

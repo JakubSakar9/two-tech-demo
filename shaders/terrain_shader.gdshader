@@ -13,7 +13,7 @@ uniform sampler2D height_map: source_color, filter_linear_mipmap;
 uniform sampler2D glitter_map: source_color, filter_nearest;
 uniform sampler2D grass_texture: filter_linear_mipmap_anisotropic;
 uniform sampler2D rock_texture: filter_linear_mipmap_anisotropic;
-uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap;
+uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mipmap, repeat_disable;
 
 uniform bool[DISP_COUNT] used_maps;
 uniform vec2 chunk_origin = vec2(0.0);
@@ -41,6 +41,8 @@ void vertex() {
 	terrain_uv = shifted_uv / HEIGHTMAP_RANGE - vec2(0.5);
 	
 	disp_uv = unshifted_uv / displacement_map_range + vec2(0.5);
+	vec2 rdisp_uv = mod(disp_uv, vec2(1.0)) + vec2(1.0);
+	rdisp_uv = mod(rdisp_uv, vec2(1.0));
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
@@ -48,7 +50,7 @@ void vertex() {
 	vec4 height_val = texture(height_map, terrain_uv);
 	height = height_val.r;
 	float snow_height = height_val.g + height_val.b;
-	float displacement_v = texture(displacement_maps[tidx], disp_uv).r;
+	float displacement_v = texture(displacement_maps[tidx], rdisp_uv).r;
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
 	
@@ -59,6 +61,9 @@ void fragment() {
 	vec2 detail_uv = disp_uv * 10.0;
 	float eps_h = 0.001;
 	float eps_d = 0.0005;
+	
+	vec2 rdisp_uv = mod(disp_uv, vec2(1.0)) + vec2(1.0);
+	rdisp_uv = mod(rdisp_uv, vec2(1.0));
 	
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
@@ -79,11 +84,11 @@ void fragment() {
 	vec3 normal_disp = vec3(0.0);
 	//used_maps[tidx] &&
 	if (used_maps[tidx] && v_distance <= far_fadeout_distance) {
-		displacement = texture(displacement_maps[tidx], disp_uv).r;
-		vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
-		vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
-		vec3 disp_py = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv + duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvy).r, VERTEX.z + eps_h * displacement_map_range);
-		vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], disp_uv - duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
+		displacement = texture(displacement_maps[tidx], rdisp_uv).r;
+		vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], rdisp_uv + duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
+		vec3 disp_mx = vec3(VERTEX.x - eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], rdisp_uv - duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv - duvx).r, VERTEX.z);
+		vec3 disp_py = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], rdisp_uv + duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvy).r, VERTEX.z + eps_h * displacement_map_range);
+		vec3 disp_my = vec3(VERTEX.x, VERTEX.y - snow_height * texture(displacement_maps[tidx], rdisp_uv - duvy).r + DETAIL_SIZE * texture(glitter_map, detail_uv - duvy).r, VERTEX.z - eps_h * displacement_map_range);
 		normal_disp = -normalize(cross(disp_px - disp_mx, disp_py - disp_my));
 	}
 	else {
@@ -128,7 +133,7 @@ void fragment() {
 	ALBEDO = mix(ground_color, vec3(0.95), snowiness);
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
-	float roughness_snow = 1.0 - (dot(texture(texture_roughness, disp_uv), roughness_texture_channel) + 3.0) / 4.0;
+	float roughness_snow = 1.0 - (dot(texture(texture_roughness, rdisp_uv), roughness_texture_channel) + 3.0) / 4.0;
 	ROUGHNESS = mix(0.9, roughness_snow, snowiness);
 }
 

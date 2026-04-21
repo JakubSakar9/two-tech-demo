@@ -1,6 +1,5 @@
-- Fix discontinuities and artifacts at displacement chunk borders
-- Fix snow cover inconsistencies, or reduce them as much as possible
 - Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)
+- Fix snow cover inconsistencies, or reduce them as much as possible
 
 - 2nd playtesting
 
