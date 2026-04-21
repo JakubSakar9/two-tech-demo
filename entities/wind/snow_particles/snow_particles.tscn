@@ -24,7 +24,6 @@ turbulence_influence_min = 0.0
 
 [node name="SnowParticles" type="Node3D" unique_id=121143072]
 script = ExtResource("1_8ftpa")
-DebugWindField = true
 DefaultParticlePass = ExtResource("2_2r760")
 DebugParticlePass = ExtResource("3_yb1o1")
 

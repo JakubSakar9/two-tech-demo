@@ -243,7 +243,7 @@ public partial class Terrain : StaticBody3D
     public void AlignPlayer(bool ignoreAboveGround = false)
     {
         Vector2 p2d = new Vector2(Player.GlobalPosition.X, Player.GlobalPosition.Z);
-        p2d += 1.5f * ChunkSizeUnits * Vector2.One;
+        p2d += 1.5f * ChunkSizeUnits * Vector2.One - ChunkOrigin;
         float y = _heightmaps[_heightmapIndex].heightImage.GetPixelv((Vector2I)p2d).R;
         if (ignoreAboveGround && Player.GlobalPosition.Y > y) return;
         Player.GlobalPosition = new Vector3(Player.GlobalPosition.X, y, Player.GlobalPosition.Z);
