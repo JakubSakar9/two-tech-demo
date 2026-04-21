@@ -1,15 +1,12 @@
-- Fix snow cover inconsistencies, or reduce them as much as possible
-- Improve snow cover visual results (have the snow texture be more visible)
-
-- 2nd playtesting
-
-- Attempt percentage closer filtering for snow height
-- [Visual Improvements]
-- [2nd playtesing feedback fixes]
 - Create a menu with simple settings and controls
 - Add trees and rocks
 - Make more versions of trees (varying snow coverages) and rocks with varying snow coverage based on surrounding snow height
+
+- 2nd playtesting
+
 - Make the terrain slightly larger (2 and 4 times)
+- [2nd playtesing feedback fixes]
+- [Visual Improvements?]
 - [Game elements]
 
 - 3rd playtesing

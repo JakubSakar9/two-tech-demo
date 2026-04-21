@@ -4,7 +4,7 @@ render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_sc
 const int DISP_COUNT = 25;
 const float HEIGHTMAP_RANGE = 768.0;
 const float DETAIL_SIZE = 0.01;
-const float JITTER_STRENGTH = 0.05;
+const float JITTER_STRENGTH = 1.0;
 
 uniform float roughness : hint_range(0.0, 1.0);
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
@@ -57,6 +57,51 @@ void vertex() {
 	debug_color = vec3(1.0);
 }
 
+// Bicubic interpolation implementation taken from http://www.java-gaming.org/index.php?topic=35123.0
+vec4 cubic(float v){
+    vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
+    vec4 s = n * n * n;
+    float x = s.x;
+    float y = s.y - 4.0 * s.x;
+    float z = s.z - 4.0 * s.y + 6.0 * s.x;
+    float w = 6.0 - x - y - z;
+    return vec4(x, y, z, w) * (1.0/6.0);
+}
+
+vec4 textureBicubic(sampler2D sampler, vec2 texCoords){
+
+   vec2 texSize = vec2(textureSize(sampler, 0));
+   vec2 invTexSize = 1.0 / texSize;
+   
+   texCoords = texCoords * texSize - 0.5;
+
+   
+    vec2 fxy = fract(texCoords);
+    texCoords -= fxy;
+
+    vec4 xcubic = cubic(fxy.x);
+    vec4 ycubic = cubic(fxy.y);
+
+    vec4 c = texCoords.xxyy + vec2 (-0.5, +1.5).xyxy;
+    
+    vec4 s = vec4(xcubic.xz + xcubic.yw, ycubic.xz + ycubic.yw);
+    vec4 offset = c + vec4 (xcubic.yw, ycubic.yw) / s;
+    
+    offset *= invTexSize.xxyy;
+    
+    vec4 sample0 = texture(sampler, offset.xz);
+    vec4 sample1 = texture(sampler, offset.yz);
+    vec4 sample2 = texture(sampler, offset.xw);
+    vec4 sample3 = texture(sampler, offset.yw);
+
+    float sx = s.x / (s.x + s.y);
+    float sy = s.z / (s.z + s.w);
+
+    return mix(
+       mix(sample3, sample2, sx), mix(sample1, sample0, sx)
+    , sy);
+}
+
 void fragment() {
 	vec2 detail_uv = disp_uv * 10.0;
 	float eps_h = 0.001;
@@ -68,7 +113,8 @@ void fragment() {
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
-	vec4 height_val = texture(height_map, terrain_uv);
+	vec4 height_val = textureBicubic(height_map, terrain_uv);
+	
 	float snow_height = height_val.g + height_val.b;
 	
 	float v_distance = length(VERTEX);
@@ -117,8 +163,8 @@ void fragment() {
 	NORMAL = mix(NORMAL, normal_height, fade_t);
 	
 	vec3 v = normalize(-VERTEX);
-	float jitter = texture(glitter_map, detail_uv).r;
-	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * jitter * jitter);
+	float jitter = texture(glitter_map, 4.0 * detail_uv).r;
+	NORMAL = mix(NORMAL, v, JITTER_STRENGTH * pow(jitter, 8.0));
 	NORMAL = (VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
 	
 	float snow_var = -0.6 * texture(glitter_map, detail_uv).r;
@@ -130,7 +176,10 @@ void fragment() {
 	vec3 grass_color = texture(grass_texture, detail_uv).rgb;
 	vec3 rock_color = texture(rock_texture, detail_uv).rgb;
 	vec3 ground_color = mix(rock_color, grass_color, grassiness);
-	ALBEDO = mix(ground_color, vec3(0.95), snowiness);
+	float detail = 0.9 + 0.1 * texture(glitter_map, 40.0 * disp_uv).r;
+	float albedo_l = 0.92;
+	albedo_l += 0.07 * texture(texture_roughness, 4.0 * disp_uv).r;
+	ALBEDO = mix(ground_color, vec3(albedo_l), snowiness);
 	
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
 	float roughness_snow = 1.0 - (dot(texture(texture_roughness, rdisp_uv), roughness_texture_channel) + 3.0) / 4.0;
@@ -142,7 +191,7 @@ void light() {
 	float fresnel2 = fresnel * fresnel;
 	float fresnel3 = fresnel * fresnel2;
 	float fresnel4 = fresnel2 * fresnel2;
-	float glitter = clamp(texture(glitter_map, 30.0 * disp_uv).r, 0.4, 1.0);
+	float glitter = pow(texture(glitter_map, 30.0 * disp_uv).r, 10.0);
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
 	float disp_ao = (1.0 - displacement_darkening * displacement);
 	SPECULAR_LIGHT = 0.5 * (1.0 - ROUGHNESS) * vec3(rim_specular);

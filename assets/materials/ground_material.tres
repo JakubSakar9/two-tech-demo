@@ -15,12 +15,13 @@ seamless = true
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_jkxpb"]
 noise_type = 2
-frequency = 0.0542
+frequency = 0.0358
 fractal_weighted_strength = 0.07
 cellular_return_type = 2
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_7orrk"]
 noise = SubResource("FastNoiseLite_jkxpb")
+seamless = true
 
 [resource]
 render_priority = 0
