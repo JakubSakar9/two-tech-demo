@@ -110,7 +110,6 @@ public partial class SnowCoverGenerator : Node
     private Dictionary<SCComputePass, Rid> _pipelines;
     private Dictionary<SCComputePass, Rid> _uniformSets;
     private Rid[] _hmImages;
-    private Rid _windSurfTex;
 
     private TemperatureParameters _tParams;
     private PrecipitationParameters _pParams;
@@ -133,7 +132,6 @@ public partial class SnowCoverGenerator : Node
         {
             _device.FreeRid(hmRid);
         }
-        _device.FreeRid(_windSurfTex);
 
         foreach (var pass in Enum.GetValues(typeof(SCComputePass)))
         {
@@ -157,7 +155,6 @@ public partial class SnowCoverGenerator : Node
     {
         _swapIdx = 0;
         _device.TextureUpdate(_hmImages[_swapIdx], 0, heightMap.bytes);
-        _windGen.LoadWindSurface(_device, _windSurfTex); // TODO: Do this only when needed
         _computeList = _device.ComputeListBegin();
 
         for (_cycleIdx = 0; _cycleIdx < EventCycleCount; _cycleIdx++)
@@ -245,7 +242,6 @@ public partial class SnowCoverGenerator : Node
         {
             _hmImages[i] = _device.TextureCreate(format, view);
         }
-        _windSurfTex = _device.TextureCreate(format, view);
     }
 
     private void GenerateCycleSequence()
@@ -393,7 +389,7 @@ public partial class SnowCoverGenerator : Node
         };
         heightMapInUniform.AddId(_hmImages[_swapIdx]);
         heightMapOutUniform.AddId(_hmImages[1 - _swapIdx]);
-        windSurfaceUniform.AddId(_windSurfTex);
+        windSurfaceUniform.AddId(_windGen.GetSurfaceTextureRid());
 
         Godot.Collections.Array<RDUniform> uniforms = [heightMapInUniform, heightMapOutUniform, windSurfaceUniform];
         if (_uniformSets[SCComputePass.Advect].IsValid && _device.UniformSetIsValid(_uniformSets[SCComputePass.Advect]))

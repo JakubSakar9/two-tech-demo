@@ -71,10 +71,10 @@ public partial class WindAudio : Node3D
     public override void _Process(double delta)
     {
         base._Process(delta);
-        Vector3 windVec = _terrain.GetWindAtPoint(GetParent<Camera3D>().GlobalPosition);
-        _directional.GlobalPosition = GlobalPosition - windVec.Normalized() * DIR_DISTANCE;
+        _terrain.GetWindAtPoint(GetParent<Camera3D>().GlobalPosition);
+        _directional.GlobalPosition = GlobalPosition - _terrain.LocalWind.Normalized() * DIR_DISTANCE;
 
-        float windSpeed = windVec.Length();
+        float windSpeed = _terrain.LocalWind.Length();
         float td = (windSpeed - MinSpeed) / (MaxSpeed - MinSpeed);
         td = Mathf.Clamp(td, 0.0f, 1.0f);
         float td1 = Mathf.Min(2.0f * td, 1.0f);

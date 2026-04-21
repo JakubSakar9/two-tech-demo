@@ -7,9 +7,10 @@ public struct HeightMap
     public byte[] bytes;
     public Image heightImage;
     public ImageTexture height; // R = terrain height, G = snow height, B = powdered snow height
-    public ImageTexture3D windTexture;
+    // public ImageTexture3D windTexture;
     public FastNoiseLite noiseFnHF;
     public FastNoiseLite noiseFnLF;
+
     private readonly int _size;
 
     public HeightMap(FastNoiseLite pNoiseFnHF, FastNoiseLite pNoiseFnLF, int size)
@@ -19,7 +20,6 @@ public struct HeightMap
         noiseFnLF = pNoiseFnLF.DuplicateDeep() as FastNoiseLite;
         heightImage = new();
         height = new();
-        windTexture = new();
         _size = size;
         noiseFnHF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
         noiseFnLF.Offset = new Vector3(-size / 2.0f, -size / 2.0f, 0.0f);
@@ -77,8 +77,8 @@ public partial class Terrain : StaticBody3D
     [Export] public int CollisionSizeUnits = 8;
     [Export] public float ChunkThresholdMultiplier = 1.125f;
     
-
     public Vector2 ChunkOrigin = Vector2.Zero;
+    public Vector3 LocalWind = Vector3.Zero;
 
     private MeshInstance3D _terrainMesh;
     private CollisionShape3D _terrainCollider;
@@ -87,8 +87,10 @@ public partial class Terrain : StaticBody3D
     private SnowCoverGenerator _scGen;
 
 
+
     private HeightMap[] _heightmaps;
-    private Godot.Collections.Array<Image> _windImages;
+    private Image _surfaceImage;
+    private Texture3Drd _windTexture;
     private Image _collisionImage;
     
     private int _heightmapIndex = HEIGHTMAP_SWAP_COUNT - 1;
@@ -107,25 +109,22 @@ public partial class Terrain : StaticBody3D
 
         int heightmapSize = 3 * ChunkSizeUnits;
 
-        WindGen.Init(heightmapSize);
+        _windTexture = new();
+        WindGen.Init(heightmapSize, ref _windTexture);
         _scGen.Init((uint)(3 * ChunkSizeUnits), WindGen);
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
-            _heightmaps[i] = new(NoiseFunctionHF, NoiseFunctionLF, heightmapSize)
-            {
-                windTexture = new ImageTexture3D()
-            };
+            _heightmaps[i] = new(NoiseFunctionHF, NoiseFunctionLF, heightmapSize);
             Godot.Collections.Array<Image> initImages = [];
             for (uint j = 0; j < heightmapSize; j++)
             {
                 initImages.Add(Image.CreateEmpty(heightmapSize, WindGen.LayerCount, false, Image.Format.Rgba8));
             }
-            _heightmaps[i].windTexture.Create(Image.Format.Rgba8, heightmapSize, WindGen.LayerCount, heightmapSize,
-                false, initImages);
         }
         _windField.Size = new Vector3(heightmapSize, MaxAltitude * 1.25f, heightmapSize);
         _windField.Strength = WindGen.MaxWindSpeed;
+        _windField.Texture = _windTexture;
         SetShaderParam("rock_fade_start", RockGroundHeight);
         SetShaderParam("rock_fade_end", RockGroundHeight + 0.3f);
         SetShaderParam("chunk_origin", ChunkOrigin);
@@ -168,7 +167,6 @@ public partial class Terrain : StaticBody3D
 
         CallDeferred(MethodName.AssignTexture);
         SetShaderParam("used_maps", Deformer.GetUsedChunks());
-        // GD.Print(Deformer.GetUsedChunks().ToString());
     }
 
     public ImageTexture GetHeightMap()
@@ -176,49 +174,40 @@ public partial class Terrain : StaticBody3D
         return _heightmaps[_heightmapIndex].height;
     }
 
-    public Vector3 GetWindAtPoint(Vector3 point)
+    public void GetWindAtPoint(Vector3 point)
     {
+        if (_surfaceImage == null || _surfaceImage.IsEmpty())
+        {
+            return;
+        }
+        int size = 3 * ChunkSizeUnits;
         Aabb windAabb = _windField.GetAabb();
         Vector3 b = windAabb.Position + _windField.GlobalPosition;
         Vector3 e = windAabb.End + _windField.GlobalPosition;
         Vector3 uvw = (point - b) / (e - b);
-        uvw = uvw.Clamp(Vector3.Zero, Vector3.One);
+        Vector2 uv = new Vector2(uvw.X, uvw.Z);
+        uv = uv.Clamp(Vector2.Zero, Vector2.One);
 
-        int size = 3 * ChunkSizeUnits;
-        int lCount = WindGen.LayerCount;
-        float tx = uvw.X * (size   - 1);
-        float ty = uvw.Y * (lCount - 1);
-        float tz = uvw.Z * (size   - 1);
+        float tx = uv.X * (size - 1);
+        float ty = uv.Y * (size - 1);
 
         int x0 = (int)tx;
         int y0 = (int)ty;
-        int z0 = (int)tz;
-        int x1 = Mathf.Min((int)tx + 1, size   - 1);
-        int y1 = Mathf.Min((int)ty + 1, lCount - 1);
-        int z1 = Mathf.Min((int)tz + 1, size   - 1);
+        int x1 = Mathf.Min((int)tx + 1, size - 1);
+        int y1 = Mathf.Min((int)ty + 1, size - 1);
 
         float fx = tx - (int)tx;
         float fy = ty - (int)ty;
-        float fz = tz - (int)tz;
 
-        Vector3 c000 = GetImgVec3(_windImages[z0], x0, y0);
-        Vector3 c100 = GetImgVec3(_windImages[z0], x1, y0);
-        Vector3 c010 = GetImgVec3(_windImages[z0], x0, y1);
-        Vector3 c110 = GetImgVec3(_windImages[z0], x1, y1);
-        Vector3 c001 = GetImgVec3(_windImages[z1], x0, y0);
-        Vector3 c101 = GetImgVec3(_windImages[z1], x1, y0);
-        Vector3 c011 = GetImgVec3(_windImages[z1], x0, y1);
-        Vector3 c111 = GetImgVec3(_windImages[z1], x1, y1);
+        Vector3 c00 = GetImgVec3(_surfaceImage, x0, y0);
+        Vector3 c10 = GetImgVec3(_surfaceImage, x1, y0);
+        Vector3 c01 = GetImgVec3(_surfaceImage, x0, y1);
+        Vector3 c11 = GetImgVec3(_surfaceImage, x1, y1);
 
-        Vector3 c00 = c000.Lerp(c100, fx);
-        Vector3 c01 = c001.Lerp(c101, fx);
-        Vector3 c10 = c010.Lerp(c110, fx);
-        Vector3 c11 = c011.Lerp(c111, fx);
-
-        Vector3 c0 = c00.Lerp(c10, fy);
-        Vector3 c1 = c01.Lerp(c11, fy);
-        Vector3 sampled = c0.Lerp(c1, fz);
-        return _windField.Strength * (2.0f * sampled - Vector3.One);
+        Vector3 c0 = c00.Lerp(c10, fx);
+        Vector3 c1 = c01.Lerp(c11, fx);
+        Vector3 sampled = c0.Lerp(c1, fy);
+        LocalWind = _windField.Strength * (2.0f * sampled - Vector3.One);
     }
 
     public float GetSnowHeight()
@@ -335,11 +324,9 @@ public partial class Terrain : StaticBody3D
         stw.Start();
         _heightmapIndex = (_heightmapIndex + 1) % HEIGHTMAP_SWAP_COUNT;
         _heightmaps[_heightmapIndex].MoveOrigin(ChunkOrigin, MaxAltitude);
+        _surfaceImage = null;
         WindGen.Generate(ref _heightmaps[_heightmapIndex]);
-
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
-        WindGen.CopyWindTexture(ref _heightmaps[_heightmapIndex].windTexture, ref _windImages);
-        _windField.Texture = _heightmaps[_heightmapIndex].windTexture;
         stw.Stop();
         GD.Print("Wind field generated in " + stw.ElapsedMilliseconds + "ms");
         stw.Reset();
@@ -366,6 +353,11 @@ public partial class Terrain : StaticBody3D
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].height);
         SetShaderParam("chunk_origin", ChunkOrigin);
+    }
+
+    private void SyncWindSurface(Image surfaceImage)
+    {
+        _surfaceImage = surfaceImage.Duplicate() as Image;
     }
 
     private async void AssignTexture()

@@ -56,7 +56,6 @@ NoiseFunctionLF = ExtResource("3_wtsjf")
 [node name="Player" parent="." unique_id=826621672 node_paths=PackedStringArray("TerrainRef") instance=ExtResource("2_j8ivh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.23542, 25.579044, -36.768616)
 WalkSpeed = 1.7
-SpectatorMultiplier = 16.0
 TerrainRef = NodePath("../Terrain")
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
@@ -67,7 +66,7 @@ Deformer = NodePath("../TerrainDeformer")
 Player = NodePath("../Player")
 
 [node name="WindGenerator" parent="." unique_id=37666401 instance=ExtResource("5_qjeyg")]
-SaveDebugSurfaceTexture = false
+MaxWindSpeed = 64.0
 
 [node name="LoadingCamera" parent="." unique_id=1737976801 instance=ExtResource("8_rnaij")]
 transform = Transform3D(1, 0, 0, 0, 0.79039025, 0.61260366, 0, -0.61260366, 0.79039025, 0, 27.633942, 35.649845)

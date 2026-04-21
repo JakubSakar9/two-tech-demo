@@ -1,4 +1,4 @@
-- Sample only a 2D texture to get wind velocity on CPU
+- Fix OOB bug in spectator mode
 - Fix discontinuities and artifacts at displacement chunk borders
 - Fix snow cover inconsistencies, or reduce them as much as possible
 - Optimize chunk transitions (WITHOUT BREAKING THE WIND THIS TIME)

@@ -20,7 +20,6 @@ public partial class WindGenerator : Node
 	
 	const string SHADER_PATH_SURFACE = "res://shaders/wind_surf_compute.glsl";
 	const string SHADER_PATH_3D = "res://shaders/wind_3d_compute.glsl";
-	const int WINDTEX_SWAP_COUNT = 4;
 
 	[Export] public Vector2 BaseWindVelocity = new Vector2(0.3f, 0.4f);
 	[Export] public int LayerCount = 8;
@@ -66,11 +65,11 @@ public partial class WindGenerator : Node
 		_device.Free();
     }
 
-	public void Init(int texSize)
+	public void Init(int texSize, ref Texture3Drd windTexture)
 	{
-		_device = RenderingServer.CreateLocalRenderingDevice();
+		_device = RenderingServer.GetRenderingDevice();
 		_texSize = texSize;
-		_terrain = GetTree().GetFirstNodeInGroup("terain") as Terrain;
+		_terrain = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
 		InitParams();
 		InitShaders();
         InitSurfaceTexture();
@@ -78,58 +77,54 @@ public partial class WindGenerator : Node
 		InitHeightTexture();
 		_pipelineSurface = _device.ComputePipelineCreate(_shaderSurface);
         _pipeline3D = _device.ComputePipelineCreate(_shader3D);
-	}
 
-	public void CopyWindTexture(ref ImageTexture3D tex, ref Godot.Collections.Array<Image> imgs)
-	{
-		Godot.Collections.Array<Image> images = [];
-
-		Stopwatch stw = new();
-		stw.Start();
-		byte[] texData = _device.TextureGetData(_windTexture, 0);
-		int strideBytes = 4 * _texSize * LayerCount;
-		
-		for (int i = 0; i < _texSize; i++)
-		{
-			byte[] layerData = new byte[strideBytes];
-			Buffer.BlockCopy(texData, i * strideBytes, layerData, 0, strideBytes);
-			Image layerImage = Image.CreateFromData(_texSize, LayerCount, false, Image.Format.Rgba8, layerData);
-			images.Add(layerImage);
-		}
-		stw.Stop();
-		GD.Print("Texture update: " + stw.Elapsed.TotalMilliseconds + "ms");
-		imgs = images;
-		tex.Update(images);
+		windTexture.TextureRdRid = _windTexture;
 	}
 
 	public void Generate(ref HeightMap heightMap)
 	{
 		_heightMap = heightMap;
 		DispatchCompute();
-		_device.Sync();
+		CopyWindSurface();
 	}
 
-	public void LoadWindSurface(RenderingDevice device, Rid targetTex)
+	private void CopyWindSurface()
 	{
-		byte[] surfaceData = _device.TextureGetData(_surfaceTexture, 0);
-		if (SaveDebugSurfaceTexture)
+		var copyLambda = (byte[] data) =>
 		{
-			Image.CreateFromData(_texSize, _texSize, false, Image.Format.Rgbaf, surfaceData)
-			.SaveExr("res://debug_output/wind_surface.exr");
+			Image surfaceImage = Image.CreateFromData(_texSize, _texSize, false, Image.Format.Rgbaf, data);
+			if (SaveDebugSurfaceTexture)
+			{
+				surfaceImage.SaveExr("res://debug_output/wind_surface.exr");
+			}
+			if (_terrain == null)
+			{
+				GD.Print("Terrain is null");
+			}
+			_terrain.CallDeferred(Terrain.MethodName.SyncWindSurface, surfaceImage);
+		};
+
+		_device.TextureGetDataAsync(_surfaceTexture, 0, Callable.From(copyLambda));
+		if (_terrain == null)
+		{
+			GD.Print("Terrain is null even here");
 		}
-		device.TextureUpdate(targetTex, 0, surfaceData);
+	}
+
+	public Rid GetSurfaceTextureRid()
+	{
+		return _surfaceTexture;
 	}
 
 	private void InitParams()
 	{
-		var tr = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
 		_params = new()
 		{
 			BaseWindVelocity = BaseWindVelocity,
 			VenturiStrength = VenturiStrength,
 			TopographicStrength = TopographicStrength,
 			MaxWindSpeed = MaxWindSpeed,
-			MaxAltitude = tr.MaxAltitude,
+			MaxAltitude = _terrain.MaxAltitude,
 			SkyHeightRatio = SkyHeightRatio
 		};
 	}
@@ -170,7 +165,8 @@ public partial class WindGenerator : Node
 			Depth = (uint)_texSize,
 			Format = RenderingDevice.DataFormat.R8G8B8A8Unorm,
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit
-				| RenderingDevice.TextureUsageBits.CanCopyFromBit,
+				| RenderingDevice.TextureUsageBits.CanCopyFromBit
+				| RenderingDevice.TextureUsageBits.SamplingBit,
 			Mipmaps = 1,
 			TextureType = RenderingDevice.TextureType.Type3D,
 		};
@@ -219,7 +215,6 @@ public partial class WindGenerator : Node
 		_device.ComputeListDispatch(computeList, xGroups, yGroups, zGroups);
 
         _device.ComputeListEnd();
-        _device.Submit();
     }
 
 	private void BindSurfaceUniforms()
