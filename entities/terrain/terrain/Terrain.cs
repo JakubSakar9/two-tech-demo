@@ -17,7 +17,6 @@ public partial class HeightMap : GodotObject
 
     public HeightMap(FastNoiseLite pNoiseFnHF, FastNoiseLite pNoiseFnLF, int size, Terrain terrain)
     {
-        Bytes = new byte[4 * size * size * sizeof(float)];
         NoiseFnHf = pNoiseFnHF.DuplicateDeep() as FastNoiseLite;
         NoiseFnLf = pNoiseFnLF.DuplicateDeep() as FastNoiseLite;
         HeightImage = new();
@@ -43,6 +42,7 @@ public partial class HeightMap : GodotObject
 
     private unsafe void GenerateHeightmapData(object stateInfo)
     {
+        Bytes = new byte[4 * _size * _size * sizeof(float)];
         fixed(byte* bytePointer = Bytes)
         {
             float* floatPointer = (float*)bytePointer;
@@ -71,7 +71,6 @@ public partial class HeightMap : GodotObject
         stw.Start();
         RenderingServer.CallOnRenderThread(Callable.From(_terrain.ComputeTextures));
         stw.Stop();
-        // _terrain.ComputeTextures();
         GD.Print("Populate height image: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
 }
@@ -279,6 +278,8 @@ public partial class Terrain : StaticBody3D
         _surfaceImage = null;
         WindGen.Generate(ref _heightmaps[_heightmapIndex]);
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
+        int hmSize = 3 * ChunkSizeUnits;
+        _heightmaps[(_heightmapIndex + HEIGHTMAP_SWAP_COUNT - 1) % HEIGHTMAP_SWAP_COUNT].Bytes = new byte[4 * hmSize * hmSize * sizeof(float)];
         _scGen.Generate(ref _heightmaps[_heightmapIndex]);
         stw.Stop();
         GD.Print("Texture compute in " + stw.ElapsedMilliseconds + "ms");
