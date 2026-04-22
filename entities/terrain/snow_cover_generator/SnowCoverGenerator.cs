@@ -172,6 +172,17 @@ public partial class SnowCoverGenerator : Node
         UpdateHeightMap();
     }
 
+    public void GenerateCycleSequence()
+    {
+        Random rng = new Random(DateTime.Now.Microsecond);
+        for (uint i = 0; i < EventCycleCount; i++)
+        {
+            _cycleSequence[i].PrecipitationDuration = MaxPrecipitationDurationHours * (float)rng.NextDouble();
+            _cycleSequence[i].SunIntensity = (float)rng.NextDouble();
+            _cycleSequence[i].WindFactor = (float)(MinWindFactor + (1.0 - MinWindFactor) * rng.NextDouble());
+        }
+    }
+
     private void InitCompute()
     {
         _device = RenderingServer.GetRenderingDevice();
@@ -242,17 +253,6 @@ public partial class SnowCoverGenerator : Node
         for (uint i = 0; i < 2; i++)
         {
             _hmImages[i] = _device.TextureCreate(format, view);
-        }
-    }
-
-    private void GenerateCycleSequence()
-    {
-        Random rng = new Random(DateTime.Now.Microsecond);
-        for (uint i = 0; i < EventCycleCount; i++)
-        {
-            _cycleSequence[i].PrecipitationDuration = MaxPrecipitationDurationHours * (float)rng.NextDouble();
-            _cycleSequence[i].SunIntensity = (float)rng.NextDouble();
-            _cycleSequence[i].WindFactor = (float)(MinWindFactor + (1.0 - MinWindFactor) * rng.NextDouble());
         }
     }
 

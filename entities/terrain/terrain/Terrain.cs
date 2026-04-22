@@ -41,6 +41,23 @@ public partial class HeightMap : GodotObject
         Generate(maxHeight);
     }
 
+    public unsafe void ClearSnowBytes()
+    {
+        fixed(byte* bytePointer = Bytes)
+        {
+            float* floatPointer = (float*)bytePointer;
+            for (int i = 0; i < _size; i++)
+            {
+                for (int j = 0; j < _size; j++)
+                {
+                    floatPointer[4 * (i * _size + j) + 1] = 0.0f;
+                    floatPointer[4 * (i * _size + j) + 2] = 0.0f;
+                    floatPointer[4 * (i * _size + j) + 3] = 0.0f;
+                }
+            }
+        }
+    }
+
     private unsafe void GenerateHeightmapData(object stateInfo)
     {
         Bytes = new byte[4 * _size * _size * sizeof(float)];
@@ -302,12 +319,18 @@ public partial class Terrain : StaticBody3D
         Deformer.Unpause();
     }
 
+    public void RegenerateSnow()
+    {
+        _scGen.GenerateCycleSequence();
+        _heightmaps[_heightmapIndex].ClearSnowBytes();
+        RenderingServer.CallOnRenderThread(Callable.From(() => _scGen.Generate(ref _heightmaps[_heightmapIndex])));
+    }
+
     private async void GenerateInitial()
     {
         Player.SetProcess(false);
         LoadCam.Current = true;
         Player.Hide();
-
         UpdateHeightMap();
         await ToSignal(this, SignalName.FinishedGenerating);
         LoadCam.HideText();

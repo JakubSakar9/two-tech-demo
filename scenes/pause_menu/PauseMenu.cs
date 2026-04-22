@@ -86,14 +86,14 @@ public partial class PauseMenu : CanvasLayer
                 HideMenu();
                 break;
             case 1:
-                HideMenu(); // TODO: Actually change snow cover
+                // HideMenu();
+                TerrainRef.RegenerateSnow();
                 break;
             case 2:
                 HideMenu();
                 GetTree().ReloadCurrentScene();
                 break;
             case 3:
-                GD.Print("Should quit");
                 GetTree().Quit();
                 break;
         }
