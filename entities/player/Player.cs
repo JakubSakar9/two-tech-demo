@@ -21,6 +21,7 @@ public partial class Player : CharacterBody3D
     [Export] public AudioStream GrassFtStream;
     [Export] public AudioStream RockFtStream;
     [Export] public Terrain TerrainRef;
+    [Export] public PauseMenu PauseMenuRef;
 
     public float LeftFootHitDistance = 0.0f;
     public float RightFootHitDistance = 0.0f;
@@ -61,6 +62,10 @@ public partial class Player : CharacterBody3D
                 _spectatorMode ^= true;
                 Visible ^= true;
                 _mainCollider.Disabled ^= true;
+            }
+            if (keyEvent.Keycode == Key.Escape && keyEvent.IsPressed())
+            {
+                PauseMenuRef.ShowMenu();
             }
         }
         _gravity = (float) ProjectSettings.GetSetting("physics/3d/default_gravity");
@@ -186,6 +191,20 @@ public partial class Player : CharacterBody3D
     public void MakeFirstPerson()
     {
         _mainCamera.Current = true;
+    }
+
+    public void Pause()
+    {
+        SetPhysicsProcess(false);
+        SetProcessInput(false);
+        Input.MouseMode = Input.MouseModeEnum.Visible;
+    }
+
+    public void Unpause()
+    {
+        SetPhysicsProcess(true);
+        SetProcessInput(true);
+        Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     private void InitNodes()

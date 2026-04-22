@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Threading;
 using Godot;
@@ -134,6 +135,10 @@ public partial class Terrain : StaticBody3D
         _windTexture = new();
         WindGen.Init(heightmapSize, ref _windTexture);
         _scGen.Init((uint)(3 * ChunkSizeUnits), WindGen);
+
+        Random rng = new Random(DateTime.Now.Microsecond);
+        NoiseFunctionLF.Seed = rng.Next();
+        NoiseFunctionHF.Seed = rng.Next();
 
         for (uint i = 0; i < HEIGHTMAP_SWAP_COUNT; i++)
         {
@@ -285,11 +290,24 @@ public partial class Terrain : StaticBody3D
         GD.Print("Texture compute in " + stw.ElapsedMilliseconds + "ms");
     }
 
+    public void Pause()
+    {
+        SetPhysicsProcess(false);
+        Deformer.Pause();
+    }
+
+    public void Unpause()
+    {
+        SetPhysicsProcess(true);
+        Deformer.Unpause();
+    }
+
     private async void GenerateInitial()
     {
         Player.SetProcess(false);
         LoadCam.Current = true;
         Player.Hide();
+
         UpdateHeightMap();
         await ToSignal(this, SignalName.FinishedGenerating);
         LoadCam.HideText();

@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://c8o2mhpwnftnn"]
+
+[ext_resource type="LabelSettings" uid="uid://c16qwa01afivl" path="res://scenes/pause_menu/menu_item.tres" id="1_5bgjm"]
+[ext_resource type="Script" uid="uid://biokdsgu4ht3q" path="res://scenes/pause_menu/PauseMenu.cs" id="1_qcmsd"]
+
+[node name="PauseMenu" type="CanvasLayer" unique_id=1849571132]
+script = ExtResource("1_qcmsd")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1889723632]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.47, 0.47, 0.47, 0.49803922)
+
+[node name="PauseMenuContainer" type="CenterContainer" parent="." unique_id=1326902033]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuItems" type="VBoxContainer" parent="PauseMenuContainer" unique_id=1463777757]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ResumeLabel" type="Label" parent="PauseMenuContainer/MenuItems" unique_id=700990309]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+text = "Resume"
+label_settings = ExtResource("1_5bgjm")
+horizontal_alignment = 1
+
+[node name="SnowLabel" type="Label" parent="PauseMenuContainer/MenuItems" unique_id=1562380969]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+text = "Regenerate Snow"
+label_settings = ExtResource("1_5bgjm")
+horizontal_alignment = 1
+
+[node name="TerrainLabel" type="Label" parent="PauseMenuContainer/MenuItems" unique_id=1073562831]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+text = "Generate New Terrain"
+label_settings = ExtResource("1_5bgjm")
+horizontal_alignment = 1
+
+[node name="QuitLabel" type="Label" parent="PauseMenuContainer/MenuItems" unique_id=419815537]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+text = "Quit"
+label_settings = ExtResource("1_5bgjm")
+horizontal_alignment = 1

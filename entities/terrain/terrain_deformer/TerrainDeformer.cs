@@ -107,6 +107,18 @@ public partial class TerrainDeformer : Node3D
         return ref _painter.Pool.UsedChunks;
     }
 
+    public void Pause()
+    {
+        SetPhysicsProcess(false);
+        _painter.SetProcess(false);
+    }
+
+    public void Unpause()
+    {
+        SetPhysicsProcess(true);
+        _painter.SetProcess(true);
+    }
+
     private void InitNodes()
     {
         _painter = GetNode<TexturePainter>("%TexturePainter");

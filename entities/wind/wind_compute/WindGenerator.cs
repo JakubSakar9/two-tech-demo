@@ -61,8 +61,6 @@ public partial class WindGenerator : Node
 
 		_device.FreeRid(_shaderSurface);
 		_device.FreeRid(_shader3D);
-
-		_device.Free();
     }
 
 	public void Init(int texSize, ref Texture3Drd windTexture)
