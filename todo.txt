@@ -1,10 +1,11 @@
-- Create a menu with simple settings and controls
-- Add trees and rocks
-- Make more versions of trees (varying snow coverages) and rocks with varying snow coverage based on surrounding snow height
+- Create a few tree models
+- Create a system that pseudo-randomly distributes the trees on the terrain so that for one terrain seed, the layout is deterministic
+- Make more versions of trees with varying snow coverage based on surrounding snow height
 
 - 2nd playtesting
 
 - Make the terrain slightly larger (2 and 4 times)
+- Add sprint (have a second animation for player movement)
 - [2nd playtesing feedback fixes]
 - [Visual Improvements?]
 - [Game elements]
