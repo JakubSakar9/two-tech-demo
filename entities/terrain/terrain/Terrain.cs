@@ -102,6 +102,7 @@ public partial class Terrain : StaticBody3D
     [Export] public TerrainDeformer Deformer;
     [Export] public WindGenerator WindGen;
     [Export] public LoadingCamera LoadCam;
+    [Export] public VegetationManager VManager;
 
     [ExportCategory("Generation")]
     [Export] public float MaxAltitude = 32.0f;
@@ -333,6 +334,7 @@ public partial class Terrain : StaticBody3D
         Player.Hide();
         UpdateHeightMap();
         await ToSignal(this, SignalName.FinishedGenerating);
+        VManager.Generate(_heightmaps[_heightmapIndex], Vector2I.Zero);
         LoadCam.HideText();
         AlignPlayer();
         Player.Show();

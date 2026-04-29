@@ -1,4 +1,4 @@
-- Create a few tree models
+- Render trees in batches
 - Create a system that pseudo-randomly distributes the trees on the terrain so that for one terrain seed, the layout is deterministic
 - Make more versions of trees with varying snow coverage based on surrounding snow height
 

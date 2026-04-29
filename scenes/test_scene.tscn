@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://byhehfsbnes1h" path="res://entities/wind/wind_compute/wind_generator.tscn" id="5_qjeyg"]
 [ext_resource type="PackedScene" uid="uid://dcnep30ldxtum" path="res://entities/loading_camera/loading_camera.tscn" id="8_rnaij"]
 [ext_resource type="PackedScene" uid="uid://c8o2mhpwnftnn" path="res://scenes/pause_menu/pause_menu.tscn" id="9_h3xc6"]
+[ext_resource type="PackedScene" uid="uid://dwk6x6finntg" path="res://entities/terrain/vegetation_,manager/vegetation_manager.tscn" id="10_s36qc"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
 sky_cover_modulate = Color(1, 1, 1, 0)
@@ -45,20 +46,22 @@ environment = SubResource("Environment_nd71p")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=352656111]
 transform = Transform3D(0.9375372, 0.1361418, -0.32013953, 0.17701465, 0.6055196, 0.77589405, 0.2994824, -0.7840989, 0.5435981, 0, 8.436316, 0)
 
-[node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen", "LoadCam") instance=ExtResource("1_j8ivh")]
+[node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen", "LoadCam", "VManager") instance=ExtResource("1_j8ivh")]
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
 WindGen = NodePath("../WindGenerator")
 LoadCam = NodePath("../LoadingCamera")
+VManager = NodePath("../VegetationManager")
 MaxAltitude = 64.0
 RockGroundHeight = 36.0
 NoiseFunctionHF = ExtResource("2_3qnke")
 NoiseFunctionLF = ExtResource("3_wtsjf")
 
-[node name="Player" parent="." unique_id=826621672 node_paths=PackedStringArray("TerrainRef") instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.23542, 25.579044, -36.768616)
+[node name="Player" parent="." unique_id=826621672 node_paths=PackedStringArray("TerrainRef", "PauseMenuRef") instance=ExtResource("2_j8ivh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.579, 0)
 WalkSpeed = 1.7
 TerrainRef = NodePath("../Terrain")
+PauseMenuRef = NodePath("../PauseMenu")
 
 [node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
 visible = false
@@ -79,3 +82,5 @@ transform = Transform3D(1, 0, 0, 0, 0.79039025, 0.61260366, 0, -0.61260366, 0.79
 [node name="PauseMenu" parent="." unique_id=1849571132 node_paths=PackedStringArray("PlayerRef", "TerrainRef") instance=ExtResource("9_h3xc6")]
 PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")
+
+[node name="VegetationManager" parent="." unique_id=26462245 instance=ExtResource("10_s36qc")]

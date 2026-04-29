@@ -34,7 +34,7 @@ nodes/BlendSpace1D/node = SubResource("AnimationNodeBlendSpace1D_bls4j")
 nodes/BlendSpace1D/position = Vector2(-140, 120)
 node_connections = [&"output", 0, &"BlendSpace1D"]
 
-[sub_resource type="QuadMesh" id="QuadMesh_bectd"]
+[sub_resource type="QuadMesh" id="QuadMesh_26q78"]
 resource_local_to_scene = true
 material = ExtResource("5_8fjmc")
 size = Vector2(0.1, 0.1)
@@ -58,29 +58,28 @@ shape = SubResource("SphereShape3D_26q78")
 [node name="MainCamera" type="Camera3D" parent="." unique_id=880945308]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -0.2290341)
-cull_mask = 1048573
 
 [node name="WindAudio" parent="MainCamera" unique_id=1700427636 instance=ExtResource("2_fkugw")]
 
 [node name="PlayerSkin" parent="." unique_id=160291661 instance=ExtResource("2_abrql")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
-[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 104445345) index="0" unique_id=628352536]
-bones/0/position = Vector3(-3.6316833e-10, 0.8423126, 0.017193034)
+[node name="Skeleton3D" parent="PlayerSkin/Armature" parent_id_path=PackedInt32Array(160291661, 1170584340) index="0" unique_id=1907178092]
+bones/0/position = Vector3(-5.1703045e-11, 0.84630525, 0.017193029)
 bones/0/rotation = Quaternion(-0.03667094, 1.1912911e-07, -4.371518e-09, 0.9993274)
-bones/2/rotation = Quaternion(-0.013490466, -0.11684679, 0.9804313, -0.15785839)
+bones/2/rotation = Quaternion(-0.01478393, -0.11694527, 0.98325694, -0.13896473)
 bones/3/rotation = Quaternion(0.120499216, 0.0051755216, -0.09108298, 0.9885126)
-bones/4/rotation = Quaternion(-0.14473379, -0.019400302, 0.9878628, -0.05294322)
+bones/4/rotation = Quaternion(-0.1436781, -0.038586773, 0.9878544, -0.04484835)
 bones/4/scale = Vector3(0.9999639, 1, 0.99999154)
-bones/5/rotation = Quaternion(-0.12629105, 0.0032071942, -0.074825265, 0.9891621)
-bones/6/rotation = Quaternion(0.5972736, 0.034668237, 0.26931226, 0.75467426)
+bones/5/rotation = Quaternion(-0.092492156, 0.0032235098, -0.054800127, 0.9941991)
+bones/6/rotation = Quaternion(0.5852021, 0.033255193, 0.261704, 0.7667749)
 bones/6/scale = Vector3(0.9999807, 1.0000161, 0.9999879)
-bones/7/rotation = Quaternion(0.0075496305, -0.10108379, 0.9797157, 0.17286465)
+bones/7/rotation = Quaternion(0.0081897965, -0.10091137, 0.98132104, 0.16358176)
 bones/8/rotation = Quaternion(0.12049925, -0.005175505, 0.091082975, 0.9885126)
-bones/9/rotation = Quaternion(0.14676043, -0.019387452, 0.9875821, 0.052604154)
+bones/9/rotation = Quaternion(0.14570852, -0.03859025, 0.9875704, 0.044549957)
 bones/9/scale = Vector3(0.9999629, 1.0000001, 0.9999911)
-bones/10/rotation = Quaternion(-0.12629054, -0.003207176, 0.07482495, 0.98916215)
-bones/11/rotation = Quaternion(0.59683794, -0.032931797, -0.27035865, 0.75472265)
+bones/10/rotation = Quaternion(-0.09249148, -0.0032234848, 0.054799695, 0.9941991)
+bones/11/rotation = Quaternion(0.58473974, -0.031540282, -0.26276895, 0.7668358)
 bones/11/scale = Vector3(0.9999801, 1.0000168, 0.9999877)
 bones/12/position = Vector3(0.051505342, 0.51271045, 0.22282161)
 bones/12/rotation = Quaternion(-0.04340317, 0.7057735, 0.7057735, -0.04340317)
@@ -92,7 +91,7 @@ bones/15/rotation = Quaternion(0.009165643, 0.7070474, -0.7070474, -0.009165643)
 
 [node name="LeftFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="1" unique_id=307436259]
 unique_name_in_owner = true
-transform = Transform3D(-0.87675357, 0.106517956, -0.4688877, -0.4732306, -0.36394906, 0.80223006, -0.08518517, 0.92531484, 0.36951113, 0.16216758, 0.09390047, -0.09540221)
+transform = Transform3D(-0.8767536, 0.10651736, -0.4688869, -0.47323102, -0.363948, 0.8022301, -0.0851852, 0.92531484, 0.36951107, 0.16216743, 0.093857706, -0.09540229)
 bone_name = "foot.l"
 bone_idx = 6
 
@@ -104,7 +103,7 @@ max_polyphony = 4
 
 [node name="RightFootAttachment" type="BoneAttachment3D" parent="PlayerSkin/Armature/Skeleton3D" index="2" unique_id=1956819650]
 unique_name_in_owner = true
-transform = Transform3D(-0.87675226, -0.10651779, 0.46888727, 0.4732301, -0.36394924, 0.8022301, 0.08518472, 0.92531514, 0.3695109, -0.1621676, 0.09390044, -0.095402166)
+transform = Transform3D(-0.8767565, -0.10651651, 0.46887937, 0.4732213, -0.36397606, 0.8022234, 0.085196495, 0.92530435, 0.36953524, -0.16216744, 0.09385753, -0.09540227)
 bone_name = "foot.r"
 bone_idx = 11
 
@@ -127,6 +126,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
 
 [node name="SnowParticles" parent="." unique_id=121143072 instance=ExtResource("3_sglur")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6819016, 0)
-DefaultParticlePass = SubResource("QuadMesh_bectd")
+visible = false
+DefaultParticlePass = SubResource("QuadMesh_26q78")
 
 [editable path="PlayerSkin"]

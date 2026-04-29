@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dwk6x6finntg"]
+
+[ext_resource type="Script" uid="uid://dtaalh1xgd5oh" path="res://entities/terrain/vegetation_,manager/VegetationManager.cs" id="1_wwns7"]
+[ext_resource type="ArrayMesh" uid="uid://bpt5jt8vctcxs" path="res://assets/models/trees/tree_plain.res" id="2_apul3"]
+[ext_resource type="ArrayMesh" uid="uid://dkq6jkfppwnyb" path="res://assets/models/trees/tree_snow0.res" id="3_m3mnc"]
+[ext_resource type="ArrayMesh" uid="uid://vuy2t16jsn7n" path="res://assets/models/trees/tree_snow1.res" id="4_ff743"]
+[ext_resource type="ArrayMesh" uid="uid://ssp3uq1o3xcj" path="res://assets/models/trees/tree_snow2.res" id="5_hfpxd"]
+
+[node name="VegetationManager" type="Node3D" unique_id=26462245]
+script = ExtResource("1_wwns7")
+TreeMeshes = Array[Mesh]([ExtResource("2_apul3"), ExtResource("3_m3mnc"), ExtResource("4_ff743"), ExtResource("5_hfpxd")])
