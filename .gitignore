@@ -28,7 +28,7 @@ html/
 *.slo
 *.lo
 *.o
-*.obj
+# *.obj
 *.ko
 *.elf
 # Precompiled Headers

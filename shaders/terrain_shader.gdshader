@@ -18,8 +18,8 @@ uniform sampler2D[DISP_COUNT] displacement_maps: source_color, filter_linear_mip
 uniform bool[DISP_COUNT] used_maps;
 uniform vec2 chunk_origin = vec2(0.0);
 uniform float displacement_map_range = 64.0;
-uniform float near_fadeout_distance = 128.0;
-uniform float far_fadeout_distance = 192.0;
+uniform float near_fadeout_distance = 96.0;
+uniform float far_fadeout_distance = 128.0;
 uniform float displacement_darkening = 0.0;
 uniform float rock_fade_start = 11.0;
 uniform float rock_fade_end = 12.0;
@@ -46,11 +46,16 @@ void vertex() {
 	ivec2 high_vec = ivec2(1000000 * disp_row);
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
-
+	
 	vec4 height_val = texture(height_map, terrain_uv);
 	height = height_val.r;
 	float snow_height = height_val.g + height_val.b;
-	float displacement_v = texture(displacement_maps[tidx], rdisp_uv).r;
+	
+	float displacement_v = 0.0;
+	if (used_maps[tidx] && length(VERTEX) <= far_fadeout_distance) {
+		displacement_v = texture(displacement_maps[tidx], rdisp_uv).r;
+	}
+	
 	float snow_offset = (1.0 - displacement_v) * snow_height;
 	VERTEX.y = height + snow_offset;
 	
@@ -114,6 +119,7 @@ void fragment() {
 	ivec2 chunk = (ivec2(floor(disp_uv)) + high_vec + disp_row / 2) % disp_row;
 	int tidx = chunk.y * disp_row + chunk.x;
 	vec4 height_val = textureBicubic(height_map, terrain_uv);
+	//vec4 height_val = texture(height_map, terrain_uv);
 	
 	float snow_height = height_val.g + height_val.b;
 	
@@ -128,7 +134,6 @@ void fragment() {
 	
 	displacement = 0.0;
 	vec3 normal_disp = vec3(0.0);
-	//used_maps[tidx] &&
 	if (used_maps[tidx] && v_distance <= far_fadeout_distance) {
 		displacement = texture(displacement_maps[tidx], rdisp_uv).r;
 		vec3 disp_px = vec3(VERTEX.x + eps_h * displacement_map_range, VERTEX.y - snow_height * texture(displacement_maps[tidx], rdisp_uv + duvx).r + DETAIL_SIZE * texture(glitter_map, detail_uv + duvx).r, VERTEX.z);
@@ -172,7 +177,6 @@ void fragment() {
 	snowiness = clamp(snow_height / 0.02 + snow_var, 0.0, 1.0);
 	float grassiness = 1.0 - clamp((height - rock_fade_start) / (rock_fade_end - rock_fade_start), 0.0, 1.0);
 	grassiness *= min(1.0, 1.2 * pow(dot(vec3(0.0, 1.0, 0.0), normal_height), 16.0));
-	//grassiness = dot(vec3(0.0, 1.0, 0.0), normal_height);
 	vec3 grass_color = texture(grass_texture, detail_uv).rgb;
 	vec3 rock_color = texture(rock_texture, detail_uv).rgb;
 	vec3 ground_color = mix(rock_color, grass_color, grassiness);
