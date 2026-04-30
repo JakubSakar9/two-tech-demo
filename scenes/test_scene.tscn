@@ -3,7 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://beg2rrt3l6i6w" path="res://entities/terrain/terrain/terrain.tscn" id="1_j8ivh"]
 [ext_resource type="FastNoiseLite" uid="uid://blaoicf2sdqe1" path="res://entities/terrain/terrain/terrain_noise_function_hf.tres" id="2_3qnke"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
-[ext_resource type="PackedScene" uid="uid://cmd36yi002y6o" path="res://entities/debug_texture/debug_texture.tscn" id="3_nd71p"]
 [ext_resource type="FastNoiseLite" uid="uid://b81fr5ihv7v3j" path="res://entities/terrain/terrain/terrain_noise_function_lf.tres" id="3_wtsjf"]
 [ext_resource type="PackedScene" uid="uid://cb3tbsjpikoo3" path="res://entities/terrain/terrain_deformer/terrain_deformer.tscn" id="4_7ddre"]
 [ext_resource type="PackedScene" uid="uid://byhehfsbnes1h" path="res://entities/wind/wind_compute/wind_generator.tscn" id="5_qjeyg"]
@@ -45,6 +44,7 @@ environment = SubResource("Environment_nd71p")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=352656111]
 transform = Transform3D(0.9375372, 0.1361418, -0.32013953, 0.17701465, 0.6055196, 0.77589405, 0.2994824, -0.7840989, 0.5435981, 0, 8.436316, 0)
+directional_shadow_mode = 0
 
 [node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen", "LoadCam", "VManager") instance=ExtResource("1_j8ivh")]
 Player = NodePath("../Player")
@@ -63,10 +63,6 @@ WalkSpeed = 1.7
 TerrainRef = NodePath("../Terrain")
 PauseMenuRef = NodePath("../PauseMenu")
 
-[node name="DebugTexture" parent="." unique_id=2046541328 node_paths=PackedStringArray("Deformer") instance=ExtResource("3_nd71p")]
-visible = false
-Deformer = NodePath("../TerrainDeformer")
-
 [node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
 Player = NodePath("../Player")
 
@@ -84,3 +80,4 @@ PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")
 
 [node name="VegetationManager" parent="." unique_id=26462245 instance=ExtResource("10_s36qc")]
+HeightThreshold = 28.0

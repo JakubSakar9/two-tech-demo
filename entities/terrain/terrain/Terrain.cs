@@ -334,7 +334,7 @@ public partial class Terrain : StaticBody3D
         Player.Hide();
         UpdateHeightMap();
         await ToSignal(this, SignalName.FinishedGenerating);
-        VManager.Generate(_heightmaps[_heightmapIndex], Vector2I.Zero);
+        VManager.GenerateInitial(_heightmaps[_heightmapIndex], ChunkOrigin);
         LoadCam.HideText();
         AlignPlayer();
         Player.Show();

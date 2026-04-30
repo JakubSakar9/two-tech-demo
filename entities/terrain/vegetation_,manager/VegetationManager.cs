@@ -1,22 +1,22 @@
 using Godot;
 using System;
 
-struct ForestChunk
+struct ForestPatch
 {
-    public Vector2I ChunkCoord;
+    public Vector2I PatchCoord;
     public int NInstances;
     public Rid[] Rids;
 }
 
 public partial class VegetationManager : Node3D
 {
-    const int N_FOREST_CHUNKS = 9;
+    const int N_FOREST_PATCHES = 9;
 
     [Export] public Godot.Collections.Array<Mesh> TreeMeshes;
     [Export] public int TreeDensity = 64;
     [Export] public float HeightThreshold = 32.0f;
 
-    private ForestChunk[] _chunks;
+    private ForestPatch[] _patches;
     private int _seed = 0;
     private int _treeChunkLimit = 0;
 
@@ -24,12 +24,12 @@ public partial class VegetationManager : Node3D
     {
         base._Ready();
         _treeChunkLimit = TreeDensity * TreeDensity;
-        _chunks = new ForestChunk[N_FOREST_CHUNKS];
-        for (int i = 0; i < _chunks.Length; i++)
+        _patches = new ForestPatch[N_FOREST_PATCHES];
+        for (int i = 0; i < _patches.Length; i++)
         {
-            _chunks[i] = new()
+            _patches[i] = new()
             {
-                ChunkCoord =  new(0, 0),
+                PatchCoord =  new(0, 0),
                 NInstances = 0,
                 Rids = new Rid[_treeChunkLimit]
             };
@@ -39,7 +39,7 @@ public partial class VegetationManager : Node3D
     public override void _ExitTree()
     {
         base._ExitTree();
-        foreach (ForestChunk chunk in _chunks)
+        foreach (ForestPatch chunk in _patches)
         {
             for (int i = 0; i < chunk.NInstances; i++)
             {
@@ -48,7 +48,18 @@ public partial class VegetationManager : Node3D
         }
     }
 
-    public void Generate(HeightMap hm, Vector2I chunkCoord)
+    public void GenerateInitial(HeightMap hm, Vector2 chunkCoord)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                Generate(hm, new Vector2I(x, y), chunkCoord);
+            }
+        }
+    }
+
+    private void Generate(HeightMap hm, Vector2I patchCoord, Vector2 chunkCoord)
     {
         if (TreeMeshes.Count == 0)
         {
@@ -56,19 +67,19 @@ public partial class VegetationManager : Node3D
             return;
         }
         
-        int chunkX = (chunkCoord.X % 3 + 4) % 3;
-        int chunkY = (chunkCoord.Y % 3 + 4) % 3;
-        int chunkIdx = 3 * chunkY + chunkX;
-        float chunkSize = hm.HeightImage.GetWidth() / 3.0f;
-        float treeStep = chunkSize / (TreeDensity - 1);
-        Vector2 chunkOrigin = chunkSize * (Vector2)chunkCoord;
-        BoxMesh debugMesh = new();
+        int patchX = (patchCoord.X % 3 + 4) % 3;
+        int patchY = (patchCoord.Y % 3 + 4) % 3;
+        int patchIdx = 3 * patchY + patchX;
+        int imWidth = (int)hm.HeightImage.GetWidth();
+        float patchSize = hm.HeightImage.GetWidth() / 3.0f;
+        float treeStep = patchSize / TreeDensity;
+        Vector2 patchOrigin = patchSize * (Vector2)patchCoord;
 
-        if (_chunks[chunkIdx].NInstances > 0)
+        if (_patches[patchIdx].NInstances > 0)
         {
-            for (int i = 0; i < _chunks[chunkIdx].NInstances; i++)
+            for (int i = 0; i < _patches[patchIdx].NInstances; i++)
             {
-                RenderingServer.FreeRid(_chunks[chunkIdx].Rids[i]);
+                RenderingServer.FreeRid(_patches[patchIdx].Rids[i]);
             }
         }
 
@@ -79,11 +90,13 @@ public partial class VegetationManager : Node3D
         int iIdx = 0;
         for (int x = 0; x < TreeDensity; x++)
         {
-            float xOffset = x * treeStep - chunkSize / 2.0f;
-            int px = (int)chunkSize + (int)(x * treeStep);
+            float xOffset = x * treeStep - patchSize / 2.0f;
+            int px = (int)(patchOrigin.X + patchSize) + (int)(x * treeStep);
+            px = Math.Min(px, imWidth);
             for (int z = 0; z < TreeDensity; z++)
             {
-                int pz = (int)chunkSize + (int)(z * treeStep);
+                int pz = (int)(patchOrigin.Y + patchSize) + (int)(z * treeStep);
+                pz = Math.Min(pz, imWidth);
                 float hVal = hm.HeightImage.GetPixel(px, pz).R;
                 // Start with and if condition that filters out trees that would be too high up
                 if (hVal > HeightThreshold)
@@ -91,25 +104,25 @@ public partial class VegetationManager : Node3D
                     continue;
                 }
 
-                _chunks[chunkIdx].Rids[iIdx] = RenderingServer.InstanceCreate();
-                RenderingServer.InstanceSetBase(_chunks[chunkIdx].Rids[iIdx], treeRid);
-                RenderingServer.InstanceSetScenario(_chunks[chunkIdx].Rids[iIdx], scenario);
+                _patches[patchIdx].Rids[iIdx] = RenderingServer.InstanceCreate();
+                RenderingServer.InstanceSetBase(_patches[patchIdx].Rids[iIdx], treeRid);
+                RenderingServer.InstanceSetScenario(_patches[patchIdx].Rids[iIdx], scenario);
                 
-                float zOffset = z * treeStep - chunkSize / 2.0f;
+                float zOffset = z * treeStep - patchSize / 2.0f;
                 float scale = 1.0f * (HeightThreshold - hVal) / HeightThreshold + 1.0f;
                 Transform3D transform = new()
                 {
                     Basis = Transform.Basis.Scaled(scale * Vector3.One),
-                    Origin = new(chunkOrigin.X + xOffset, hVal, chunkOrigin.Y + zOffset)
+                    Origin = new(patchOrigin.X + xOffset, hVal, patchOrigin.Y + zOffset)
                 };
-                RenderingServer.InstanceSetTransform(_chunks[chunkIdx].Rids[iIdx], transform);
-                RenderingServer.InstanceSetVisible(_chunks[chunkIdx].Rids[iIdx], true);
-                RenderingServer.InstanceSetLayerMask(_chunks[chunkIdx].Rids[iIdx], 1);
+                RenderingServer.InstanceSetTransform(_patches[patchIdx].Rids[iIdx], transform);
+                RenderingServer.InstanceSetVisible(_patches[patchIdx].Rids[iIdx], true);
+                RenderingServer.InstanceSetLayerMask(_patches[patchIdx].Rids[iIdx], 1);
 
                 iIdx++;
             }
         }
         GD.Print("Created instances: " + iIdx);
-        _chunks[chunkIdx].NInstances = iIdx;
+        _patches[patchIdx].NInstances = iIdx;
     }
 }
