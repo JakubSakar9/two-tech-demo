@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://byhehfsbnes1h" path="res://entities/wind/wind_compute/wind_generator.tscn" id="5_qjeyg"]
 [ext_resource type="PackedScene" uid="uid://dcnep30ldxtum" path="res://entities/loading_camera/loading_camera.tscn" id="8_rnaij"]
 [ext_resource type="PackedScene" uid="uid://c8o2mhpwnftnn" path="res://scenes/pause_menu/pause_menu.tscn" id="9_h3xc6"]
+[ext_resource type="Texture2D" uid="uid://7au3p3ffsh1t" path="res://assets/textures/noise.png" id="10_6qxox"]
 [ext_resource type="PackedScene" uid="uid://dwk6x6finntg" path="res://entities/terrain/vegetation_,manager/vegetation_manager.tscn" id="10_s36qc"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
@@ -81,3 +82,5 @@ TerrainRef = NodePath("../Terrain")
 
 [node name="VegetationManager" parent="." unique_id=26462245 instance=ExtResource("10_s36qc")]
 SnowHeightLimits = Array[float]([24.0, 28.0, 65536.0])
+PerturbNoise = ExtResource("10_6qxox")
+PerturbStrength = 3.0

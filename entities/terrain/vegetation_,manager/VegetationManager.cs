@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Diagnostics;
 
 struct ForestPatch
 {
@@ -14,7 +15,9 @@ public partial class VegetationManager : Node3D
 
     [Export] public Godot.Collections.Array<Mesh> TreeMeshes;
     [Export] public Godot.Collections.Array<float> SnowHeightLimits;
+    [Export] public Texture2D PerturbNoise;
     [Export] public int TreeDensity = 64;
+    [Export] public float PerturbStrength = 1.0f;
     [Export] public float HeightThreshold = 32.0f;
     [Export] public float GradientThreshold = 0.5f;
 
@@ -63,6 +66,8 @@ public partial class VegetationManager : Node3D
 
     private void Generate(HeightMap hm, Vector2I patchCoord, Vector2 chunkCoord)
     {
+        Stopwatch stw = new();
+        stw.Start();
         if (TreeMeshes.Count == 0)
         {
             GD.PushWarning("Couldn't find any tree mesh");
@@ -76,6 +81,7 @@ public partial class VegetationManager : Node3D
         float patchSize = hm.HeightImage.GetWidth() / 3.0f;
         float treeStep = patchSize / TreeDensity;
         Vector2 patchOrigin = patchSize * (Vector2)patchCoord;
+        Image perturbIm = PerturbNoise.GetImage();
 
         if (_patches[patchIdx].NInstances > 0)
         {
@@ -90,13 +96,16 @@ public partial class VegetationManager : Node3D
         int iIdx = 0;
         for (int x = 0; x < TreeDensity; x++)
         {
-            float xOffset = x * treeStep - patchSize / 2.0f;
-            int px = (int)(patchOrigin.X + patchSize) + (int)(x * treeStep);
-            px = Math.Min(px, imWidth);
             for (int z = 0; z < TreeDensity; z++)
             {
-                int pz = (int)(patchOrigin.Y + patchSize) + (int)(z * treeStep);
-                pz = Math.Min(pz, imWidth);
+                Color perturbCol = perturbIm.GetPixel(x, z);
+                float xBase = x * treeStep + (perturbCol.R * 2.0f - 1.0f) * PerturbStrength;
+                int px = (int)(patchOrigin.X + patchSize) + (int)xBase;
+                px = Math.Clamp(px, 0, imWidth - 1);
+
+                float zBase = z * treeStep + (perturbCol.G * 2.0f - 1.0f) * PerturbStrength;
+                int pz = (int)(patchOrigin.Y + patchSize) + (int)zBase;
+                pz = Math.Clamp(pz, 0, imWidth - 1);
                 float h = hm.HeightImage.GetPixel(px, pz).R;
                 if (h > HeightThreshold)
                 {
@@ -133,7 +142,8 @@ public partial class VegetationManager : Node3D
                 RenderingServer.InstanceSetBase(_patches[patchIdx].Rids[iIdx], treeRid);
                 RenderingServer.InstanceSetScenario(_patches[patchIdx].Rids[iIdx], scenario);
                 
-                float zOffset = z * treeStep - patchSize / 2.0f;
+                float xOffset = xBase - patchSize / 2.0f;
+                float zOffset = zBase - patchSize / 2.0f;
                 float scale = 1.0f * (HeightThreshold - h) / HeightThreshold + 1.0f;
                 Transform3D transform = new()
                 {
@@ -147,7 +157,8 @@ public partial class VegetationManager : Node3D
                 iIdx++;
             }
         }
-        GD.Print("Created instances: " + iIdx);
         _patches[patchIdx].NInstances = iIdx;
+        stw.Stop();
+        GD.Print("Tree patch generated in: " + stw.Elapsed.TotalMilliseconds + "ms");
     }
 }
