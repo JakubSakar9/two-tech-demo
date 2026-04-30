@@ -423,7 +423,7 @@ public partial class Terrain : StaticBody3D
 
         if (_initial)
         {
-            VManager.GenerateInitial(_heightmaps[_heightmapIndex], ChunkOrigin);
+            VManager.GenerateInitial(_heightmaps[_heightmapIndex]);
         }
         else
         {
