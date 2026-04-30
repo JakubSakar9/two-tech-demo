@@ -79,7 +79,7 @@ public partial class HeightMap : GodotObject
         CallDeferred(MethodName.PopulateHeightImage);
     }
 
-     private void PopulateHeightImage()
+    private void PopulateHeightImage()
     {
         HeightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgbaf, Bytes);
         HeightImage.GenerateMipmaps();
@@ -135,6 +135,7 @@ public partial class Terrain : StaticBody3D
     private Image _collisionImage;
     
     private int _heightmapIndex = HEIGHTMAP_SWAP_COUNT - 1;
+    private bool _initial = true;
 
     public override void _Ready()
     {
@@ -334,7 +335,6 @@ public partial class Terrain : StaticBody3D
         Player.Hide();
         UpdateHeightMap();
         await ToSignal(this, SignalName.FinishedGenerating);
-        VManager.GenerateInitial(_heightmaps[_heightmapIndex], ChunkOrigin);
         LoadCam.HideText();
         AlignPlayer();
         Player.Show();
@@ -420,6 +420,17 @@ public partial class Terrain : StaticBody3D
 
         SetShaderParam("height_map", _heightmaps[_heightmapIndex].Height);
         SetShaderParam("chunk_origin", ChunkOrigin);
+
+        if (_initial)
+        {
+            VManager.GenerateInitial(_heightmaps[_heightmapIndex], ChunkOrigin);
+        }
+        else
+        {
+            // Generate just one row
+        }
+
+        _initial = false;
     }
 
     private void SyncWindSurface(Image surfaceImage)

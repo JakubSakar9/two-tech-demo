@@ -13,8 +13,10 @@ public partial class VegetationManager : Node3D
     const int N_FOREST_PATCHES = 9;
 
     [Export] public Godot.Collections.Array<Mesh> TreeMeshes;
+    [Export] public Godot.Collections.Array<float> SnowHeightLimits;
     [Export] public int TreeDensity = 64;
     [Export] public float HeightThreshold = 32.0f;
+    [Export] public float GradientThreshold = 0.5f;
 
     private ForestPatch[] _patches;
     private int _seed = 0;
@@ -85,8 +87,6 @@ public partial class VegetationManager : Node3D
 
         Rid scenario = GetWorld3D().Scenario;
 
-        var treeRid = TreeMeshes[0].GetRid();
-
         int iIdx = 0;
         for (int x = 0; x < TreeDensity; x++)
         {
@@ -97,23 +97,48 @@ public partial class VegetationManager : Node3D
             {
                 int pz = (int)(patchOrigin.Y + patchSize) + (int)(z * treeStep);
                 pz = Math.Min(pz, imWidth);
-                float hVal = hm.HeightImage.GetPixel(px, pz).R;
-                // Start with and if condition that filters out trees that would be too high up
-                if (hVal > HeightThreshold)
+                float h = hm.HeightImage.GetPixel(px, pz).R;
+                if (h > HeightThreshold)
                 {
                     continue;
                 }
+
+                int imgW = hm.HeightImage.GetWidth();
+                int imgH = hm.HeightImage.GetHeight();
+
+                float hmx = hm.HeightImage.GetPixel(Mathf.Max(px - 1, 0),        pz).R;
+                float hpx = hm.HeightImage.GetPixel(Mathf.Min(px + 1, imgW - 1), pz).R;
+                float hmz = hm.HeightImage.GetPixel(px, Mathf.Max(pz - 1, 0)       ).R;
+                float hpz = hm.HeightImage.GetPixel(px, Mathf.Min(pz + 1, imgH - 1)).R;
+
+                float gradPX = Mathf.Abs(hpx - h);
+                float gradMX = Mathf.Abs(hmx - h);
+                float gradPZ = Mathf.Abs(hpz - h);
+                float gradMZ = Mathf.Abs(hmz - h);
+                float gradientMagnitude = Mathf.Sqrt(gradPX * gradMX + gradPZ * gradMZ);
+
+                if (gradientMagnitude > GradientThreshold)
+                {
+                    continue;
+                }
+
+                int treeIdx;
+                for (treeIdx = 0; treeIdx < TreeMeshes.Count; treeIdx++)
+                {
+                    if (h < SnowHeightLimits[treeIdx]) break;
+                }
+                var treeRid = TreeMeshes[treeIdx].GetRid();
 
                 _patches[patchIdx].Rids[iIdx] = RenderingServer.InstanceCreate();
                 RenderingServer.InstanceSetBase(_patches[patchIdx].Rids[iIdx], treeRid);
                 RenderingServer.InstanceSetScenario(_patches[patchIdx].Rids[iIdx], scenario);
                 
                 float zOffset = z * treeStep - patchSize / 2.0f;
-                float scale = 1.0f * (HeightThreshold - hVal) / HeightThreshold + 1.0f;
+                float scale = 1.0f * (HeightThreshold - h) / HeightThreshold + 1.0f;
                 Transform3D transform = new()
                 {
                     Basis = Transform.Basis.Scaled(scale * Vector3.One),
-                    Origin = new(patchOrigin.X + xOffset, hVal, patchOrigin.Y + zOffset)
+                    Origin = new(patchOrigin.X + xOffset, h, patchOrigin.Y + zOffset)
                 };
                 RenderingServer.InstanceSetTransform(_patches[patchIdx].Rids[iIdx], transform);
                 RenderingServer.InstanceSetVisible(_patches[patchIdx].Rids[iIdx], true);

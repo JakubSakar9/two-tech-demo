@@ -80,4 +80,4 @@ PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")
 
 [node name="VegetationManager" parent="." unique_id=26462245 instance=ExtResource("10_s36qc")]
-HeightThreshold = 28.0
+SnowHeightLimits = Array[float]([24.0, 28.0, 65536.0])
