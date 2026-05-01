@@ -25,7 +25,7 @@ public partial class VegetationManager : Node3D
 
     private ForestPatch[] _patches;
     private Godot.Collections.Array<Vector2I> _treePositions;
-    private int _seed = 0;
+    private Vector2I _centralPatchCoord;
 
     public override void _Ready()
     {
@@ -40,6 +40,7 @@ public partial class VegetationManager : Node3D
                 Rids = new Rid[TreeCountLimit]
             };
         }
+        _centralPatchCoord = Vector2I.Zero;
     }
 
     public override void _ExitTree()
@@ -62,6 +63,26 @@ public partial class VegetationManager : Node3D
             for (int y = -1; y <= 1; y++)
             {
                 Generate(hm, new Vector2I(x, y));
+            }
+        }
+    }
+
+    public void GenerateRow(HeightMap hm, Vector2I direction)
+    {
+        _centralPatchCoord += direction;
+
+        if (direction.X == 0)
+        {
+            for (int i = -1; i <= 1; i++)
+            {
+                Generate(hm, _centralPatchCoord + direction + new Vector2I(i, 0));
+            }
+        }
+        else
+        {
+            for (int i = -1; i <= 1; i++)
+            {
+                Generate(hm, _centralPatchCoord + direction + new Vector2I(0, i));
             }
         }
     }
@@ -102,10 +123,11 @@ public partial class VegetationManager : Node3D
         int patchX = (patchCoord.X % 3 + 4) % 3;
         int patchY = (patchCoord.Y % 3 + 4) % 3;
         int patchIdx = 3 * patchY + patchX;
-        int imWidth = (int)hm.HeightImage.GetWidth();
+        int imWidth = hm.HeightImage.GetWidth();
         float patchSize = hm.HeightImage.GetWidth() / 3.0f;
         float treeStep = patchSize / TreeScatterDetail;
         Vector2 patchOrigin = patchSize * (Vector2)patchCoord;
+        Vector2 patchOffset = patchSize * (Vector2)(patchCoord - _centralPatchCoord);
 
         if (_patches[patchIdx].NInstances > 0)
         {
@@ -121,11 +143,11 @@ public partial class VegetationManager : Node3D
         foreach (Vector2I pos in _treePositions)
         {
             float xBase = pos.X * treeStep;
-            int px = (int)(patchOrigin.X + patchSize) + (int)xBase;
+            int px = (int)(patchOffset.X + patchSize) + (int)xBase;
             px = Math.Clamp(px, 0, imWidth - 1);
 
             float zBase = pos.Y * treeStep;
-            int pz = (int)(patchOrigin.Y + patchSize) + (int)zBase;
+            int pz = (int)(patchOffset.Y + patchSize) + (int)zBase;
             pz = Math.Clamp(pz, 0, imWidth - 1);
             float h = hm.HeightImage.GetPixel(px, pz).R;
             if (h > HeightThreshold)

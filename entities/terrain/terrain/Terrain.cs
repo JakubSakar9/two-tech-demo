@@ -133,6 +133,7 @@ public partial class Terrain : StaticBody3D
     private Image _surfaceImage;
     private Texture3Drd _windTexture;
     private Image _collisionImage;
+    private Vector2I _changeDirection;
     
     private int _heightmapIndex = HEIGHTMAP_SWAP_COUNT - 1;
     private bool _initial = true;
@@ -150,6 +151,7 @@ public partial class Terrain : StaticBody3D
         _heightMapShape = new HeightMapShape3D();
 
         int heightmapSize = 3 * ChunkSizeUnits;
+        _changeDirection = Vector2I.Zero;
 
         _windTexture = new();
         WindGen.Init(heightmapSize, ref _windTexture);
@@ -350,21 +352,25 @@ public partial class Terrain : StaticBody3D
         if (playerOffset.X < -thresholdDistance)
         {
             ChunkOrigin.X -= ChunkSizeUnits;
+            _changeDirection = Vector2I.Left;
             updateChunk = true;
         }
         if (playerOffset.X > thresholdDistance)
         {
             ChunkOrigin.X += ChunkSizeUnits;
+            _changeDirection = Vector2I.Right;
             updateChunk = true;
         }
         if (playerOffset.Y < -thresholdDistance)
         {
             ChunkOrigin.Y -= ChunkSizeUnits;
+            _changeDirection = Vector2I.Up;
             updateChunk = true;
         }
         if (playerOffset.Y > thresholdDistance)
         {
             ChunkOrigin.Y += ChunkSizeUnits;
+            _changeDirection = Vector2I.Down;
             updateChunk = true;
         }
 
@@ -427,7 +433,7 @@ public partial class Terrain : StaticBody3D
         }
         else
         {
-            // Generate just one row
+            VManager.GenerateRow(_heightmaps[_heightmapIndex], _changeDirection);
         }
 
         _initial = false;
