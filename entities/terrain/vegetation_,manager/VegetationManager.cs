@@ -1,12 +1,14 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 struct ForestPatch
 {
     public Vector2I PatchCoord;
     public int NInstances;
-    public Rid[] Rids;
+    public Rid[] VInstances;
+    public Rid[] Bodies;
 }
 
 public partial class VegetationManager : Node3D
@@ -26,6 +28,7 @@ public partial class VegetationManager : Node3D
     private ForestPatch[] _patches;
     private Godot.Collections.Array<Vector2I> _treePositions;
     private Vector2I _centralPatchCoord;
+    private Rid _treeCollisionShape;
 
     public override void _Ready()
     {
@@ -37,10 +40,18 @@ public partial class VegetationManager : Node3D
             {
                 PatchCoord =  new(0, 0),
                 NInstances = 0,
-                Rids = new Rid[TreeCountLimit]
+                VInstances = new Rid[TreeCountLimit],
+                Bodies = new Rid[TreeCountLimit]
             };
         }
         _centralPatchCoord = Vector2I.Zero;
+        _treeCollisionShape = PhysicsServer3D.CylinderShapeCreate();
+        Godot.Collections.Dictionary<string, float> paramDict = new()
+        {
+            {"height", 3.0f},
+            {"radius", 0.5f}
+        };
+        PhysicsServer3D.ShapeSetData(_treeCollisionShape, paramDict);
     }
 
     public override void _ExitTree()
@@ -50,7 +61,7 @@ public partial class VegetationManager : Node3D
         {
             for (int i = 0; i < chunk.NInstances; i++)
             {
-                RenderingServer.FreeRid(chunk.Rids[i]);
+                RenderingServer.FreeRid(chunk.VInstances[i]);
             }
         }
     }
@@ -133,11 +144,13 @@ public partial class VegetationManager : Node3D
         {
             for (int i = 0; i < _patches[patchIdx].NInstances; i++)
             {
-                RenderingServer.FreeRid(_patches[patchIdx].Rids[i]);
+                RenderingServer.FreeRid(_patches[patchIdx].VInstances[i]);
+                PhysicsServer3D.FreeRid(_patches[patchIdx].Bodies[i]);
             }
         }
 
         Rid scenario = GetWorld3D().Scenario;
+        Rid space = GetWorld3D().Space;
 
         int iIdx = 0;
         foreach (Vector2I pos in _treePositions)
@@ -181,9 +194,14 @@ public partial class VegetationManager : Node3D
             }
             var treeRid = TreeMeshes[treeIdx].GetRid();
 
-            _patches[patchIdx].Rids[iIdx] = RenderingServer.InstanceCreate();
-            RenderingServer.InstanceSetBase(_patches[patchIdx].Rids[iIdx], treeRid);
-            RenderingServer.InstanceSetScenario(_patches[patchIdx].Rids[iIdx], scenario);
+            _patches[patchIdx].VInstances[iIdx] = RenderingServer.InstanceCreate();
+            _patches[patchIdx].Bodies[iIdx] = PhysicsServer3D.BodyCreate();
+
+            RenderingServer.InstanceSetBase(_patches[patchIdx].VInstances[iIdx], treeRid);
+            RenderingServer.InstanceSetScenario(_patches[patchIdx].VInstances[iIdx], scenario);
+            PhysicsServer3D.BodySetMode(_patches[patchIdx].Bodies[iIdx], PhysicsServer3D.BodyMode.Static);
+            PhysicsServer3D.BodyAddShape(_patches[patchIdx].Bodies[iIdx], _treeCollisionShape);
+            PhysicsServer3D.BodySetSpace(_patches[patchIdx].Bodies[iIdx], space);
             
             float xOffset = xBase - patchSize / 2.0f;
             float zOffset = zBase - patchSize / 2.0f;
@@ -193,9 +211,15 @@ public partial class VegetationManager : Node3D
                 Basis = Transform.Basis.Scaled(scale * Vector3.One),
                 Origin = new(patchOrigin.X + xOffset, h, patchOrigin.Y + zOffset)
             };
-            RenderingServer.InstanceSetTransform(_patches[patchIdx].Rids[iIdx], transform);
-            RenderingServer.InstanceSetVisible(_patches[patchIdx].Rids[iIdx], true);
-            RenderingServer.InstanceSetLayerMask(_patches[patchIdx].Rids[iIdx], 1);
+            Transform3D phTransform = new()
+            {
+                Basis = transform.Basis,
+                Origin = transform.Origin + 2.0f * Vector3.Up
+            };
+            RenderingServer.InstanceSetTransform(_patches[patchIdx].VInstances[iIdx], transform);
+            RenderingServer.InstanceSetVisible(_patches[patchIdx].VInstances[iIdx], true);
+            RenderingServer.InstanceSetLayerMask(_patches[patchIdx].VInstances[iIdx], 1);
+            PhysicsServer3D.BodySetState(_patches[patchIdx].Bodies[iIdx], PhysicsServer3D.BodyState.Transform, phTransform);
 
             iIdx++;
 
