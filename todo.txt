@@ -1,7 +1,3 @@
-- Make trees work properly when changing terrain chunks
-
-- 2nd playtesting
-
 - Make the terrain slightly larger (2 and 4 times)
 - Add sprint (have a second animation for player movement)
 - [2nd playtesing feedback fixes]
