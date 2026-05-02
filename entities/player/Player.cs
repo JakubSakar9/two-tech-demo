@@ -35,6 +35,7 @@ public partial class Player : CharacterBody3D
     private AudioStreamPlayer3D _leftFootAudio;
     private AudioStreamPlayer3D _rightFootAudio;
     private RayCast3D _heightRaycast;
+    private RayCast3D _correctionRaycast;
     private CollisionShape3D _mainCollider;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
@@ -58,7 +59,15 @@ public partial class Player : CharacterBody3D
         {
             if (keyEvent.Keycode == Key.F1 && keyEvent.IsPressed())
             {
-                if (_spectatorMode) TerrainRef.AlignPlayer(true);
+                if (_spectatorMode)
+                {
+                    TerrainRef.AlignPlayer(true);
+                    FloorMaxAngle = Mathf.DegToRad(45.0f);
+                }
+                else
+                {
+                    FloorMaxAngle = Mathf.DegToRad(89.5f);
+                }
                 _spectatorMode ^= true;
                 Visible ^= true;
                 _mainCollider.Disabled ^= true;
@@ -122,6 +131,11 @@ public partial class Player : CharacterBody3D
         }
         if (!_spectatorMode) Velocity += Gravity(delta);
         MoveAndSlide();
+
+        if (_spectatorMode && _correctionRaycast.IsColliding())
+        {
+            Position += 2.0f * (_correctionRaycast.GetCollisionPoint() - _mainCamera.GlobalPosition);
+        }
 
         float motionParameter = rawVelocity.Length() / WalkSpeed;
         _animationTree.Set("parameters/BlendSpace1D/blend_position", motionParameter);
@@ -216,6 +230,7 @@ public partial class Player : CharacterBody3D
         _leftFootAudio = GetNode<AudioStreamPlayer3D>("%LeftFootAudio");
         _rightFootAudio = GetNode<AudioStreamPlayer3D>("%RightFootAudio");
         _heightRaycast = GetNode<RayCast3D>("%HeightRaycast");
+        _correctionRaycast = GetNode<RayCast3D>("%CorrectionRaycast");
         _mainCollider = GetNode<CollisionShape3D>("%MainCollider");
     }
 
