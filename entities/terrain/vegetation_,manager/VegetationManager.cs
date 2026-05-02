@@ -49,7 +49,7 @@ public partial class VegetationManager : Node3D
         Godot.Collections.Dictionary<string, float> paramDict = new()
         {
             {"height", 3.0f},
-            {"radius", 0.5f}
+            {"radius", 0.6f}
         };
         PhysicsServer3D.ShapeSetData(_treeCollisionShape, paramDict);
     }
@@ -214,7 +214,7 @@ public partial class VegetationManager : Node3D
             Transform3D phTransform = new()
             {
                 Basis = transform.Basis,
-                Origin = transform.Origin + 2.0f * Vector3.Up
+                Origin = transform.Origin + scale * 2.0f * Vector3.Up
             };
             RenderingServer.InstanceSetTransform(_patches[patchIdx].VInstances[iIdx], transform);
             RenderingServer.InstanceSetVisible(_patches[patchIdx].VInstances[iIdx], true);
