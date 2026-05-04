@@ -67,7 +67,6 @@ public partial class PauseMenu : CanvasLayer
         {
             _selectedIdx = idx;
             _labels[idx].Modulate = Colors.DimGray;
-            GD.Print("Entered", idx);
         };
         _labels[idx].MouseExited += () =>
         {

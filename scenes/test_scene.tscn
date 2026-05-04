@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://rlxdv0y863e"]
 
+[ext_resource type="Script" uid="uid://dhrwojt28uv7v" path="res://scenes/SunLight.cs" id="1_6qxox"]
 [ext_resource type="PackedScene" uid="uid://beg2rrt3l6i6w" path="res://entities/terrain/terrain/terrain.tscn" id="1_j8ivh"]
 [ext_resource type="FastNoiseLite" uid="uid://blaoicf2sdqe1" path="res://entities/terrain/terrain/terrain_noise_function_hf.tres" id="2_3qnke"]
 [ext_resource type="PackedScene" uid="uid://d10bpbm16fk1e" path="res://entities/player/player.tscn" id="2_j8ivh"]
@@ -12,7 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://dwk6x6finntg" path="res://entities/terrain/vegetation_,manager/vegetation_manager.tscn" id="10_s36qc"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_g7g4h"]
-sky_cover_modulate = Color(1, 1, 1, 0)
+sky_top_color = Color(0.29688686, 0.4490441, 0.6909727, 1)
 ground_bottom_color = Color(0.64705884, 0.654902, 0.67058825, 1)
 ground_curve = 0.017411066
 sun_angle_max = 85.43
@@ -28,8 +29,7 @@ ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
 reflected_light_source = 2
 ssao_enabled = true
-ssil_radius = 10.0
-ssil_intensity = 4.0
+ssil_enabled = true
 fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.64705884, 0.654902, 0.67058825, 1)
@@ -44,9 +44,20 @@ volumetric_fog_density = 0.015
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=263366814]
 environment = SubResource("Environment_nd71p")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=352656111]
+[node name="SunLight" type="DirectionalLight3D" parent="." unique_id=352656111 node_paths=PackedStringArray("Environment")]
 transform = Transform3D(0.9375372, 0.1361418, -0.32013953, 0.17701465, 0.6055196, 0.77589405, 0.2994824, -0.7840989, 0.5435981, 0, 8.436316, 0)
-directional_shadow_mode = 0
+light_energy = 0.4
+light_indirect_energy = 0.4
+light_volumetric_fog_energy = 0.4
+light_specular = 0.4
+shadow_enabled = true
+shadow_opacity = 0.4
+shadow_blur = 2.0
+script = ExtResource("1_6qxox")
+Environment = NodePath("../WorldEnvironment")
+SkyClearColor = Color(0.29803923, 0.4509804, 0.6901961, 1)
+SkyCloudyColor = Color(0.38431373, 0.45490196, 0.54901963, 1)
+HorizonCloudyColor = Color(0.64705884, 0.654902, 0.67058825, 1)
 
 [node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen", "LoadCam", "VManager") instance=ExtResource("1_j8ivh")]
 Player = NodePath("../Player")

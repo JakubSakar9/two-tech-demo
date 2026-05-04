@@ -188,18 +188,26 @@ void fragment() {
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
 	float roughness_snow = 1.0 - (dot(texture(texture_roughness, rdisp_uv), roughness_texture_channel) + 3.0) / 4.0;
 	ROUGHNESS = mix(0.9, roughness_snow, snowiness);
-}
-
-void light() {
+	
 	float fresnel = 1.0 - dot(VIEW, NORMAL);
 	float fresnel2 = fresnel * fresnel;
 	float fresnel3 = fresnel * fresnel2;
 	float fresnel4 = fresnel2 * fresnel2;
 	float glitter = pow(texture(glitter_map, 30.0 * disp_uv).r, 10.0);
 	float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
-	float disp_ao = (1.0 - displacement_darkening * displacement);
-	SPECULAR_LIGHT = 0.5 * (1.0 - ROUGHNESS) * vec3(rim_specular);
-	vec3 snow_diffuse = 0.4 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
-	vec3 ground_diffuse = ALBEDO * dot(LIGHT, NORMAL);
-	DIFFUSE_LIGHT = mix(ground_diffuse, snow_diffuse, snowiness);
+	SPECULAR = 0.5 * (1.0 - ROUGHNESS) * rim_specular;
 }
+
+//void light() {
+	//float fresnel = 1.0 - dot(VIEW, NORMAL);
+	//float fresnel2 = fresnel * fresnel;
+	//float fresnel3 = fresnel * fresnel2;
+	//float fresnel4 = fresnel2 * fresnel2;
+	//float glitter = pow(texture(glitter_map, 30.0 * disp_uv).r, 10.0);
+	//float rim_specular = glitter * fresnel2 * fresnel3 / 3.0 + fresnel4 * fresnel4 / 4.0;
+	//float disp_ao = (1.0 - displacement_darkening * displacement);
+	//SPECULAR_LIGHT = 0.5 * (1.0 - ROUGHNESS) * vec3(rim_specular);
+	//vec3 snow_diffuse = 0.4 * ALBEDO * dot(LIGHT, NORMAL) * disp_flatness * disp_ao;
+	//vec3 ground_diffuse = ALBEDO * dot(LIGHT, NORMAL);
+	//DIFFUSE_LIGHT = mix(ground_diffuse, snow_diffuse, snowiness);
+//}
