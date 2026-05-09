@@ -325,6 +325,7 @@ public partial class Terrain : StaticBody3D
 
     public void RegenerateSnow()
     {
+        _changeDirection = Vector2I.Zero;
         _scGen.GenerateCycleSequence();
         _heightmaps[_heightmapIndex].ClearSnowBytes();
         RenderingServer.CallOnRenderThread(Callable.From(() => _scGen.Generate(ref _heightmaps[_heightmapIndex])));
