@@ -80,6 +80,7 @@ public partial class VegetationManager : Node3D
 
     public void GenerateRow(HeightMap hm, Vector2I direction)
     {
+        if (direction == Vector2I.Zero) return;
         _centralPatchCoord += direction;
 
         if (direction.X == 0)
