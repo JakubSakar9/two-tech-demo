@@ -89,6 +89,7 @@ SaveDebugSurfaceTexture = false
 transform = Transform3D(1, 0, 0, 0, 0.79039025, 0.61260366, 0, -0.61260366, 0.79039025, 0, 27.633942, 35.649845)
 
 [node name="PauseMenu" parent="." unique_id=1849571132 node_paths=PackedStringArray("PlayerRef", "TerrainRef") instance=ExtResource("9_h3xc6")]
+visible = false
 PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")
 

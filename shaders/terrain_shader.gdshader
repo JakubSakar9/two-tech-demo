@@ -151,17 +151,17 @@ void fragment() {
 	}
 	
 	disp_flatness = dot(normal_disp, vec3(0.0, 1.0, 0.0));
-	float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
+	//float dot_diff = disp_flatness - dot(normal_height, vec3(0.0, 1.0, 0.0));
 	
-	if (dot_diff > 0.05) {
+	if (displacement == 0.0) {
 		NORMAL = normal_height;
 	}
-	else if (dot_diff < -0.1) {
+	else if (displacement > 0.1) {
 		NORMAL = normal_disp;
 	}
 	else {
-		float t = (dot_diff + 0.1) / 0.15;
-		NORMAL = mix(normal_disp, normal_height, t);
+		float t = displacement / 0.1;
+		NORMAL = mix(normal_height, normal_disp, t);
 	}
 	
 	float fade_t = clamp((v_distance - near_fadeout_distance) / (far_fadeout_distance - near_fadeout_distance), 0.0, 1.0);

@@ -34,8 +34,8 @@ public partial class Player : CharacterBody3D
     private BoneAttachment3D _rightFootAttachment;
     private AudioStreamPlayer3D _leftFootAudio;
     private AudioStreamPlayer3D _rightFootAudio;
-    private RayCast3D _heightRaycast;
-    private RayCast3D _correctionRaycast;
+    private RayCast3D _heightRayCast;
+    private RayCast3D _correctionRayCast;
     private CollisionShape3D _mainCollider;
     private Vector3 _gravityVelocity = Vector3.Zero;
     private float _gravity;
@@ -132,21 +132,21 @@ public partial class Player : CharacterBody3D
         if (!_spectatorMode) Velocity += Gravity(delta);
         MoveAndSlide();
 
-        if (_spectatorMode && _correctionRaycast.IsColliding())
+        if (_spectatorMode && _correctionRayCast.IsColliding())
         {
-            Position += 2.0f * (_correctionRaycast.GetCollisionPoint() - _mainCamera.GlobalPosition);
+            Position += 2.0f * (_correctionRayCast.GetCollisionPoint() - _mainCamera.GlobalPosition);
         }
 
         float motionParameter = rawVelocity.Length() / WalkSpeed;
         _animationTree.Set("parameters/BlendSpace1D/blend_position", motionParameter);
 
-        _heightRaycast.ForceRaycastUpdate();
-        if (_heightRaycast.IsColliding() && !_spectatorMode)
+        _heightRayCast.ForceRaycastUpdate();
+        if (_heightRayCast.IsColliding() && !_spectatorMode)
         {
             float hitDistance = 0.0f;
             if (!IsOnFloor())
             {
-                hitDistance = _heightRaycast.GetCollisionPoint().DistanceTo(_heightRaycast.GlobalPosition) - _heightRaycast.Position.Y;
+                hitDistance = _heightRayCast.GetCollisionPoint().DistanceTo(_heightRayCast.GlobalPosition) - _heightRayCast.Position.Y;
             }
             LeftFootHitDistance = hitDistance + _leftFootAttachment.Position.Y - _initialAttachmentHeight;
             RightFootHitDistance = hitDistance + _rightFootAttachment.Position.Y - _initialAttachmentHeight;
@@ -166,7 +166,7 @@ public partial class Player : CharacterBody3D
     public void PlayFootstep(FootSide side, bool playGrass)
     {
         Terrain tr = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
-        Vector3 normal = _heightRaycast.GetCollisionNormal();
+        Vector3 normal = _heightRayCast.GetCollisionNormal();
         float grassinessMult = Mathf.Min(1.2f * Mathf.Pow(normal.Dot(Vector3.Up), 16.0f), 1.0f);
         if (side == FootSide.Left)
         {
@@ -229,8 +229,8 @@ public partial class Player : CharacterBody3D
         _rightFootAttachment = GetNode<BoneAttachment3D>("%RightFootAttachment");
         _leftFootAudio = GetNode<AudioStreamPlayer3D>("%LeftFootAudio");
         _rightFootAudio = GetNode<AudioStreamPlayer3D>("%RightFootAudio");
-        _heightRaycast = GetNode<RayCast3D>("%HeightRaycast");
-        _correctionRaycast = GetNode<RayCast3D>("%CorrectionRaycast");
+        _heightRayCast = GetNode<RayCast3D>("%HeightRayCast");
+        _correctionRayCast = GetNode<RayCast3D>("%CorrectionRayCast");
         _mainCollider = GetNode<CollisionShape3D>("%MainCollider");
     }
 

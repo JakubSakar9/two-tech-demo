@@ -43,19 +43,15 @@ public partial class SunLight : DirectionalLight3D
 		if (_lightingQuality == 0)
 		{
 			ShadowEnabled = false;
-			Environment.Environment.SsaoEnabled = false;
-			Environment.Environment.SsilEnabled = false;
 		}
 		else if (_lightingQuality == 1)
 		{
 			ShadowEnabled = true;
 			DirectionalShadowMode = ShadowMode.Orthogonal;
-			Environment.Environment.SsaoEnabled = true;
 		}
 		else if (_lightingQuality == 2)
 		{
 			DirectionalShadowMode = ShadowMode.Parallel4Splits;
-			Environment.Environment.SsilEnabled = true;
 		}
 	}
 
