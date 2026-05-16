@@ -26,7 +26,7 @@ void main() {
     uint idx2d = size * pz + px;
 
     // Maximum velocity computation
-    vec2 w_max_venturi = (1.0 + params.k_venturi * params.a_max) * params.w_base;
+    vec2 w_max_venturi = (1.0 + params.k_venturi * (1.0 + params.k_sky) * params.a_max) * params.w_base;
     w_max_venturi = w_max_venturi / params.w_max;
     vec3 w_max = normalize(vec3(w_max_venturi.x, 0.0, w_max_venturi.y));
     w_max = 0.5 * w_max + vec3(0.5);
