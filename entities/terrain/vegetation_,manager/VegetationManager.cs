@@ -25,6 +25,8 @@ public partial class VegetationManager : Node3D
     [Export] public float HeightThreshold = 32.0f;
     [Export] public float GradientThreshold = 0.5f;
 
+    [Export] public Terrain TerrainRef;
+
     private ForestPatch[] _patches;
     private Godot.Collections.Array<Vector2I> _treePositions;
     private Vector2I _centralPatchCoord;
@@ -44,7 +46,7 @@ public partial class VegetationManager : Node3D
                 Bodies = new Rid[TreeCountLimit]
             };
         }
-        _centralPatchCoord = Vector2I.Zero;
+        _centralPatchCoord = (Vector2I)(TerrainRef.ChunkOrigin / TerrainRef.ChunkSizeUnits);
         _treeCollisionShape = PhysicsServer3D.CylinderShapeCreate();
         Godot.Collections.Dictionary<string, float> paramDict = new()
         {
@@ -69,9 +71,9 @@ public partial class VegetationManager : Node3D
     public void GenerateInitial(HeightMap hm)
     {
         GenerateTreePositions();
-        for (int x = -1; x <= 1; x++)
+        for (int x = _centralPatchCoord.X - 1; x <= _centralPatchCoord.X + 1; x++)
         {
-            for (int y = -1; y <= 1; y++)
+            for (int y = _centralPatchCoord.Y - 1; y <= _centralPatchCoord.Y + 1; y++)
             {
                 Generate(hm, new Vector2I(x, y));
             }
@@ -119,7 +121,6 @@ public partial class VegetationManager : Node3D
                 }
             }
         }
-        GD.Print("N tree positions: " + _treePositions.Count);
     }
 
     private void Generate(HeightMap hm, Vector2I patchCoord)

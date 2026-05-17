@@ -34,7 +34,7 @@ public partial class ChunkPool : Node
 
     private Queue<int> _reconstructionQueue;
 
-    public void Initialize(uint chunkRange, uint textureSize, ref readonly RenderingDevice device, ref FootprintStorage fpStorage)
+    public void Initialize(uint chunkRange, uint textureSize, ref readonly RenderingDevice device, ref FootprintStorage fpStorage, Vector2 playerPos)
     {
         _device = device;
         _radiusChunks = (int)chunkRange;
@@ -42,25 +42,33 @@ public partial class ChunkPool : Node
         RowChunks = 2 * _radiusChunks + 1;
         NChunks = RowChunks * RowChunks;
         _pool = new DTChunk[NChunks];
-        _chunkIdx = (uint)NChunks / 2;
+
+        RecomputeChunk(playerPos);
+        int xCoord = (_chunk.X % RowChunks) + RowChunks;
+        int yCoord = (_chunk.Y % RowChunks) + RowChunks;
+        xCoord = (xCoord + _radiusChunks) % RowChunks;
+        yCoord = (yCoord + _radiusChunks) % RowChunks;
+        _chunkIdx = (uint)(yCoord * RowChunks + xCoord);
+        Vector2I centralChunk = _chunk + _radiusChunks * Vector2I.One - new Vector2I(xCoord, yCoord);
+        
         _reconstructionQueue = new();
         UsedChunks = new();
         UsedChunks.Resize(NChunks);
 
         CreateSharedResources(textureSize);
-        for (uint i = 0; i < RowChunks; i++)
+        for (int i = 0; i < RowChunks; i++)
         {
-            for (uint j = 0; j < RowChunks; j++)
+            for (int j = 0; j < RowChunks; j++)
             {
-                uint idx = i * (uint)RowChunks + j;
+                int idx = i * RowChunks + j;
                 ref DTChunk curChunk = ref _pool[idx];
                 curChunk = new();
                 CreateTexture((int)textureSize, ref curChunk);
-                curChunk.ChunkCoord = new Vector2I((int)j - (int)_radiusChunks, (int)i - (int)_radiusChunks);
+                curChunk.ChunkCoord = new Vector2I(j - _radiusChunks + centralChunk.X, i - _radiusChunks + centralChunk.Y);
             }
         }
         _activeChunks = [];
-        UpdateActiveChunks(Vector2.Zero);
+        UpdateActiveChunks(playerPos);
     }
 
     public void Cleanup(ref readonly RenderingDevice device)

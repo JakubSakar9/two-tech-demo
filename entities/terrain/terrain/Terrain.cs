@@ -60,6 +60,8 @@ public partial class HeightMap : GodotObject
 
     private unsafe void GenerateHeightmapData(object stateInfo)
     {
+        Stopwatch stw = new();
+        stw.Start();
         Bytes = new byte[4 * _size * _size * sizeof(float)];
         fixed(byte* bytePointer = Bytes)
         {
@@ -76,17 +78,19 @@ public partial class HeightMap : GodotObject
                 }
             }
         }
+        stw.Stop();
+        GD.Print("Generate hm data: " + stw.Elapsed.TotalMilliseconds + "ms");
         CallDeferred(MethodName.PopulateHeightImage);
     }
 
     private void PopulateHeightImage()
     {
+        Stopwatch stw = new();
+        stw.Start();
         HeightImage = Image.CreateFromData(_size, _size, false, Image.Format.Rgbaf, Bytes);
         HeightImage.GenerateMipmaps();
         Height.SetImage(HeightImage);
         _terrain.EmitSignal(Terrain.SignalName.FinishedGenerating);
-        Stopwatch stw = new();
-        stw.Start();
         RenderingServer.CallOnRenderThread(Callable.From(_terrain.ComputeTextures));
         stw.Stop();
         GD.Print("Populate height image: " + stw.Elapsed.TotalMilliseconds + "ms");
@@ -127,7 +131,8 @@ public partial class Terrain : StaticBody3D
     private GpuParticlesAttractorVectorField3D _windField;
     private SnowCoverGenerator _scGen;
 
-
+    private Stopwatch _windStw = new();
+    private Stopwatch _snowStw = new();
 
     private HeightMap[] _heightmaps;
     private Image _surfaceImage;
@@ -152,6 +157,10 @@ public partial class Terrain : StaticBody3D
 
         int heightmapSize = 3 * ChunkSizeUnits;
         _changeDirection = Vector2I.Zero;
+
+        ChunkOrigin.X = Mathf.Round(Player.GlobalPosition.X / ChunkSizeUnits) * ChunkSizeUnits;
+        ChunkOrigin.Y = Mathf.Round(Player.GlobalPosition.Z / ChunkSizeUnits) * ChunkSizeUnits;
+        _terrainMesh.GlobalPosition = new Vector3(ChunkOrigin.X, 0, ChunkOrigin.Y);
 
         _windTexture = new();
         WindGen.Init(heightmapSize, ref _windTexture);
@@ -302,13 +311,15 @@ public partial class Terrain : StaticBody3D
         Stopwatch stw = new();
         stw.Start();
         _surfaceImage = null;
+        _windStw.Start();
         WindGen.Generate(ref _heightmaps[_heightmapIndex]);
         _windField.Position = new Vector3(ChunkOrigin.X, _windField.Size.Y / 2.0f, ChunkOrigin.Y);
         int hmSize = 3 * ChunkSizeUnits;
         _heightmaps[(_heightmapIndex + HEIGHTMAP_SWAP_COUNT - 1) % HEIGHTMAP_SWAP_COUNT].Bytes = new byte[4 * hmSize * hmSize * sizeof(float)];
+        _snowStw.Start();
         _scGen.Generate(ref _heightmaps[_heightmapIndex]);
         stw.Stop();
-        GD.Print("Texture compute in " + stw.ElapsedMilliseconds + "ms");
+        GD.Print("Wind and snow compute setup in " + stw.ElapsedMilliseconds + "ms");
     }
 
     public void Pause()
@@ -348,6 +359,7 @@ public partial class Terrain : StaticBody3D
     private void CheckChunkChange(ref readonly Vector2 position2D)
     {
         Vector2 playerOffset = position2D - ChunkOrigin;
+
         float thresholdDistance = ChunkSizeUnits * ChunkThresholdMultiplier / 2.0f;
         bool updateChunk = false;
         if (playerOffset.X < -thresholdDistance)
@@ -413,6 +425,9 @@ public partial class Terrain : StaticBody3D
     
     private void SyncHeightmap(byte[] data)
     {
+        _snowStw.Stop();
+        GD.Print("Snow cover computed in " + _snowStw.Elapsed.TotalMilliseconds + "ms");
+        _snowStw.Reset();
         _heightmaps[_heightmapIndex].Bytes = data;
         _heightmaps[_heightmapIndex].HeightImage = Image.CreateFromData(3 * ChunkSizeUnits, 3 * ChunkSizeUnits, false, Image.Format.Rgbaf, _heightmaps[_heightmapIndex].Bytes);
 
@@ -442,6 +457,9 @@ public partial class Terrain : StaticBody3D
 
     private void SyncWindSurface(Image surfaceImage)
     {
+        _windStw.Stop();
+        GD.Print("Wind surface computed in " + _windStw.Elapsed.TotalMilliseconds + "ms");
+        _windStw.Reset();
         _surfaceImage = surfaceImage.Duplicate() as Image;
     }
 

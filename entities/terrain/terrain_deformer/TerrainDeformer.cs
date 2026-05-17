@@ -25,10 +25,8 @@ public partial class TerrainDeformer : Node3D
 
         _painter.Params.DownscaleFactor = 1.6f * DisplacementMapRange;
         _painter.BatchParams.DownscaleFactor = 1.6f * DisplacementMapRange;
-        _painter.InitPool(RadiusChunks, ref FpStorage);
         _painter.Pool.DisplacementMapRange = DisplacementMapRange;
-
-        _terrain = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
+        _painter.InitPool(RadiusChunks, ref FpStorage, ref _terrain.Player);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -122,5 +120,6 @@ public partial class TerrainDeformer : Node3D
     private void InitNodes()
     {
         _painter = GetNode<TexturePainter>("%TexturePainter");
+        _terrain = GetTree().GetFirstNodeInGroup("terrain") as Terrain;
     }
 }

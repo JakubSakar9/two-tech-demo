@@ -153,9 +153,9 @@ public partial class TexturePainter : Node
         };
     }
 
-    public void InitPool(uint chunkRange, ref FootprintStorage fpStorage)
+    public void InitPool(uint chunkRange, ref FootprintStorage fpStorage, ref Player player)
     {
-        Pool.Initialize(chunkRange, TextureSize, in _device, ref fpStorage);
+        Pool.Initialize(chunkRange, TextureSize, in _device, ref fpStorage, new Vector2(player.GlobalPosition.X, player.GlobalPosition.Z));
     }
 
     private void InitCompute()

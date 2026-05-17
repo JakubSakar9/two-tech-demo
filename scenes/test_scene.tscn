@@ -59,6 +59,12 @@ SkyClearColor = Color(0.29803923, 0.4509804, 0.6901961, 1)
 SkyCloudyColor = Color(0.38431373, 0.45490196, 0.54901963, 1)
 HorizonCloudyColor = Color(0.64705884, 0.654902, 0.67058825, 1)
 
+[node name="Player" parent="." unique_id=826621672 node_paths=PackedStringArray("TerrainRef", "PauseMenuRef") instance=ExtResource("2_j8ivh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
+WalkSpeed = 1.7
+TerrainRef = NodePath("../Terrain")
+PauseMenuRef = NodePath("../PauseMenu")
+
 [node name="Terrain" parent="." unique_id=679293597 node_paths=PackedStringArray("Player", "Deformer", "WindGen", "LoadCam", "VManager") instance=ExtResource("1_j8ivh")]
 Player = NodePath("../Player")
 Deformer = NodePath("../TerrainDeformer")
@@ -69,12 +75,6 @@ MaxAltitude = 64.0
 RockGroundHeight = 36.0
 NoiseFunctionHF = ExtResource("2_3qnke")
 NoiseFunctionLF = ExtResource("3_wtsjf")
-
-[node name="Player" parent="." unique_id=826621672 node_paths=PackedStringArray("TerrainRef", "PauseMenuRef") instance=ExtResource("2_j8ivh")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25.579, 0)
-WalkSpeed = 1.7
-TerrainRef = NodePath("../Terrain")
-PauseMenuRef = NodePath("../PauseMenu")
 
 [node name="TerrainDeformer" parent="." unique_id=253020266 node_paths=PackedStringArray("Player") instance=ExtResource("4_7ddre")]
 Player = NodePath("../Player")
@@ -93,7 +93,8 @@ visible = false
 PlayerRef = NodePath("../Player")
 TerrainRef = NodePath("../Terrain")
 
-[node name="VegetationManager" parent="." unique_id=26462245 instance=ExtResource("10_s36qc")]
+[node name="VegetationManager" parent="." unique_id=26462245 node_paths=PackedStringArray("TerrainRef") instance=ExtResource("10_s36qc")]
 SnowHeightLimits = Array[float]([24.0, 28.0, 65536.0])
 BlueNoise = ExtResource("10_gthg3")
 PerturbStrength = 3.0
+TerrainRef = NodePath("../Terrain")

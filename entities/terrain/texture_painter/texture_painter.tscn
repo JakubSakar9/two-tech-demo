@@ -10,3 +10,4 @@ FootprintTexture = ExtResource("2_k3ea3")
 Pool = NodePath("ChunkPool")
 
 [node name="ChunkPool" parent="." unique_id=1759920285 instance=ExtResource("2_kowy2")]
+HighPrecisionTextures = true
