@@ -1,3 +1,5 @@
+# The White Ocean - Technical Demo
+
 This project is a technical demo showcasing rendering of an infinitely generated snow-covered terrain, which has been implemented using Godot Engine .NET v4.6.2.
 The project has been done as a major part of my Master's Thesis on Czech Technical University in Prague.
 
